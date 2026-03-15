@@ -2,3 +2,6 @@
 .vs/lemons-stupid-site/FileContentIndex/4e13a837-2bdd-49df-b83e-7cf2cc7fb91f.vsidx
 *.vsidx
 .vs/slnx.sqlite
+/.vs
+/.vs
+*.sqlite
