@@ -60,16 +60,31 @@
         }
 
         .avatar {
-            font-size: 6rem;
-            line-height: 1;
             margin-bottom: 0.75rem;
             filter: drop-shadow(0 0 16px #f5e56b);
             transition: transform 0.2s ease;
         }
+        
+        /* Avatar image styling - THIS MAKES IT ROUND! */
+        .avatar img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #f5e56b;
+            transition: all 0.3s ease;
+            display: block;
+        }
 
-            .avatar:hover {
-                transform: scale(1.05) rotate(3deg);
-            }
+        .avatar:hover {
+            transform: scale(1.05) rotate(3deg);
+        }
+        
+        /* Optional: Add a subtle glow effect on hover */
+        .avatar img:hover {
+            box-shadow: 0 0 25px rgba(245, 229, 107, 0.6);
+            border-color: #ffd700;
+        }
 
         h1 {
             font-size: 3.5rem;
@@ -254,6 +269,11 @@
             h1 {
                 font-size: 2.5rem;
             }
+            
+            .avatar img {
+                width: 90px;
+                height: 90px;
+            }
 
             .repeat {
                 flex-wrap: wrap;
@@ -270,7 +290,7 @@
         <!-- Profile section -->
         <div class="profile">
             <div class="avatar">
-                <img src="avatar.png" alt="🍋">
+                <img src="avatar.png" alt="lemon avatar">
             </div>
             <h1>lemon</h1>
             <div class="tagline">a gaming addicted coder</div>
