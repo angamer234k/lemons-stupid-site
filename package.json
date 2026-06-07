@@ -1,0 +1,16 @@
+{
+  "name": "lemons-stupid-site",
+  "version": "1.0.0",
+  "description": "lemon's personal website",
+  "type": "module",
+  "scripts": {
+    "dev": "npx serve .",
+    "build": "echo 'Static site - no build needed'"
+  },
+  "keywords": [],
+  "author": "lemon",
+  "license": "MIT",
+  "dependencies": {
+    "@vercel/speed-insights": "^1.1.0"
+  }
+}
