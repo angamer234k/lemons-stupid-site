@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Please Don't Drop Forum Links in #community</title>
+
+    <!-- Discord / Open Graph embed support -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="SPF: Stop Posting Forums">
+    <meta property="og:description" content="Click to learn more.">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="SPF: Stop Posting Forums">
+    <meta name="twitter:description" content="Click to learn more.">
+
+    <style>
+        :root {
+            --bg: #fafafa;
+            --text: #1a1a1a;
+            --soft-text: #444;
+            --accent: #c0392b;
+            --border: #e0e0e0;
+            --code-bg: #f0f0f0;
+            --max-width: 680px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            padding: 2rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: var(--max-width);
+            width: 100%;
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin-bottom: 1.2rem;
+            line-height: 1.15;
+            color: #111;
+            border-bottom: 4px solid #eee;
+            padding-bottom: 0.6rem;
+        }
+
+        @media (max-width: 500px) {
+            h1 {
+                font-size: 2rem;
+            }
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #555;
+            margin-bottom: 2rem;
+            font-style: italic;
+        }
+
+        p {
+            margin-bottom: 1.3rem;
+            font-size: 1.05rem;
+            color: var(--soft-text);
+        }
+
+        .highlight {
+            background: #fff3cd;
+            padding: 0.1rem 0.3rem;
+            border-radius: 4px;
+            font-weight: 600;
+            color: #856404;
+            white-space: nowrap;
+        }
+
+        .channel-name {
+            font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+            background: var(--code-bg);
+            padding: 0.2rem 0.5rem;
+            border-radius: 5px;
+            font-size: 0.95em;
+            font-weight: 600;
+            letter-spacing: -0.2px;
+            color: #2c3e50;
+            border: 1px solid #ddd;
+        }
+
+        .reasons {
+            list-style: none;
+            margin: 2rem 0 1.8rem;
+            padding-left: 0;
+        }
+
+        .reasons li {
+            margin-bottom: 0.9rem;
+            padding-left: 1.8rem;
+            position: relative;
+            font-size: 1.05rem;
+            color: #222;
+        }
+
+        .reasons li::before {
+            content: "✗";
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+            font-weight: bold;
+            font-size: 1.2rem;
+            top: 0;
+        }
+
+        .good-reasons li::before {
+            content: "✓";
+            color: #2e7d32;
+        }
+
+        .box {
+            background: #f9f9f9;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem 1.8rem;
+            margin: 2rem 0;
+        }
+
+        .box p {
+            margin-bottom: 0.8rem;
+        }
+
+        .footer {
+            margin-top: 2.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+            color: #777;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        a {
+            color: #2563eb;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .game-tag {
+            display: inline-block;
+            background: #e8e8e8;
+            padding: 0.2rem 0.7rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-right: 0.3rem;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Please don't drop forum links in <span class="channel-name">#community</span></h1>
+        <p class="subtitle">(or any other forum channel, really)</p>
+
+        <p>
+            You might think you're being helpful or "networking", but when you post a link to your own forum
+            inside someone else's community space — especially in channels like
+            <span class="channel-name">#community</span> on <span class="game-tag">Discord</span> or
+            <span class="game-tag">Roblox Catweb</span> — it's just spam.
+        </p>
+
+        <ul class="reasons">
+            <li>It hijacks a conversation that isn't about your project</li>
+            <li>It shows zero respect for the community you're posting in</li>
+            <li>It almost never leads to genuine engagement — only annoyance</li>
+            <li>It can get you muted, banned, or quietly ignored forever</li>
+        </ul>
+
+        <div class="box">
+            <p style="font-weight: 700; font-size: 1.2rem; margin-bottom: 0.5rem;">👉 What to do instead</p>
+            <ul class="reasons good-reasons" style="margin:0.5rem 0 0 0;">
+                <li>Join the community and actually contribute to discussions</li>
+                <li>If there's a dedicated <span class="channel-name">#promo</span> or <span class="channel-name">#self-plug</span> channel, use it <em>once</em> — politely</li>
+                <li>Let people discover your forum naturally through your helpfulness and reputation</li>
+                <li>Build real connections — nobody clicks a random link from a stranger</li>
+            </ul>
+        </div>
+
+        <p style="margin-top: 1.8rem;">
+            This applies everywhere, but it's especially painful in
+            <strong>Discord servers</strong> and the <strong>Roblox game Catweb</strong>, where
+            <span class="channel-name">#community</span> forums are meant for conversation, not advertising.
+        </p>
+
+        <p style="font-weight: 600; margin-top: 2rem;">
+            A community channel is not your billboard. 🛑
+        </p>
+
+        <div class="footer">
+            <p>
+                Inspired by the spirit of <a href="https://nohello.net" target="_blank" rel="noopener">nohello.net</a>.
+                Just be a decent human — don't spam your links.
+            </p>
+            <p style="margin-top:0.4rem;">
+                <span class="game-tag">Discord</span>
+                <span class="game-tag">Roblox Catweb</span>
+                <span class="game-tag">Every forum</span>
+            </p>
+        </div>
+    </div>
+</body>
+</html>
