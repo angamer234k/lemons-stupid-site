@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/spf", "destination": "/spf.html" }
+  ]
+}
