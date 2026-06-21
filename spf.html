@@ -1,154 +1,101 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Please Don't Drop Forum Links in #community</title>
+    <meta charset="utf-8">
+    <title>SPF: Stop Posting Forum Links</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <!-- Discord / Open Graph embed support -->
+    <!-- Discord / Open Graph embed -->
     <meta property="og:type" content="website">
-    <meta property="og:title" content="SPF: Stop Posting Forums">
+    <meta property="og:title" content="SPF: Stop Posting Forum Links">
     <meta property="og:description" content="Click to learn more.">
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="SPF: Stop Posting Forums">
+    <meta name="twitter:title" content="SPF: Stop Posting Forum Links">
     <meta name="twitter:description" content="Click to learn more.">
 
     <style>
         :root {
-            --bg: #fafafa;
-            --text: #1a1a1a;
-            --soft-text: #444;
-            --accent: #c0392b;
-            --border: #e0e0e0;
-            --code-bg: #f0f0f0;
-            --max-width: 680px;
+            --bg: #fff;
+            --text: #111;
+            --sub: #555;
+            --footer-text: #666;
+            --border-light: #eee;
+            --chat-bg: #f5f5f5;
+            --chat-hover: rgba(0,0,0,0.03);
+            --bad-border: #ed4245;
+            --good-border: #57f287;
+            --code-bg: #e8e8e8;
+            --embed-bg: #e0e0e0;
+            --reaction-bg: #e0e0e0;
+            --divider-bg: #e0e0e0;
+            --username: #2e3338;
+            --content: #313338;
+            --time: #949ba4;
+            --link: #00a8fc;
+            --deleted: #949ba4;
+            --label-bad: #ed4245;
+            --label-good: #3ba55c;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        body.dark {
+            --bg: #1e1e1e;
+            --text: #e0e0e0;
+            --sub: #aaa;
+            --footer-text: #999;
+            --border-light: #333;
+            --chat-bg: #2a2a2a;
+            --chat-hover: rgba(255,255,255,0.03);
+            --bad-border: #ed4245;
+            --good-border: #57f287;
+            --code-bg: #3a3a3a;
+            --embed-bg: #3a3a3a;
+            --reaction-bg: #3a3a3a;
+            --divider-bg: #3a3a3a;
+            --username: #e0e0e0;
+            --content: #ddd;
+            --time: #888;
+            --link: #00a8fc;
+            --deleted: #888;
+            --label-bad: #ed4245;
+            --label-good: #57f287;
         }
 
         body {
             background: var(--bg);
             color: var(--text);
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            line-height: 1.6;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
             padding: 2rem 1.5rem;
             display: flex;
-            flex-direction: column;
-            align-items: center;
             justify-content: center;
+            align-items: center;
             min-height: 100vh;
+            line-height: 1.6;
+            transition: background 0.2s ease, color 0.2s ease;
         }
-
         .container {
-            max-width: var(--max-width);
+            max-width: 640px;
             width: 100%;
         }
-
         h1 {
-            font-size: 2.8rem;
+            font-size: 2.5rem;
             font-weight: 800;
+            margin: 0 0 0.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px dashed #ccc;
             letter-spacing: -0.5px;
-            margin-bottom: 1.2rem;
-            line-height: 1.15;
-            color: #111;
-            border-bottom: 4px solid #eee;
-            padding-bottom: 0.6rem;
         }
-
-        @media (max-width: 500px) {
-            h1 {
-                font-size: 2rem;
-            }
+        body.dark h1 {
+            border-bottom-color: #444;
         }
-
-        .subtitle {
-            font-size: 1.2rem;
-            color: #555;
-            margin-bottom: 2rem;
-            font-style: italic;
-        }
-
         p {
-            margin-bottom: 1.3rem;
+            margin: 0 0 1rem;
             font-size: 1.05rem;
-            color: var(--soft-text);
         }
-
-        .highlight {
-            background: #fff3cd;
-            padding: 0.1rem 0.3rem;
-            border-radius: 4px;
-            font-weight: 600;
-            color: #856404;
-            white-space: nowrap;
+        .sub {
+            color: var(--sub);
+            margin-bottom: 2rem;
         }
-
-        .channel-name {
-            font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
-            background: var(--code-bg);
-            padding: 0.2rem 0.5rem;
-            border-radius: 5px;
-            font-size: 0.95em;
-            font-weight: 600;
-            letter-spacing: -0.2px;
-            color: #2c3e50;
-            border: 1px solid #ddd;
-        }
-
-        .reasons {
-            list-style: none;
-            margin: 2rem 0 1.8rem;
-            padding-left: 0;
-        }
-
-        .reasons li {
-            margin-bottom: 0.9rem;
-            padding-left: 1.8rem;
-            position: relative;
-            font-size: 1.05rem;
-            color: #222;
-        }
-
-        .reasons li::before {
-            content: "✗";
-            position: absolute;
-            left: 0;
-            color: var(--accent);
-            font-weight: bold;
-            font-size: 1.2rem;
-            top: 0;
-        }
-
-        .good-reasons li::before {
-            content: "✓";
-            color: #2e7d32;
-        }
-
-        .box {
-            background: #f9f9f9;
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1.5rem 1.8rem;
-            margin: 2rem 0;
-        }
-
-        .box p {
-            margin-bottom: 0.8rem;
-        }
-
-        .footer {
-            margin-top: 2.5rem;
-            padding-top: 1.5rem;
-            border-top: 1px solid var(--border);
-            color: #777;
-            font-size: 0.9rem;
-            text-align: center;
-        }
-
         a {
             color: #2563eb;
             text-decoration: none;
@@ -156,69 +103,396 @@
         a:hover {
             text-decoration: underline;
         }
+        .footer {
+            margin-top: 2.5rem;
+            border-top: 1px solid var(--border-light);
+            padding-top: 1.2rem;
+            font-size: 0.9rem;
+            color: var(--footer-text);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.8rem;
+        }
+        .footer p {
+            margin: 0;
+        }
 
-        .game-tag {
-            display: inline-block;
-            background: #e8e8e8;
-            padding: 0.2rem 0.7rem;
-            border-radius: 20px;
-            font-weight: 600;
+        /* utility buttons */
+        .util-buttons {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
             font-size: 0.85rem;
-            margin-right: 0.3rem;
-            color: #333;
+        }
+        .util-btn {
+            background: none;
+            border: 1px solid var(--border-light);
+            color: var(--text);
+            padding: 0.3rem 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: background 0.15s ease;
+            font-family: inherit;
+        }
+        .util-btn:hover {
+            background: rgba(128,128,128,0.1);
+        }
+
+        /* Discord chat styling */
+        .discord-chat {
+            background: var(--chat-bg);
+            border-radius: 8px;
+            padding: 1rem 0;
+            margin: 1.2rem 0 1.8rem;
+            font-family: 'gg sans', 'Noto Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        }
+        .discord-chat.bad {
+            border-left: 3px solid var(--bad-border);
+        }
+        .discord-chat.good {
+            border-left: 3px solid var(--good-border);
+        }
+        .discord-msg {
+            display: flex;
+            padding: 0.25rem 1rem 0.25rem 1rem;
+            gap: 0.75rem;
+        }
+        .discord-msg.first {
+            margin-top: 0.15rem;
+        }
+        .discord-msg:hover {
+            background: var(--chat-hover);
+        }
+        .discord-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+            color: #fff;
+            margin-top: 2px;
+        }
+        .discord-body {
+            min-width: 0;
+        }
+        .discord-header {
+            display: flex;
+            align-items: baseline;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+            margin-bottom: 0.1rem;
+        }
+        .discord-username {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--username);
+        }
+        .discord-time {
+            font-size: 0.75rem;
+            color: var(--time);
+            white-space: nowrap;
+        }
+        .discord-content {
+            font-size: 0.95rem;
+            color: var(--content);
+            line-height: 1.5;
+            word-break: break-word;
+        }
+        .discord-content code {
+            background: var(--code-bg);
+            padding: 0.1rem 0.35rem;
+            border-radius: 3px;
+            font-size: 0.9em;
+            font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+        }
+        .discord-link {
+            color: var(--link);
+            text-decoration: underline;
+            word-break: break-all;
+        }
+        .discord-embed-preview {
+            background: var(--embed-bg);
+            border-left: 3px solid #00a8fc;
+            border-radius: 3px;
+            padding: 0.45rem 0.7rem;
+            margin-top: 0.35rem;
+            font-size: 0.82rem;
+            color: #555;
+        }
+        body.dark .discord-embed-preview {
+            color: #aaa;
+        }
+        .discord-reaction {
+            display: inline-block;
+            background: var(--reaction-bg);
+            border-radius: 6px;
+            padding: 0.1rem 0.45rem;
+            font-size: 0.85rem;
+            margin-top: 0.3rem;
+            color: #4e5058;
+        }
+        body.dark .discord-reaction {
+            color: #bbb;
+        }
+        .discord-divider {
+            height: 1px;
+            background: var(--divider-bg);
+            margin: 0.5rem 1rem 0.5rem 1rem;
+            display: flex;
+            align-items: center;
+            font-size: 0.7rem;
+            color: var(--time);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            gap: 0.5rem;
+        }
+        .discord-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--divider-bg);
+        }
+        .discord-deleted {
+            font-size: 0.85rem;
+            color: var(--deleted);
+            font-style: italic;
+            padding: 0.3rem 0;
+        }
+        .label-bad {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--label-bad);
+            margin-bottom: 0.3rem;
+            padding-left: 0.2rem;
+        }
+        .label-good {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--label-good);
+            margin-bottom: 0.3rem;
+            padding-left: 0.2rem;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Please don't drop forum links in <span class="channel-name">#community</span></h1>
-        <p class="subtitle">(or any other forum channel, really)</p>
+        <h1>Stop Posting Forum Links</h1>
+        <p class="sub">(SPF for short)</p>
 
         <p>
-            You might think you're being helpful or "networking", but when you post a link to your own forum
-            inside someone else's community space — especially in channels like
-            <span class="channel-name">#community</span> on <span class="game-tag">Discord</span> or
-            <span class="game-tag">Roblox Catweb</span> — it's just spam.
+            You've seen it. Someone joins a community and within minutes drops a link to their own forum, Discord server, or Roblox group. Often in a <code>#community</code> channel where people are actually talking. It's not networking — it's spam.
         </p>
 
-        <ul class="reasons">
-            <li>It hijacks a conversation that isn't about your project</li>
-            <li>It shows zero respect for the community you're posting in</li>
-            <li>It almost never leads to genuine engagement — only annoyance</li>
-            <li>It can get you muted, banned, or quietly ignored forever</li>
-        </ul>
+        <p>
+            This happens everywhere, but especially in <strong>Discord servers</strong> and the <strong>CatWeb</strong> community. CatWeb's own forums are meant for its community; hijacking them with links to an external forum is disrespectful and annoying.
+        </p>
 
-        <div class="box">
-            <p style="font-weight: 700; font-size: 1.2rem; margin-bottom: 0.5rem;">👉 What to do instead</p>
-            <ul class="reasons good-reasons" style="margin:0.5rem 0 0 0;">
-                <li>Join the community and actually contribute to discussions</li>
-                <li>If there's a dedicated <span class="channel-name">#promo</span> or <span class="channel-name">#self-plug</span> channel, use it <em>once</em> — politely</li>
-                <li>Let people discover your forum naturally through your helpfulness and reputation</li>
-                <li>Build real connections — nobody clicks a random link from a stranger</li>
-            </ul>
+        <p>Here's what it looks like in practice:</p>
+
+        <!-- Bad example -->
+        <div class="label-bad">❌ The wrong way</div>
+        <div class="discord-chat bad">
+            <div class="discord-msg first">
+                <div class="discord-avatar" style="background:#5865f2;">S</div>
+                <div class="discord-body">
+                    <div class="discord-header">
+                        <span class="discord-username">Silvermoon</span>
+                        <span class="discord-time">Today at 3:14 PM</span>
+                    </div>
+                    <div class="discord-content">Has anyone tried the new building update in Everturn Sandbox? The roof pieces finally snap properly ✨</div>
+                </div>
+            </div>
+            <div class="discord-msg">
+                <div class="discord-avatar" style="background:#eb459e;">K</div>
+                <div class="discord-body">
+                    <div class="discord-header">
+                        <span class="discord-username">Kai_Plays</span>
+                        <span class="discord-time">Today at 3:16 PM</span>
+                    </div>
+                    <div class="discord-content">Yesss I built a whole café with the new curved windows. It took like two hours but looks so good</div>
+                </div>
+            </div>
+            <div class="discord-msg">
+                <div class="discord-avatar" style="background:#747f8d;">R</div>
+                <div class="discord-body">
+                    <div class="discord-header">
+                        <span class="discord-username">RandomDude42</span>
+                        <span class="discord-time">Today at 3:17 PM</span>
+                    </div>
+                    <div class="discord-content">
+                        hey everyone! 👋 check out my forum we talk about roblox and gaming stuff<br>
+                        <span class="discord-link">https://mycoolforum.example.com</span>
+                        <div class="discord-embed-preview">
+                            <strong>MyCoolForum</strong><br>
+                            <span style="font-size:0.78rem;">A place to talk about games, Roblox, and more! Join our community of 50+ members.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="discord-msg">
+                <div class="discord-avatar" style="background:#5865f2;">S</div>
+                <div class="discord-body">
+                    <div class="discord-header">
+                        <span class="discord-username">Silvermoon</span>
+                        <span class="discord-time">Today at 3:20 PM</span>
+                    </div>
+                    <div class="discord-content">…we were literally just talking about building 😅</div>
+                    <span class="discord-reaction">👎 3</span>
+                </div>
+            </div>
+            <div class="discord-divider">later</div>
+            <div class="discord-msg">
+                <div class="discord-avatar" style="background:#faa61a;">M</div>
+                <div class="discord-body">
+                    <div class="discord-header">
+                        <span class="discord-username" style="color:#faa61a;">Moderator</span>
+                        <span class="discord-time">Today at 3:22 PM</span>
+                    </div>
+                    <div class="discord-deleted">⛔ Message deleted — unsolicited promotion</div>
+                </div>
+            </div>
         </div>
 
-        <p style="margin-top: 1.8rem;">
-            This applies everywhere, but it's especially painful in
-            <strong>Discord servers</strong> and the <strong>Roblox game Catweb</strong>, where
-            <span class="channel-name">#community</span> forums are meant for conversation, not advertising.
+        <p>
+            Nobody asked. You interrupted a real conversation. The result? You get ignored, your message gets deleted, and you might even get banned. You've made a bad first impression that's hard to undo.
         </p>
 
-        <p style="font-weight: 600; margin-top: 2rem;">
+        <p>Compare that to a genuine approach:</p>
+
+        <!-- Good example -->
+        <div class="label-good">✅ The right way</div>
+        <div class="discord-chat good">
+            <div class="discord-msg first">
+                <div class="discord-avatar" style="background:#43b581;">J</div>
+                <div class="discord-body">
+                    <div class="discord-header">
+                        <span class="discord-username">JadeBuilds</span>
+                        <span class="discord-time">Today at 4:05 PM</span>
+                    </div>
+                    <div class="discord-content">I've been playing Everturn Sandbox for a few weeks now and the building system is amazing. Has anyone tried making a themed café? I'd love to see pics!</div>
+                </div>
+            </div>
+            <div class="discord-msg">
+                <div class="discord-avatar" style="background:#eb459e;">K</div>
+                <div class="discord-body">
+                    <div class="discord-header">
+                        <span class="discord-username">Kai_Plays</span>
+                        <span class="discord-time">Today at 4:07 PM</span>
+                    </div>
+                    <div class="discord-content">Oh I literally just made one! Here's a screenshot 📸<br>I used the new curved windows and added a little outdoor seating area</div>
+                </div>
+            </div>
+            <div class="discord-msg">
+                <div class="discord-avatar" style="background:#43b581;">J</div>
+                <div class="discord-body">
+                    <div class="discord-header">
+                        <span class="discord-username">JadeBuilds</span>
+                        <span class="discord-time">Today at 4:10 PM</span>
+                    </div>
+                    <div class="discord-content">That looks incredible! The outdoor seating is such a nice touch. I've been working on a rooftop garden build but the plant placement is tricky</div>
+                </div>
+            </div>
+            <div class="discord-divider">a week later</div>
+            <div class="discord-msg">
+                <div class="discord-avatar" style="background:#5865f2;">S</div>
+                <div class="discord-body">
+                    <div class="discord-header">
+                        <span class="discord-username">Silvermoon</span>
+                        <span class="discord-time">Today at 2:30 PM</span>
+                    </div>
+                    <div class="discord-content">Jade your builds are always so creative! Do you post them anywhere else? I'd love to see more</div>
+                </div>
+            </div>
+            <div class="discord-msg">
+                <div class="discord-avatar" style="background:#43b581;">J</div>
+                <div class="discord-body">
+                    <div class="discord-header">
+                        <span class="discord-username">JadeBuilds</span>
+                        <span class="discord-time">Today at 2:33 PM</span>
+                    </div>
+                    <div class="discord-content">Thank you! 🥹 I actually run a small forum for Roblox builders — it's pretty chill, we share tips and feedback. No pressure but I can DM you the link if you're interested</div>
+                    <span class="discord-reaction">❤️ 2</span>
+                </div>
+            </div>
+        </div>
+
+        <p>
+            <strong>See the difference?</strong> In the second example, the person became a real part of the community first. They contributed value, made connections, and <em>someone else asked them</em> about their forum. That's how real growth happens.
+        </p>
+
+        <p>
+            Every community is someone's home on the internet. Dropping unsolicited links is like walking into a dinner party and handing out flyers for your own event down the street. Use dedicated <code>#promo</code> channels if they exist — once, politely — and let your reputation do the rest.
+        </p>
+
+        <p style="margin-top:1.8rem; font-weight:600;">
             A community channel is not your billboard. 🛑
         </p>
 
         <div class="footer">
             <p>
-                Inspired by the spirit of <a href="https://nohello.net" target="_blank" rel="noopener">nohello.net</a>.
-                Just be a decent human — don't spam your links.
+                Inspired by <a href="https://nohello.net" target="_blank" rel="noopener">nohello.net</a>.
+                Just be a decent community member — don't spam your links.
             </p>
-            <p style="margin-top:0.4rem;">
-                <span class="game-tag">Discord</span>
-                <span class="game-tag">Roblox Catweb</span>
-                <span class="game-tag">Every forum</span>
-            </p>
+            <div class="util-buttons">
+                <button class="util-btn" id="shareBtn" title="Copy link">🔗 Share</button>
+                <button class="util-btn" id="darkToggle" title="Toggle dark mode">🌓 Theme</button>
+            </div>
         </div>
     </div>
+
+    <script>
+        // Dark mode toggle with localStorage
+        const darkToggle = document.getElementById('darkToggle');
+        const body = document.body;
+
+        // Check saved preference
+        if (localStorage.getItem('spf-dark') === 'true') {
+            body.classList.add('dark');
+        }
+
+        darkToggle.addEventListener('click', () => {
+            body.classList.toggle('dark');
+            localStorage.setItem('spf-dark', body.classList.contains('dark'));
+        });
+
+        // Share / copy link
+        const shareBtn = document.getElementById('shareBtn');
+        const shareUrl = window.location.origin + '/spf';  // clean short URL
+
+        shareBtn.addEventListener('click', async () => {
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: 'SPF: Stop Posting Forum Links',
+                        url: shareUrl
+                    });
+                } catch (err) {
+                    console.log('Share cancelled or failed');
+                }
+            } else {
+                // Fallback: copy to clipboard
+                try {
+                    await navigator.clipboard.writeText(shareUrl);
+                    shareBtn.textContent = '✅ Copied!';
+                    setTimeout(() => {
+                        shareBtn.textContent = '🔗 Share';
+                    }, 2000);
+                } catch (err) {
+                    alert('Copy link manually: ' + shareUrl);
+                }
+            }
+        });
+    </script>
 </body>
 </html>
