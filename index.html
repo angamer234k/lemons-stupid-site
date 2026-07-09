@@ -1,356 +1,187 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🍋 lemon · gaming addicted coder</title>
-    <!-- Fonts & Icons -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,600;14..32,800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lemon's Profile</title>
     <!-- Vercel Speed Insights -->
     <script>
         window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
     </script>
     <script defer src="/_vercel/speed-insights/script.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
 
-        body {
-            background-color: #0a0c0f;
-            font-family: 'Inter', sans-serif;
-            color: #eaeef2;
-            line-height: 1.6;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            padding: 1.5rem;
-        }
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-        .container {
-            max-width: 1100px;
-            width: 100%;
-            background: rgba(18, 22, 28, 0.8);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid #2e3a44;
-            border-radius: 3rem;
-            padding: 2.5rem 2rem;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(250, 240, 130, 0.2) inset;
-        }
+    body {
+      min-height: 100vh;
+      background: #1e1e2a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Arial', 'Helvetica', sans-serif;
+      padding: 20px;
+    }
 
-        /* Lemon accent */
-        .accent {
-            color: #f5e56b;
-            text-shadow: 0 0 8px rgba(245, 229, 107, 0.4);
-        }
+    .card-wrapper {
+      width: 85vw;
+      max-width: 700px;
+      padding: 3px;
+      border-radius: 16px;              /* rectangular */
+      background: linear-gradient(180deg, #ffffff 0%, #888888 100%);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+    }
 
-        .glow {
-            box-shadow: 0 0 20px rgba(245, 229, 107, 0.3);
-        }
+    .card {
+      width: 100%;
+      background-color: #67809f;
+      border-radius: 13px;
+      padding: 24px 24px 36px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
 
-        /* Header / profile */
-        .profile {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            margin-bottom: 3rem;
-        }
+    .lemon-heading {
+      margin-top: 40px;
+      font-family: 'Arial Black', 'BuilderSansBold', sans-serif;
+      font-weight: bold;
+      font-size: 3.5rem;
+      color: #fdff94;
+      text-shadow: -2px -2px 0 #535353,
+                    2px -2px 0 #535353,
+                   -2px  2px 0 #535353,
+                    2px  2px 0 #535353;
+      text-align: center;
+    }
 
-        .avatar {
-            margin-bottom: 0.75rem;
-            filter: drop-shadow(0 0 16px #f5e56b);
-            transition: transform 0.2s ease;
-        }
-        
-        /* Avatar image styling - THIS MAKES IT ROUND! */
-        .avatar img {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 3px solid #f5e56b;
-            transition: all 0.3s ease;
-            display: block;
-        }
+    .avatar {
+      margin-top: 4px;
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      border: 3px solid #ffe77f;
+      object-fit: cover;
+      background: #2c3744;
+      flex-shrink: 0;
+    }
 
-        .avatar:hover {
-            transform: scale(1.05) rotate(3deg);
-        }
-        
-        /* Optional: Add a subtle glow effect on hover */
-        .avatar img:hover {
-            box-shadow: 0 0 25px rgba(245, 229, 107, 0.6);
-            border-color: #ffd700;
-        }
+    .bio-text {
+      margin-top: 80px;
+      width: 100%;
+      color: #ffffff;
+      font-weight: bold;
+      font-family: 'Arial', 'Helvetica', sans-serif;
+      font-size: 1.2rem;
+      text-align: center;
+    }
 
-        h1 {
-            font-size: 3.5rem;
-            font-weight: 800;
-            letter-spacing: -0.02em;
-            background: linear-gradient(135deg, #ffffff 0%, #f5e56b 80%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 0.25rem;
-        }
+    .section-title {
+      width: 100%;
+      color: #ffffff;
+      font-weight: bold;
+      font-family: 'Arial', 'Helvetica', sans-serif;
+      font-size: 1.05rem;
+      text-align: center;
+      letter-spacing: 0.5px;
+    }
+    .section-title.hobbies {
+      margin-top: 100px;
+    }
+    .section-title.contact {
+      margin-top: 150px;
+    }
 
-        .tagline {
-            font-size: 1.3rem;
-            font-weight: 600;
-            color: #b0c4d9;
-            background: #1f2a33;
-            padding: 0.4rem 1.5rem;
-            border-radius: 100px;
-            display: inline-block;
-            border: 1px solid #3d4d5d;
-            margin: 1rem 0 1.2rem;
-        }
+    .row {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+      height: 30px;
+    }
+    .row.hobbies {
+      margin-top: 110px;
+    }
+    .row.contact {
+      margin-top: 160px;
+    }
 
-        .repeat {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            font-size: 1.2rem;
-            color: #8fa3b7;
-            background: #131c24;
-            padding: 0.5rem 1.8rem;
-            border-radius: 100px;
-            border: 1px dashed #3d4d5d;
-        }
+    .chip {
+      flex: 0 0 auto;
+      height: 26px;
+      aspect-ratio: 2.5 / 1;
+      background-color: #2c3744;
+      border: 2px solid #4b6ca5;
+      border-radius: 50px;
+      color: #ffffff;
+      font-weight: bold;
+      font-size: 17px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+      padding: 0 10px;
+      text-decoration: none;
+      transition: background 0.15s;
+    }
 
-            .repeat span {
-                color: #f5e56b;
-                font-weight: 600;
-                display: inline-flex;
-                align-items: center;
-                gap: 0.4rem;
-            }
+    .row.contact .chip:hover {
+      background-color: #3e4d5e;
+      border-color: #6b8fc7;
+    }
 
-            .repeat i {
-                font-size: 1.2rem;
-                color: #f5e56b;
-            }
-
-        /* Cards grid */
-        .cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 2rem;
-            margin: 3rem 0 2.5rem;
-        }
-
-        .card {
-            background: #141d26;
-            border-radius: 2rem;
-            padding: 2rem 1.8rem;
-            border: 1px solid #2c3e4e;
-            transition: all 0.25s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-            .card::before {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                height: 4px;
-                background: linear-gradient(90deg, #f5e56b, #ffb347, #f5e56b);
-                background-size: 200% 100%;
-                animation: shimmer 3s infinite linear;
-            }
-
-        @keyframes shimmer {
-            0% {
-                background-position: 0% 0;
-            }
-
-            100% {
-                background-position: 200% 0;
-            }
-        }
-
-        .card:hover {
-            transform: translateY(-8px);
-            border-color: #f5e56b;
-            box-shadow: 0 20px 30px -10px rgba(245, 229, 107, 0.2);
-        }
-
-        .card h2 {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-        }
-
-            .card h2 i {
-                color: #f5e56b;
-                font-size: 2rem;
-            }
-
-        .card ul {
-            list-style: none;
-        }
-
-        .card li {
-            margin-bottom: 0.9rem;
-            font-size: 1.2rem;
-            display: flex;
-            align-items: center;
-            gap: 0.7rem;
-            background: #0f1a22;
-            padding: 0.6rem 1rem;
-            border-radius: 50px;
-            border: 1px solid #2d4253;
-        }
-
-            .card li i {
-                width: 1.6rem;
-                color: #f5e56b;
-                font-size: 1.3rem;
-                text-align: center;
-            }
-
-        /* Social footer */
-        .social {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: center;
-            gap: 2rem 2.5rem;
-            padding-top: 2rem;
-            border-top: 1px solid #26333e;
-        }
-
-        .social-link {
-            display: flex;
-            align-items: center;
-            gap: 0.7rem;
-            color: #cddcec;
-            text-decoration: none;
-            font-weight: 500;
-            font-size: 1.1rem;
-            padding: 0.4rem 1rem;
-            border-radius: 2rem;
-            background: #1a2832;
-            border: 1px solid #3b4f5e;
-            transition: 0.2s;
-        }
-
-            .social-link i {
-                font-size: 1.4rem;
-                color: #f5e56b;
-            }
-
-            .social-link:hover {
-                background: #253845;
-                border-color: #f5e56b;
-                color: white;
-                transform: scale(1.03);
-            }
-
-            .social-link span {
-                font-size: 0.95rem;
-                opacity: 0.9;
-            }
-
-        /* Responsive */
-        @media (max-width: 600px) {
-            .container {
-                padding: 1.5rem;
-            }
-
-            h1 {
-                font-size: 2.5rem;
-            }
-            
-            .avatar img {
-                width: 90px;
-                height: 90px;
-            }
-
-            .repeat {
-                flex-wrap: wrap;
-            }
-
-            .social {
-                gap: 1rem;
-            }
-        }
-    </style>
+    @media (max-width: 500px) {
+      .lemon-heading { font-size: 2.6rem; }
+      .chip { font-size: 14px; height: 22px; padding: 0 8px; }
+      .bio-text { font-size: 1rem; }
+      .section-title { font-size: 0.9rem; }
+      .card { padding: 16px 12px 24px 12px; }
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Profile section -->
-        <div class="profile">
-            <div class="avatar">
-                <img src="avatar.png" alt="lemon avatar">
-            </div>
-            <h1>lemon</h1>
-            <div class="tagline">a gaming addicted coder</div>
-            <div class="repeat">
-                <span><i class="fas fa-keyboard"></i> coding</span>
-                <span><i class="fas fa-gamepad"></i> gaming</span>
-                <span><i class="fas fa-sync-alt"></i> repeat</span>
-            </div>
-        </div>
 
-        <!-- Cards: Gaming & Coding -->
-        <div class="cards">
-            <!-- Gaming card -->
-            <div class="card">
-                <h2>
-                    <i class="fas fa-gamepad"></i> gaming
-                </h2>
-                <ul>
-                    <li><i class="fas fa-cube"></i> Roblox (@GJ4JHK)</li>
-                    <li><i class="fas fa-tree"></i> Minecraft (havent tried yet)</li>
-                    <li><i class="fas fa-bolt"></i> SCP:SL (havent tried anything else)</li>
-                    <li><i class="fas fa-clock"></i> 140+hrs in that game lol</li>
-                </ul>
-            </div>
-            <!-- Coding card -->
-            <div class="card">
-                <h2>
-                    <i class="fas fa-code"></i> coding
-                </h2>
-                <ul>
-                    <li><i class="fab fa-python"></i> Python (hardly know it)</li>
-                    <li><i class="fab fa-js"></i> HTML (deepseek coded ts for me)</li>
-                    <li><i class="fas fa-database"></i> Luau (roblox, basically.)</li>
-                </ul>
-            </div>
-        </div>
+<div class="card-wrapper">
+  <div class="card">
 
-        <!-- Social links (footer) -->
-        <div class="social">
-            <!-- Roblox -->
-            <a href="https://www.roblox.com/users/2545613154/profile" class="social-link" target="_blank" rel="noopener noreferrer" title="Roblox: @GJ4JHK">
-                <i class="fas fa-gamepad"></i>
-                <span>@GJ4JHK</span>
-            </a>
-            <!-- Discord -->
-            <a href="discord://-/users/1131451961942749206" class="social-link" target="_blank" rel="noopener noreferrer" title="Discord: @breheh">
-                <i class="fab fa-discord"></i>
-                <span>@breheh</span>
-            </a>
-            <!-- GitHub -->
-            <a href="https://github.com/angamer234k" class="social-link" target="_blank" rel="noopener noreferrer" title="GitHub: @angamer234k">
-                <i class="fab fa-github"></i>
-                <span>@angamer234k</span>
-            </a>
-        </div>
+    <div class="lemon-heading">lemon</div>
+
+    <!-- 
+      🔥 Avatar now uses DiceBear – always works, no broken images.
+      If you want your Roblox avatar, you can replace the src with:
+      https://www.roblox.com/Thumbs/Avatar.ashx?x=64&y=64&userid=2545613154
+      (but that sometimes doesn't load – DiceBear is the safe fallback)
+    -->
+    <img 
+      class="avatar" 
+      src="https://api.dicebear.com/7.x/avataaars/svg?seed=lemon" 
+      alt="avatar" 
+    />
+
+    <div class="bio-text">hiya! im lemon (@GJ4JHK on RBLX)</div>
+
+    <div class="section-title hobbies">my hobbies are:</div>
+    <div class="row hobbies">
+      <span class="chip">gaming</span>
+      <span class="chip">coding</span>
+      <span class="chip">repeat</span>
     </div>
+
+    <div class="section-title contact">contact me on</div>
+    <div class="row contact">
+      <a href="https://discord.gg/sSymHq6FjQ" class="chip" target="_blank">DISCORD</a>
+      <a href="https://github.com/angamer234k" class="chip" target="_blank">GITHUB</a>
+      <a href="https://emailthing.me/@lemon0real" class="chip" target="_blank">CUSTOM</a>
+    </div>
+
+  </div>
+</div>
+
 </body>
 </html>
