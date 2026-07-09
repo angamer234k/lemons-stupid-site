@@ -2,8 +2,18 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Lemon's Profile</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Page title (shows in browser tab and embed) -->
+  <title>lemon's profile</title>
+
+  <!-- Open Graph / Embed Metadata -->
+  <meta property="og:title" content="lemon's profile" />
+  <meta property="og:description" content="hiya! im lemon (@GJ4JHK on RBLX) — check out my hobbies and contact me!" />
+  <meta property="og:image" content="avatar.png" />
+  <meta property="og:url" content="" /> <!-- optional, you can set your page URL -->
+  <meta name="twitter:card" content="summary" />
+
   <style>
     * {
       margin: 0;
@@ -25,7 +35,7 @@
       width: 85vw;
       max-width: 700px;
       padding: 3px;
-      border-radius: 16px;              /* rectangular */
+      border-radius: 16px;
       background: linear-gradient(180deg, #ffffff 0%, #888888 100%);
       box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
     }
@@ -146,12 +156,7 @@
 
     <div class="lemon-heading">lemon</div>
 
-    <!-- 
-      🔥 Avatar now uses DiceBear – always works, no broken images.
-      If you want your Roblox avatar, you can replace the src with:
-      https://www.roblox.com/Thumbs/Avatar.ashx?x=64&y=64&userid=2545613154
-      (but that sometimes doesn't load – DiceBear is the safe fallback)
-    -->
+    <!-- Avatar uses your own avatar.png -->
     <img 
       class="avatar" 
       src="avatar.png" 
