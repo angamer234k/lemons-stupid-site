@@ -1,1 +1,42 @@
-<meta http-equiv="refresh" content="0; url=https://honeypot.riskymh.dev/">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Redirect immediately -->
+  <meta http-equiv="refresh" content="0; url=https://honeypot.riskymh.dev/">
+  <title>Redirecting...</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #f5f5f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .card {
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    a {
+      color: #0066cc;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <p>Redirecting to <strong>honeypot.riskymh.dev</strong>…</p>
+    <p>If you are not redirected automatically, <a href="https://honeypot.riskymh.dev/">click here</a>.</p>
+  </div>
+
+  <!-- JavaScript fallback (in case meta refresh is blocked) -->
+  <script>
+    window.location.href = "https://honeypot.riskymh.dev/";
+  </script>
+</body>
+</html>
