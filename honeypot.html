@@ -5,19 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <!-- ===== DISCORD / SOCIAL EMBED META TAGS ===== -->
-  <!-- Title & description (exactly as requested) -->
   <meta property="og:title" content="i use honeypot">
   <meta property="og:description" content="i use honeypot by RiskyMH, learn more on this site! (redirecter)">
   <meta property="og:type" content="website">
-  <!-- Optional: set the actual URL so Discord knows where the link points -->
   <meta property="og:url" content="https://honeypot.riskymh.dev/">
-  <!-- Optional: add a small default image so the embed looks nicer -->
   <meta property="og:image" content="https://honeypot.riskymh.dev/favicon.ico">
-  <!-- Twitter card (Discord falls back to og: tags) -->
+  
+  <!-- ===== ORANGE EMBED COLOR (Discord, Slack, etc.) ===== -->
+  <meta name="theme-color" content="#FF7F00">
+
   <meta name="twitter:card" content="summary">
 
   <!-- ===== REDIRECT TO THE TARGET ===== -->
-  <!-- Meta refresh (instant) -->
   <meta http-equiv="refresh" content="0; url=https://honeypot.riskymh.dev/">
 
   <title>Redirecting to honeypot.riskymh.dev</title>
@@ -62,7 +61,7 @@
       padding: 1rem;
       background: #f8f9fa;
       border-radius: 10px;
-      border-left: 4px solid #5865f2;
+      border-left: 4px solid #FF7F00;  <!-- Changed to orange -->
       text-align: left;
       font-size: 0.9rem;
     }
@@ -82,15 +81,15 @@
     <p>You are being sent to <strong>honeypot.riskymh.dev</strong>.</p>
     <p>If nothing happens, <a href="https://honeypot.riskymh.dev/">click here</a>.</p>
 
-    <!-- Just a visual preview of how the embed will look in Discord -->
+    <!-- Visual preview matching the orange embed -->
     <div class="embed-preview">
-      <strong>📌 Discord embed preview</strong>
+      <strong>📌 Discord embed preview (orange)</strong>
       <strong>i use honeypot</strong>
       <span>i use honeypot by RiskyMH, learn more on this site! (redirecter)</span>
     </div>
   </div>
 
-  <!-- JavaScript fallback redirect (if meta refresh is blocked) -->
+  <!-- JavaScript fallback redirect -->
   <script>
     window.location.href = "https://honeypot.riskymh.dev/";
   </script>
