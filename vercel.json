@@ -1,5 +1,4 @@
 {
-  "rewrites": [
-    { "source": "/spf", "destination": "/spf.html" }
-  ]
+  "cleanUrls": true,
+  "trailingSlash": false
 }
