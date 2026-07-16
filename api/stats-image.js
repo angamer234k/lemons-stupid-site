@@ -4,11 +4,9 @@ export const config = {
   runtime: 'edge',
 };
 
-// Fallback stats if WS fails
 async function fetchStats() {
   try {
-    // Try to fetch via a simple HTTP endpoint if available, or fallback
-    const response = await fetch('https://honeypot-stats.riskymh.dev/api/stats', {
+    const response = await fetch('https://honeypot-stats.riskymh.dev/', {
       headers: { 'User-Agent': 'Lemon-OG-Image' },
       cache: 'no-store'
     });
@@ -17,16 +15,16 @@ async function fetchStats() {
       return await response.json();
     }
   } catch (e) {
-    console.error('HTTP fallback failed:', e);
+    console.error('Stats fetch failed:', e);
   }
 
-  // Ultimate fallback
+  // Fallback data
   return {
-    guilds: 420,
-    moderations: 6969,
-    last7dModerations: 123,
-    last7dEngagedGuilds: 69,
-    dailyStats: [{ date: '2026-07-16', moderations: 42, engagedGuilds: 12 }]
+    guilds: 69425,
+    moderations: 367929,
+    last7dModerations: 46927,
+    last7dEngagedGuilds: 16383,
+    dailyStats: [{ date: '2026-07-16', moderations: 420, engagedGuilds: 69 }]
   };
 }
 
