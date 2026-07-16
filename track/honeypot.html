@@ -3,17 +3,13 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Discord Bot Stats · Live</title>
+    <title>Honeypot · Live Stats</title>
 
-<meta property="og:title" content="Bot Stats · Live" />
-<meta property="og:description" content="Real‑time Discord bot statistics" />
-<meta property="og:url" content="https://лемон.space/track/honeypot" />
-<meta name="twitter:card" content="summary_large_image" />
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js">
     </script>
 
     <style>
-        /* ----- Reset & Base ----- */
         * {
             margin: 0;
             padding: 0;
@@ -22,26 +18,25 @@
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #080b12;
+            background: #0b0f17;
             color: #eef2f8;
             min-height: 100vh;
             padding: 24px;
+            background-image: radial-gradient(circle at 20% 30%, #1a2744 0%, #0b0f17 70%);
         }
 
-        /* ----- Scrollbar ----- */
         ::-webkit-scrollbar {
             width: 4px;
-            height: 4px;
         }
         ::-webkit-scrollbar-track {
-            background: #111821;
+            background: #111a27;
         }
         ::-webkit-scrollbar-thumb {
-            background: #2a3445;
-            border-radius: 8px;
+            background: #3d4f6b;
+            border-radius: 10px;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #3d4b60;
+            background: #586f8f;
         }
 
         .dashboard {
@@ -49,53 +44,64 @@
             margin: 0 auto;
         }
 
-        /* ----- Header ----- */
+        /* ----- HEADER (glass) ----- */
         .header {
             display: flex;
             align-items: center;
             justify-content: space-between;
             flex-wrap: wrap;
             gap: 16px;
-            padding: 14px 24px;
-            background: #111821;
-            border-radius: 16px;
-            border: 1px solid #1e2838;
-            margin-bottom: 24px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            padding: 16px 28px;
+            background: rgba(17, 25, 40, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 20px;
+            margin-bottom: 28px;
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.6);
         }
 
         .header-left {
             display: flex;
             align-items: center;
-            gap: 14px;
+            gap: 18px;
         }
 
-        .logo-icon {
-            width: 38px;
-            height: 38px;
-            background: linear-gradient(145deg, #5865f2, #4752c4);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            font-weight: 700;
-            color: #fff;
-            box-shadow: 0 4px 14px rgba(88, 101, 242, 0.3);
+        .avatar-wrapper {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            border: 2px solid rgba(88, 101, 242, 0.4);
+            padding: 2px;
+            background: linear-gradient(145deg, #5865f2, #3b48c0);
+            box-shadow: 0 0 30px rgba(88, 101, 242, 0.2);
+            transition: transform 0.25s ease;
+        }
+        .avatar-wrapper:hover {
+            transform: scale(1.05);
+        }
+        .avatar-wrapper img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            display: block;
+            object-fit: cover;
         }
 
-        .header h1 {
-            font-size: 20px;
+        .brand h1 {
+            font-size: 22px;
             font-weight: 600;
-            letter-spacing: -0.2px;
-            color: #f0f4ff;
+            background: linear-gradient(135deg, #f0f4ff, #a8c0e8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.3px;
         }
-        .header h1 span {
-            font-weight: 400;
-            font-size: 13px;
-            color: #5a6f8a;
-            margin-left: 8px;
-            letter-spacing: 0;
+        .brand .sub {
+            font-size: 12px;
+            color: #6a7f9a;
+            margin-top: 2px;
+            -webkit-text-fill-color: #6a7f9a;
+            background: none;
         }
 
         .header-right {
@@ -105,7 +111,6 @@
             flex-wrap: wrap;
         }
 
-        /* ----- Status Badge (mini) ----- */
         .status-badge {
             display: flex;
             align-items: center;
@@ -114,29 +119,29 @@
             border-radius: 100px;
             font-size: 12px;
             font-weight: 500;
-            background: #141d2a;
-            border: 1px solid #1e2838;
-            transition: all 0.3s;
+            background: rgba(20, 30, 45, 0.6);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
         .status-dot {
             width: 8px;
             height: 8px;
             border-radius: 50%;
-            transition: background 0.3s, box-shadow 0.3s;
+            transition: all 0.3s;
             flex-shrink: 0;
         }
         .status-dot.online {
             background: #3ba55d;
-            box-shadow: 0 0 14px rgba(59, 165, 93, 0.5);
+            box-shadow: 0 0 16px rgba(59, 165, 93, 0.6);
         }
         .status-dot.connecting {
             background: #faa81a;
-            box-shadow: 0 0 14px rgba(250, 168, 26, 0.5);
+            box-shadow: 0 0 16px rgba(250, 168, 26, 0.6);
             animation: pulse 1s infinite;
         }
         .status-dot.offline {
             background: #ed4245;
-            box-shadow: 0 0 14px rgba(237, 66, 69, 0.3);
+            box-shadow: 0 0 16px rgba(237, 66, 69, 0.4);
         }
         @keyframes pulse {
             0%,
@@ -149,6 +154,7 @@
                 transform: scale(0.85);
             }
         }
+
         .status-text {
             color: #8a9eb8;
         }
@@ -158,25 +164,25 @@
         }
 
         .btn {
-            padding: 7px 18px;
+            padding: 8px 20px;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             font-size: 12px;
             font-weight: 500;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.25s;
             display: inline-flex;
             align-items: center;
             gap: 6px;
         }
         .btn-primary {
-            background: #5865f2;
+            background: linear-gradient(145deg, #5865f2, #4752c4);
             color: #fff;
+            box-shadow: 0 4px 16px rgba(88, 101, 242, 0.25);
         }
         .btn-primary:hover {
-            background: #4752c4;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 16px rgba(88, 101, 242, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 28px rgba(88, 101, 242, 0.4);
         }
         .btn-primary:active {
             transform: translateY(0);
@@ -189,47 +195,64 @@
         .btn-outline {
             background: transparent;
             color: #8a9eb8;
-            border: 1px solid #1e2838;
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
         .btn-outline:hover {
-            background: #141d2a;
-            border-color: #2a3a4e;
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.15);
         }
         .btn-sm {
-            padding: 4px 12px;
+            padding: 4px 14px;
             font-size: 11px;
-            border-radius: 6px;
+            border-radius: 8px;
         }
 
-        /* ----- Stats Grid ----- */
+        /* ----- STATS GRID (glass cards) ----- */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 14px;
-            margin-bottom: 20px;
+            gap: 16px;
+            margin-bottom: 24px;
         }
 
         .stat-card {
-            background: #111821;
-            border: 1px solid #1a2436;
-            border-radius: 14px;
-            padding: 16px 18px 14px;
-            transition: border-color 0.25s, box-shadow 0.25s;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            background: rgba(17, 25, 40, 0.55);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 18px 20px 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
             position: relative;
+            overflow: hidden;
+        }
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #5865f2, transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
         }
         .stat-card:hover {
-            border-color: #2a3a4e;
-            box-shadow: 0 6px 28px rgba(0, 0, 0, 0.4);
+            border-color: rgba(88, 101, 242, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+        .stat-card:hover::before {
+            opacity: 1;
         }
 
         .stat-label {
             font-size: 11px;
             text-transform: uppercase;
             letter-spacing: 0.6px;
-            color: #5a6f8a;
+            color: #6a7f9a;
             font-weight: 500;
-            margin-bottom: 2px;
+            margin-bottom: 4px;
         }
 
         .stat-row {
@@ -240,7 +263,7 @@
         }
 
         .stat-value {
-            font-size: 26px;
+            font-size: 28px;
             font-weight: 600;
             color: #f0f4ff;
             letter-spacing: -0.2px;
@@ -249,7 +272,7 @@
         .stat-value .unit {
             font-size: 14px;
             font-weight: 400;
-            color: #5a6f8a;
+            color: #6a7f9a;
             margin-left: 4px;
         }
 
@@ -261,7 +284,6 @@
             display: inline-flex;
             align-items: center;
             gap: 2px;
-            transition: all 0.3s;
         }
         .stat-delta.positive {
             color: #3ba55d;
@@ -270,20 +292,21 @@
             color: #ed4245;
         }
         .stat-delta.neutral {
-            color: #5a6f8a;
+            color: #6a7f9a;
         }
         .stat-delta .arrow {
             font-size: 10px;
         }
 
-        /* ----- Chart Section ----- */
+        /* ----- CHART SECTION (glass) ----- */
         .chart-section {
-            background: #111821;
-            border: 1px solid #1a2436;
-            border-radius: 16px;
-            padding: 20px 22px 18px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            background: rgba(17, 25, 40, 0.55);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 22px 26px 20px;
+            margin-bottom: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
             position: relative;
             overflow: hidden;
         }
@@ -294,12 +317,13 @@
             justify-content: space-between;
             flex-wrap: wrap;
             gap: 12px;
-            margin-bottom: 14px;
+            margin-bottom: 16px;
         }
         .chart-header h3 {
-            font-size: 14px;
+            font-size: 15px;
             font-weight: 500;
-            color: #8a9eb8;
+            color: #b0c4dc;
+            letter-spacing: 0.2px;
         }
 
         .chart-controls {
@@ -308,152 +332,40 @@
             flex-wrap: wrap;
         }
         .chart-controls .btn-chart {
-            padding: 3px 14px;
+            padding: 4px 16px;
             font-size: 11px;
-            border-radius: 6px;
-            border: 1px solid #1e2838;
-            background: transparent;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: rgba(255, 255, 255, 0.02);
             color: #6a7f9a;
             cursor: pointer;
             transition: all 0.2s;
             font-weight: 500;
         }
         .chart-controls .btn-chart:hover {
-            background: #141d2a;
+            background: rgba(255, 255, 255, 0.06);
             color: #eef2f8;
         }
         .chart-controls .btn-chart.active {
             background: #5865f2;
             border-color: #5865f2;
             color: #fff;
+            box-shadow: 0 4px 16px rgba(88, 101, 242, 0.3);
         }
 
         .chart-wrapper {
             position: relative;
-            height: 250px;
+            height: 260px;
         }
 
-        /* ----- Overlay Dot (status indicator over chart) ----- */
-        .chart-overlay {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            pointer-events: none;
-            transition: opacity 0.6s ease, backdrop-filter 0.6s ease;
-            border-radius: 12px;
-            z-index: 10;
-        }
-        .chart-overlay.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-        .chart-overlay .blur-bg {
-            position: absolute;
-            inset: 0;
-            border-radius: 12px;
-            background: rgba(8, 11, 18, 0.55);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            transition: opacity 0.6s ease;
-        }
-        .chart-overlay.hidden .blur-bg {
-            opacity: 0;
-        }
-
-        .status-center {
-            position: relative;
-            z-index: 2;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-            transition: transform 0.4s ease;
-        }
-        .chart-overlay.hidden .status-center {
-            transform: scale(0.9);
-            opacity: 0;
-        }
-
-        .status-center-dot {
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            border: 3px solid transparent;
-            transition: all 0.4s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 22px;
-            font-weight: 600;
-            color: #fff;
-        }
-        .status-center-dot.offline {
-            background: rgba(237, 66, 69, 0.15);
-            border-color: #ed4245;
-            box-shadow: 0 0 40px rgba(237, 66, 69, 0.25);
-        }
-        .status-center-dot.offline::after {
-            content: "✕";
-            font-size: 24px;
-            color: #ed4245;
-        }
-        .status-center-dot.connecting {
-            background: rgba(250, 168, 26, 0.12);
-            border-color: #faa81a;
-            box-shadow: 0 0 40px rgba(250, 168, 26, 0.2);
-            animation: pulse-ring 1.4s infinite;
-        }
-        .status-center-dot.connecting::after {
-            content: "⟳";
-            font-size: 26px;
-            color: #faa81a;
-            animation: spin 1.6s linear infinite;
-        }
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-        @keyframes pulse-ring {
-            0%,
-            100% {
-                box-shadow: 0 0 30px rgba(250, 168, 26, 0.15);
-            }
-            50% {
-                box-shadow: 0 0 60px rgba(250, 168, 26, 0.35);
-            }
-        }
-        .status-center-dot.online {
-            background: rgba(59, 165, 93, 0.12);
-            border-color: #3ba55d;
-            box-shadow: 0 0 40px rgba(59, 165, 93, 0.2);
-        }
-        .status-center-dot.online::after {
-            content: "✓";
-            font-size: 26px;
-            color: #3ba55d;
-        }
-
-        .status-center-label {
-            font-size: 13px;
-            font-weight: 500;
-            color: #8a9eb8;
-            background: rgba(8, 11, 18, 0.6);
-            padding: 4px 16px;
-            border-radius: 100px;
-            backdrop-filter: blur(4px);
-            border: 1px solid rgba(255, 255, 255, 0.04);
-        }
-
-        /* ----- Log Section ----- */
+        /* ----- LOG SECTION ----- */
         .log-section {
-            background: #111821;
-            border: 1px solid #1a2436;
-            border-radius: 16px;
-            padding: 14px 20px 18px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            background: rgba(17, 25, 40, 0.55);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 16px 22px 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
         .log-header {
             display: flex;
@@ -461,41 +373,41 @@
             justify-content: space-between;
             flex-wrap: wrap;
             gap: 10px;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
         }
         .log-header h3 {
             font-size: 13px;
             font-weight: 500;
-            color: #6a7f9a;
+            color: #8a9eb8;
         }
         .log-header .count {
             font-size: 11px;
             color: #4a5f7a;
-            background: #080b12;
-            padding: 2px 10px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 12px;
             border-radius: 100px;
         }
 
         .log-container {
-            max-height: 140px;
+            max-height: 150px;
             overflow-y: auto;
-            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-size: 11px;
             line-height: 1.7;
-            background: #080b12;
-            border-radius: 10px;
-            padding: 8px 14px;
-            border: 1px solid #141d2a;
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 12px;
+            padding: 10px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
         }
         .log-entry {
             display: flex;
             gap: 14px;
-            padding: 2px 0;
-            border-bottom: 1px solid #0e141e;
+            padding: 3px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
             color: #6a7f9a;
         }
         .log-entry .time {
-            color: #3a4f6a;
+            color: #4a5f7a;
             flex-shrink: 0;
             min-width: 72px;
             font-size: 10px;
@@ -503,26 +415,25 @@
         .log-entry .data {
             color: #b8c8e0;
             word-break: break-all;
-            overflow-wrap: anywhere;
             font-size: 10px;
         }
         .log-empty {
-            color: #3a4f6a;
+            color: #4a5f7a;
             text-align: center;
             padding: 16px 0;
             font-size: 12px;
         }
 
-        /* ----- Responsive ----- */
+        /* ----- RESPONSIVE ----- */
         @media (max-width: 768px) {
             body {
                 padding: 14px;
             }
             .header {
-                padding: 12px 16px;
+                padding: 14px 18px;
                 flex-direction: column;
                 align-items: stretch;
-                gap: 10px;
+                gap: 12px;
             }
             .header-left {
                 justify-content: center;
@@ -532,66 +443,57 @@
             }
             .stats-grid {
                 grid-template-columns: repeat(2, 1fr);
-                gap: 10px;
+                gap: 12px;
             }
             .stat-card {
-                padding: 12px 14px 10px;
+                padding: 14px 16px 12px;
             }
             .stat-value {
-                font-size: 20px;
+                font-size: 22px;
             }
             .chart-wrapper {
-                height: 180px;
+                height: 190px;
             }
             .chart-section {
-                padding: 14px 14px 12px;
+                padding: 16px 16px 14px;
             }
             .log-container {
                 font-size: 10px;
-                padding: 6px 10px;
-                max-height: 110px;
+                padding: 6px 12px;
+                max-height: 120px;
             }
             .log-entry {
                 flex-direction: column;
                 gap: 1px;
-                padding: 3px 0;
+                padding: 4px 0;
             }
             .log-entry .time {
                 min-width: auto;
                 font-size: 9px;
-                color: #3a4f6a;
             }
-            .status-center-dot {
+            .avatar-wrapper {
                 width: 44px;
                 height: 44px;
             }
-            .status-center-dot::after {
-                font-size: 18px !important;
-            }
-            .status-center-label {
-                font-size: 11px;
-                padding: 2px 12px;
+            .brand h1 {
+                font-size: 18px;
             }
         }
+
         @media (max-width: 480px) {
             .stats-grid {
                 grid-template-columns: 1fr 1fr;
                 gap: 8px;
             }
             .stat-value {
-                font-size: 17px;
+                font-size: 18px;
             }
-            .header h1 {
-                font-size: 16px;
-            }
-            .header h1 span {
-                font-size: 11px;
-                display: block;
-                margin-left: 0;
+            .header {
+                padding: 12px 12px;
             }
             .btn {
                 font-size: 11px;
-                padding: 5px 12px;
+                padding: 6px 14px;
             }
             .stat-delta {
                 font-size: 11px;
@@ -609,6 +511,9 @@
         .gap-1 {
             gap: 6px;
         }
+        .glow {
+            box-shadow: 0 0 40px rgba(88, 101, 242, 0.08);
+        }
     </style>
 </head>
 <body>
@@ -618,15 +523,20 @@
         <!-- ===== HEADER ===== -->
         <header class="header">
             <div class="header-left">
-                <div class="logo-icon">◆</div>
-                <h1>Bot Stats <span>wss://honeypot-stats.riskymh.dev/ws</span></h1>
+                <div class="avatar-wrapper">
+                    <img src="https://cdn.discordapp.com/attachments/894705593535852628/1526157712294150254/honeypot.png?ex=6a594c61&is=6a57fae1&hm=3d9e027d9edad280f01154aa5552fd088f30a8bc9956d7ed2f4cbf51f4177c7a&" alt="Bot avatar" />
+                </div>
+                <div class="brand">
+                    <h1>Honeypot Stats</h1>
+                    <div class="sub">live · wss://honeypot-stats.riskymh.dev/ws</div>
+                </div>
             </div>
             <div class="header-right">
                 <div class="status-badge">
                     <span class="status-dot offline" id="statusDot"></span>
                     <span class="status-text" id="statusText">
                         <strong id="statusLabel">Disconnected</strong>
-                        <span id="statusDetail" class="text-muted" style="font-weight:400;"></span>
+                        <span id="statusDetail" class="text-muted"></span>
                     </span>
                 </div>
                 <button class="btn btn-primary" id="connectBtn">⟳ Connect</button>
@@ -649,15 +559,6 @@
             </div>
             <div class="chart-wrapper">
                 <canvas id="statsChart"></canvas>
-
-                <!-- overlay status dot -->
-                <div class="chart-overlay" id="chartOverlay">
-                    <div class="blur-bg"></div>
-                    <div class="status-center">
-                        <div class="status-center-dot offline" id="centerDot"></div>
-                        <span class="status-center-label" id="centerLabel">Awaiting connection</span>
-                    </div>
-                </div>
             </div>
         </section>
 
@@ -694,12 +595,12 @@
         let reconnectTimer = null;
         let manualDisconnect = false;
 
-        let history = []; // [{ time, data }]
-        let previousStats = {}; // for delta tracking
+        let history = [];
+        let previousStats = {};
         let currentMetric = null;
         let chart = null;
 
-        // DOM
+        // DOM refs
         const statusDot = document.getElementById('statusDot');
         const statusLabel = document.getElementById('statusLabel');
         const statusDetail = document.getElementById('statusDetail');
@@ -712,9 +613,6 @@
         const chartControls = document.getElementById('chartControls');
         const chartTitle = document.getElementById('chartTitle');
         const canvas = document.getElementById('statsChart');
-        const chartOverlay = document.getElementById('chartOverlay');
-        const centerDot = document.getElementById('centerDot');
-        const centerLabel = document.getElementById('centerLabel');
 
         let logVisible = true;
 
@@ -727,29 +625,18 @@
             const detailEl = statusDetail;
 
             dot.className = 'status-dot';
-            centerDot.className = 'status-center-dot';
-
             if (state === 'online') {
                 dot.classList.add('online');
                 label.textContent = 'Online';
                 detailEl.textContent = detail || 'receiving';
-                centerDot.classList.add('online');
-                centerLabel.textContent = 'Connected · live';
-                chartOverlay.classList.add('hidden');
             } else if (state === 'connecting') {
                 dot.classList.add('connecting');
                 label.textContent = 'Connecting…';
                 detailEl.textContent = detail || `attempt ${reconnectAttempt + 1}`;
-                centerDot.classList.add('connecting');
-                centerLabel.textContent = `Connecting… ${detail || ''}`;
-                chartOverlay.classList.remove('hidden');
             } else {
                 dot.classList.add('offline');
                 label.textContent = 'Disconnected';
                 detailEl.textContent = detail || 'waiting';
-                centerDot.classList.add('offline');
-                centerLabel.textContent = detail || 'Disconnected';
-                chartOverlay.classList.remove('hidden');
             }
 
             connectBtn.textContent = (state === 'online' || state === 'connecting') ? '● Disconnect' : '⟳ Connect';
@@ -796,24 +683,15 @@
         //  STATS CARDS with DELTAS
         // ================================================================
         function renderStats(data) {
-            const keys = Object.keys(data).filter(k =>
-                typeof data[k] !== 'object' && data[k] !== null && data[k] !== undefined
-            );
-
-            if (keys.length === 0) {
-                statsGrid.innerHTML =
-                    `<div class="stat-card" style="grid-column:1/-1;text-align:center;color:#4a5f7a;">No numeric stats</div>`;
-                return;
-            }
-
-            // pick displayable: numbers or short strings
-            const entries = keys
-                .map(k => ({ key: k, value: data[k] }))
-                .filter(e => typeof e.value === 'number' || (typeof e.value === 'string' && e.value.length < 18));
+            // Only show the fields we know exist
+            const allowedKeys = ['guilds', 'moderations', 'last7dModerations', 'last7dEngagedGuilds'];
+            const entries = allowedKeys
+                .filter(k => data[k] !== undefined && data[k] !== null)
+                .map(k => ({ key: k, value: data[k] }));
 
             if (entries.length === 0) {
                 statsGrid.innerHTML =
-                    `<div class="stat-card" style="grid-column:1/-1;text-align:center;color:#4a5f7a;">No displayable stats</div>`;
+                    `<div class="stat-card" style="grid-column:1/-1;text-align:center;color:#4a5f7a;">No stats yet</div>`;
                 return;
             }
 
@@ -822,7 +700,6 @@
                 const val = typeof e.value === 'number' ? formatNumber(e.value) : e.value;
                 const unit = typeof e.value === 'number' ? getUnit(e.key) : '';
 
-                // compute delta
                 let deltaHtml = '';
                 const prev = previousStats[e.key];
                 if (prev !== undefined && typeof e.value === 'number' && typeof prev === 'number') {
@@ -852,7 +729,7 @@
             }
             statsGrid.innerHTML = html;
 
-            // update previous for next tick
+            // Update previous stats for next delta
             for (const e of entries) {
                 if (typeof e.value === 'number') {
                     previousStats[e.key] = e.value;
@@ -867,14 +744,7 @@
         }
 
         function getUnit(key) {
-            const k = key.toLowerCase();
-            if (k.includes('percent') || k.includes('pct')) return '%';
-            if (k.includes('memory') || k.includes('ram') || k.includes('mb')) return 'MB';
-            if (k.includes('cpu')) return '%';
-            if (k.includes('ms') || k.includes('ping') || k.includes('latency')) return 'ms';
-            if (k.includes('seconds') || k.includes('uptime')) return 's';
-            if (k.includes('guild') || k.includes('server')) return '';
-            if (k.includes('member') || k.includes('user')) return '';
+            // no units for these specific keys, but keep generic
             return '';
         }
 
@@ -890,7 +760,9 @@
         //  CHART
         // ================================================================
         function getNumericKeys(data) {
-            return Object.keys(data).filter(k =>
+            // Only use keys we know exist and are numbers
+            const allowed = ['guilds', 'moderations', 'last7dModerations', 'last7dEngagedGuilds'];
+            return allowed.filter(k =>
                 typeof data[k] === 'number' && !isNaN(data[k]) && isFinite(data[k])
             );
         }
@@ -951,7 +823,6 @@
             if (chart) { chart.destroy();
                 chart = null; }
 
-            // find min/max to make variations visible
             const min = Math.min(...values);
             const max = Math.max(...values);
             const range = max - min;
@@ -967,7 +838,7 @@
                         label: formatLabel(currentMetric),
                         data: values,
                         borderColor: '#5865f2',
-                        backgroundColor: 'rgba(88,101,242,0.07)',
+                        backgroundColor: 'rgba(88,101,242,0.08)',
                         borderWidth: 2.8,
                         pointRadius: 2,
                         pointBackgroundColor: '#5865f2',
@@ -984,13 +855,13 @@
                     plugins: {
                         legend: { display: false },
                         tooltip: {
-                            backgroundColor: '#111821',
+                            backgroundColor: 'rgba(17,25,40,0.9)',
                             titleColor: '#eef2f8',
                             bodyColor: '#b0c4dc',
-                            borderColor: '#1e2838',
+                            borderColor: 'rgba(255,255,255,0.06)',
                             borderWidth: 1,
-                            cornerRadius: 8,
-                            padding: 10,
+                            cornerRadius: 10,
+                            padding: 12,
                             callbacks: {
                                 label: function(ctx) {
                                     let v = ctx.parsed.y;
@@ -1033,20 +904,15 @@
         //  DATA HANDLER
         // ================================================================
         function handleMessage(data) {
-            // update stats with deltas
             renderStats(data);
-
-            // log
             addLogEntry(data);
 
-            // chart
             const numericKeys = getNumericKeys(data);
             if (numericKeys.length > 0) {
                 updateChartControls(numericKeys);
                 updateChart();
             }
 
-            // status detail
             const ts = data.timestamp || data.ts || data.time;
             if (ts) {
                 const d = new Date(ts);
@@ -1180,7 +1046,7 @@
             if (reconnectTimer) clearTimeout(reconnectTimer);
         });
 
-        console.log('🔷 Bot Stats Tracker · live');
+        console.log('🔷 Honeypot Stats · live');
         console.log('📡', WS_URL);
     </script>
 
