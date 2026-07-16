@@ -1,7 +1,7 @@
 import { ImageResponse } from '@vercel/og';
 import WebSocket from 'ws';
 
-export const runtime = 'nodejs'; // WebSocket needs Node.js
+export const runtime = 'nodejs'; // required for WebSocket
 
 function fetchStats() {
   return new Promise((resolve, reject) => {
@@ -18,7 +18,7 @@ function fetchStats() {
         ws.close();
         resolve(parsed);
       } catch {
-        // ignore non‑JSON
+        // ignore non-JSON
       }
     });
 
@@ -38,17 +38,12 @@ export async function GET() {
   try {
     const stats = await fetchStats();
 
-    // Extract the specific fields we care about
     const guilds = stats.guilds ?? 0;
     const moderations = stats.moderations ?? 0;
     const last7dModerations = stats.last7dModerations ?? 0;
     const last7dEngaged = stats.last7dEngagedGuilds ?? 0;
 
-    // Optional: grab the latest daily stats (if you want)
     const latestDaily = stats.dailyStats?.[stats.dailyStats.length - 1] ?? null;
-    const latestDate = latestDaily ? latestDaily.date : '';
-    const latestMods = latestDaily ? latestDaily.moderations : 0;
-    const latestEngaged = latestDaily ? latestDaily.engagedGuilds : 0;
 
     return new ImageResponse(
       (
@@ -87,7 +82,7 @@ export async function GET() {
             </div>
           </div>
 
-          {/* Stats grid – 4 cards */}
+          {/* 4 main stats */}
           <div
             style={{
               display: 'grid',
@@ -103,7 +98,7 @@ export async function GET() {
             <StatCard label="Last 7d Engaged Guilds" value={last7dEngaged} />
           </div>
 
-          {/* Optional: show latest daily stat as a bonus */}
+          {/* Latest daily stats (optional) */}
           {latestDaily && (
             <div
               style={{
@@ -116,9 +111,9 @@ export async function GET() {
                 paddingTop: 14,
               }}
             >
-              <span>📅 Latest day ({latestDate})</span>
-              <span>Moderations: {latestMods.toLocaleString()}</span>
-              <span>Engaged Guilds: {latestEngaged.toLocaleString()}</span>
+              <span>📅 {latestDaily.date}</span>
+              <span>Mods: {latestDaily.moderations.toLocaleString()}</span>
+              <span>Engaged: {latestDaily.engagedGuilds.toLocaleString()}</span>
             </div>
           )}
 
@@ -135,7 +130,7 @@ export async function GET() {
             }}
           >
             <span>🟢 Live</span>
-            <span>Updated: {new Date().toLocaleString()}</span>
+            <span>{new Date().toLocaleString()}</span>
           </div>
         </div>
       ),
@@ -171,7 +166,7 @@ export async function GET() {
   }
 }
 
-// Helper component for stat cards
+// Helper component
 function StatCard({ label, value }) {
   return (
     <div
