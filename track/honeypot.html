@@ -680,10 +680,9 @@
         }
 
         // ================================================================
-        //  STATS CARDS with DELTAS
+        //  STATS CARDS with DELTAS (integers only)
         // ================================================================
         function renderStats(data) {
-            // Only show the fields we know exist
             const allowedKeys = ['guilds', 'moderations', 'last7dModerations', 'last7dEngagedGuilds'];
             const entries = allowedKeys
                 .filter(k => data[k] !== undefined && data[k] !== null)
@@ -697,18 +696,17 @@
 
             let html = '';
             for (const e of entries) {
-                const val = typeof e.value === 'number' ? formatNumber(e.value) : e.value;
-                const unit = typeof e.value === 'number' ? getUnit(e.key) : '';
+                const val = typeof e.value === 'number' ? formatInt(e.value) : e.value;
+                const unit = '';
 
                 let deltaHtml = '';
                 const prev = previousStats[e.key];
                 if (prev !== undefined && typeof e.value === 'number' && typeof prev === 'number') {
                     const diff = e.value - prev;
-                    const absDiff = Math.abs(diff);
-                    if (absDiff > 0.001) {
+                    if (diff !== 0) {
                         const cls = diff > 0 ? 'positive' : 'negative';
                         const arrow = diff > 0 ? '↑' : '↓';
-                        const displayDiff = diff > 0 ? `+${formatNumber(diff)}` : formatNumber(diff);
+                        const displayDiff = diff > 0 ? `+${formatInt(diff)}` : formatInt(diff);
                         deltaHtml = `<span class="stat-delta ${cls}"><span class="arrow">${arrow}</span>${displayDiff}</span>`;
                     } else {
                         deltaHtml = `<span class="stat-delta neutral">—</span>`;
@@ -729,7 +727,6 @@
             }
             statsGrid.innerHTML = html;
 
-            // Update previous stats for next delta
             for (const e of entries) {
                 if (typeof e.value === 'number') {
                     previousStats[e.key] = e.value;
@@ -737,15 +734,10 @@
             }
         }
 
-        function formatNumber(n) {
+        // Format numbers as integers (no decimals)
+        function formatInt(n) {
             if (Number.isInteger(n)) return n.toLocaleString();
-            if (Math.abs(n) > 1000) return n.toFixed(1).toLocaleString();
-            return n.toFixed(2);
-        }
-
-        function getUnit(key) {
-            // no units for these specific keys, but keep generic
-            return '';
+            return Math.round(n).toLocaleString();
         }
 
         function formatLabel(key) {
@@ -757,10 +749,9 @@
         }
 
         // ================================================================
-        //  CHART
+        //  CHART (straight lines, integer only)
         // ================================================================
         function getNumericKeys(data) {
-            // Only use keys we know exist and are numbers
             const allowed = ['guilds', 'moderations', 'last7dModerations', 'last7dEngagedGuilds'];
             return allowed.filter(k =>
                 typeof data[k] === 'number' && !isNaN(data[k]) && isFinite(data[k])
@@ -826,9 +817,9 @@
             const min = Math.min(...values);
             const max = Math.max(...values);
             const range = max - min;
-            const padding = range * 0.12 || 0.5;
-            const yMin = Math.max(0, min - padding);
-            const yMax = max + padding;
+            const padding = range * 0.12 || 1;
+            const yMin = Math.max(0, Math.floor(min - padding));
+            const yMax = Math.ceil(max + padding);
 
             chart = new Chart(ctx, {
                 type: 'line',
@@ -845,7 +836,7 @@
                         pointBorderColor: '#5865f2',
                         pointBorderWidth: 0,
                         pointHoverRadius: 5,
-                        tension: 0.25,
+                        tension: 0, // straight lines
                         fill: true,
                     }]
                 },
@@ -864,9 +855,7 @@
                             padding: 12,
                             callbacks: {
                                 label: function(ctx) {
-                                    let v = ctx.parsed.y;
-                                    if (Number.isInteger(v)) return v.toLocaleString();
-                                    return v.toFixed(2);
+                                    return ctx.parsed.y.toLocaleString(); // integer format
                                 }
                             }
                         }
@@ -878,7 +867,13 @@
                         },
                         y: {
                             grid: { color: 'rgba(30,40,56,0.3)', drawBorder: false },
-                            ticks: { color: '#4a5f7a', font: { size: 9 } },
+                            ticks: {
+                                color: '#4a5f7a',
+                                font: { size: 9 },
+                                callback: function(value) {
+                                    return Math.round(value).toLocaleString(); // integer ticks
+                                }
+                            },
                             min: yMin,
                             max: yMax,
                             beginAtZero: min > 0 ? false : true,
@@ -1046,7 +1041,7 @@
             if (reconnectTimer) clearTimeout(reconnectTimer);
         });
 
-        console.log('🔷 Honeypot Stats · live');
+        console.log('🔷 Honeypot Stats · live (straight lines, integers)');
         console.log('📡', WS_URL);
     </script>
 
