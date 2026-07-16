@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- THIS is the key – tells Discord CDN to allow the request -->
+    <meta name="referrer" content="no-referrer" />
 
     <!-- Discord Embed (Open Graph) -->
     <meta property="og:title" content="this guy cannot be deadahh rn" />
     <meta property="og:description" content="this guy is getting a whole ass site on my page" />
     <meta property="og:type" content="website" />
-
-    <!-- Optional: use first image as preview card -->
-    <meta property="og:image" content="https://cdn.discordapp.com/attachments/1475473794603945986/1527388558820769792/Screenshot_20260716-215633.jpg?ex=6a5a7af1&is=6a592971&hm=b176b1c60d240ab5f703b5796a443e00238a342bca168a2b837c14283f758047&" />
+    <meta property="og:image" content="https://cdn.discordapp.com/attachments/1475473794603945986/1527388558820769792/Screenshot_20260716-215633.jpg?ex=6a5a7af1&is=6a592971&hm=b176b1c60d240ab5f703b5796a443e00238a342bca168a2b837c14283f758047" />
 
     <title>this guy cannot be deadahh rn</title>
 
@@ -98,7 +98,6 @@
             margin-right: 6px;
         }
 
-        /* subtle scroll hint */
         .scroll-hint {
             margin-top: 12px;
             color: #4e5058;
@@ -114,7 +113,6 @@
             margin-right: 6px;
         }
 
-        /* small screens */
         @media (max-width: 480px) {
             body {
                 padding: 12px 10px 40px;
@@ -137,29 +135,31 @@
 
     <div class="scroll-container">
 
-        <!-- Image 1 -->
+        <!-- Image 1 – URL cleaned (no trailing &) -->
         <div class="image-card">
             <img
-            src="https://cdn.discordapp.com/attachments/1475473794603945986/1527388558820769792/Screenshot_20260716-215633.jpg?ex=6a5a7af1&is=6a592971&hm=b176b1c60d240ab5f703b5796a443e00238a342bca168a2b837c14283f758047&"
-            alt="Screenshot 1"
-            loading="lazy"
+                src="https://cdn.discordapp.com/attachments/1475473794603945986/1527388558820769792/Screenshot_20260716-215633.jpg?ex=6a5a7af1&is=6a592971&hm=b176b1c60d240ab5f703b5796a443e00238a342bca168a2b837c14283f758047"
+                alt="Screenshot 1"
+                loading="lazy"
+                referrerpolicy="no-referrer"
             />
-            <div class="caption">📸 <span>slide 1</span> · this is MY site!</div>
+            <div class="caption">📸 <span>slide 1</span> · caught in 4k</div>
         </div>
 
-        <!-- Image 2 -->
+        <!-- Image 2 – URL cleaned (no trailing &) -->
         <div class="image-card">
             <img
-            src="https://cdn.discordapp.com/attachments/1475473794603945986/1527388568799154239/Screenshot_20260716-215622.jpg?ex=6a5a7af4&is=6a592974&hm=acb604622560dd02e0b987b2ca9486196d9aa867bc480db1902bf414018277d0&"
-            alt="Screenshot 2"
-            loading="lazy"
+                src="https://cdn.discordapp.com/attachments/1475473794603945986/1527388568799154239/Screenshot_20260716-215622.jpg?ex=6a5a7af4&is=6a592974&hm=acb604622560dd02e0b987b2ca9486196d9aa867bc480db1902bf414018277d0"
+                alt="Screenshot 2"
+                loading="lazy"
+                referrerpolicy="no-referrer"
             />
-            <div class="caption">📸 <span>slide 2</span> · the confrontation</div>
+            <div class="caption">📸 <span>slide 2</span> · the evidence</div>
         </div>
 
         <!-- Final text -->
         <div class="final-text">
-            <span class="emoji">🧠</span> i wasnt lying about the "youre getting a page" part, by the way.
+            <span class="emoji">🧠</span> i wasnt lying about the last part
         </div>
 
         <!-- subtle scroll indicator -->
