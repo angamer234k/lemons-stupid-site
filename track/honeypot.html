@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Discord Bot Stats · Live</title>
+
+    <!-- Chart.js for real-time charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js">
+    </script>
+
+    <style>
+        /* ----- Reset & Base ----- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0b0e14;
+            color: #e8edf5;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* ----- Scrollbar ----- */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #141a24;
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2a3442;
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3d4a5c;
+        }
+
+        /* ----- Container ----- */
+        .dashboard {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* ----- Header ----- */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            padding: 16px 24px;
+            background: #131b26;
+            border-radius: 16px;
+            border: 1px solid #1e2936;
+            margin-bottom: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #5865f2, #4752c4);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(88, 101, 242, 0.3);
+        }
+
+        .header h1 {
+            font-size: 22px;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+            background: linear-gradient(135deg, #f0f4ff, #a8b8d8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header h1 small {
+            font-weight: 400;
+            font-size: 14px;
+            -webkit-text-fill-color: #6a7a92;
+            margin-left: 8px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        /* ----- Status Indicator ----- */
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px 6px 12px;
+            border-radius: 100px;
+            font-size: 13px;
+            font-weight: 500;
+            background: #1a2432;
+            border: 1px solid #26303f;
+            transition: all 0.3s;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            transition: background 0.3s, box-shadow 0.3s;
+            flex-shrink: 0;
+        }
+
+        .status-dot.online {
+            background: #3ba55d;
+            box-shadow: 0 0 12px rgba(59, 165, 93, 0.4);
+        }
+        .status-dot.connecting {
+            background: #faa81a;
+            box-shadow: 0 0 12px rgba(250, 168, 26, 0.4);
+            animation: pulse 1s infinite;
+        }
+        .status-dot.offline {
+            background: #ed4245;
+            box-shadow: 0 0 12px rgba(237, 66, 69, 0.3);
+        }
+
+        @keyframes pulse {
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.5;
+                transform: scale(0.85);
+            }
+        }
+
+        .status-text {
+            color: #b0c0d8;
+        }
+        .status-text strong {
+            color: #e8edf5;
+            font-weight: 500;
+        }
+
+        /* ----- Buttons ----- */
+        .btn {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: #5865f2;
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background: #4752c4;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(88, 101, 242, 0.3);
+        }
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+        .btn-primary:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: #b0c0d8;
+            border: 1px solid #2a3442;
+        }
+        .btn-outline:hover {
+            background: #1a2432;
+            border-color: #3d4a5c;
+        }
+
+        /* ----- Stats Grid ----- */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: #131b26;
+            border: 1px solid #1e2936;
+            border-radius: 14px;
+            padding: 18px 20px 16px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .stat-card:hover {
+            border-color: #2a3442;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #6a7a92;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 600;
+            color: #f0f4ff;
+            letter-spacing: -0.3px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .stat-value .unit {
+            font-size: 16px;
+            font-weight: 400;
+            color: #6a7a92;
+            margin-left: 4px;
+        }
+
+        .stat-change {
+            font-size: 12px;
+            margin-top: 4px;
+            color: #6a7a92;
+        }
+
+        /* ----- Chart Section ----- */
+        .chart-section {
+            background: #131b26;
+            border: 1px solid #1e2936;
+            border-radius: 14px;
+            padding: 20px 20px 16px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .chart-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .chart-header h3 {
+            font-size: 16px;
+            font-weight: 500;
+            color: #b0c0d8;
+        }
+
+        .chart-controls {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .chart-controls .btn-sm {
+            padding: 4px 14px;
+            font-size: 12px;
+            border-radius: 6px;
+            border: 1px solid #26303f;
+            background: transparent;
+            color: #8a9ab2;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .chart-controls .btn-sm:hover {
+            background: #1a2432;
+            color: #e8edf5;
+        }
+        .chart-controls .btn-sm.active {
+            background: #5865f2;
+            border-color: #5865f2;
+            color: #fff;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 260px;
+        }
+
+        /* ----- Data Log ----- */
+        .log-section {
+            background: #131b26;
+            border: 1px solid #1e2936;
+            border-radius: 14px;
+            padding: 16px 20px 20px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .log-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .log-header h3 {
+            font-size: 14px;
+            font-weight: 500;
+            color: #8a9ab2;
+        }
+
+        .log-header .count {
+            font-size: 12px;
+            color: #4a5a72;
+            background: #0b0e14;
+            padding: 2px 10px;
+            border-radius: 100px;
+        }
+
+        .log-container {
+            max-height: 180px;
+            overflow-y: auto;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 12px;
+            line-height: 1.7;
+            background: #0b0e14;
+            border-radius: 10px;
+            padding: 10px 14px;
+            border: 1px solid #1a2432;
+        }
+
+        .log-entry {
+            display: flex;
+            gap: 16px;
+            padding: 2px 0;
+            border-bottom: 1px solid #0f151e;
+            color: #8a9ab2;
+        }
+
+        .log-entry .time {
+            color: #4a5a72;
+            flex-shrink: 0;
+            min-width: 80px;
+        }
+
+        .log-entry .data {
+            color: #c8d4e8;
+            word-break: break-all;
+            overflow-wrap: anywhere;
+        }
+
+        .log-entry .data .key {
+            color: #6a8ab8;
+        }
+        .log-entry .data .value {
+            color: #e8edf5;
+        }
+        .log-entry .data .sep {
+            color: #3a4a5a;
+        }
+
+        .log-empty {
+            color: #3a4a5a;
+            text-align: center;
+            padding: 20px 0;
+            font-size: 13px;
+        }
+
+        /* ----- Responsive ----- */
+        @media (max-width: 768px) {
+            body {
+                padding: 12px;
+            }
+            .header {
+                padding: 14px 16px;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+            }
+            .header-left {
+                justify-content: center;
+            }
+            .header-right {
+                justify-content: center;
+            }
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+            .stat-card {
+                padding: 14px 14px 12px;
+            }
+            .stat-value {
+                font-size: 22px;
+            }
+            .chart-wrapper {
+                height: 180px;
+            }
+            .log-container {
+                font-size: 11px;
+                padding: 8px 10px;
+                max-height: 140px;
+            }
+            .log-entry {
+                flex-direction: column;
+                gap: 2px;
+                padding: 4px 0;
+            }
+            .log-entry .time {
+                min-width: auto;
+                font-size: 10px;
+                color: #4a5a72;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+            .stat-value {
+                font-size: 18px;
+            }
+            .header h1 {
+                font-size: 17px;
+            }
+            .header h1 small {
+                font-size: 11px;
+                display: block;
+                margin-left: 0;
+            }
+            .status-badge {
+                font-size: 11px;
+                padding: 4px 12px 4px 8px;
+            }
+            .btn {
+                font-size: 12px;
+                padding: 6px 14px;
+            }
+        }
+
+        /* ----- Utility ----- */
+        .text-muted {
+            color: #4a5a72;
+        }
+        .mt-1 {
+            margin-top: 4px;
+        }
+        .flex-center {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .gap-2 {
+            gap: 8px;
+        }
+        .truncate {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard">
+
+        <!-- ===== HEADER ===== -->
+        <header class="header">
+            <div class="header-left">
+                <div class="logo-icon">◆</div>
+                <h1>
+                    Bot Stats
+                    <small>live · wss://honeypot-stats.riskymh.dev/ws</small>
+                </h1>
+            </div>
+            <div class="header-right">
+                <div class="status-badge" id="statusBadge">
+                    <span class="status-dot offline" id="statusDot"></span>
+                    <span class="status-text" id="statusText">
+                        <strong id="statusLabel">Disconnected</strong>
+                        <span id="statusDetail" class="text-muted"></span>
+                    </span>
+                </div>
+                <button class="btn btn-primary" id="connectBtn">⟳ Connect</button>
+                <button class="btn btn-outline" id="clearLogBtn">Clear log</button>
+            </div>
+        </header>
+
+        <!-- ===== STATS GRID ===== -->
+        <section class="stats-grid" id="statsGrid">
+            <!-- Cards are injected dynamically -->
+        </section>
+
+        <!-- ===== CHART SECTION ===== -->
+        <section class="chart-section">
+            <div class="chart-header">
+                <h3>📈 Real‑time metrics</h3>
+                <div class="chart-controls" id="chartControls">
+                    <!-- buttons injected dynamically -->
+                </div>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="statsChart"></canvas>
+            </div>
+        </section>
+
+        <!-- ===== DATA LOG ===== -->
+        <section class="log-section">
+            <div class="log-header">
+                <h3>📋 Data log <span class="count" id="logCount">0 entries</span></h3>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <button class="btn btn-outline" id="toggleLogBtn" style="font-size:12px;padding:4px 12px;">Show</button>
+                </div>
+            </div>
+            <div class="log-container" id="logContainer">
+                <div class="log-empty">Waiting for data…</div>
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        // ============================================================
+        //  CONFIG
+        // ============================================================
+        const WS_URL = 'wss://honeypot-stats.riskymh.dev/ws';
+        const MAX_LOG_ENTRIES = 200;
+        const MAX_CHART_POINTS = 120; // 120 * 5s = 10min
+        const RECONNECT_DELAYS = [1000, 2000, 4000, 8000, 15000, 30000];
+
+        // ============================================================
+        //  STATE
+        // ============================================================
+        let ws = null;
+        let isConnected = false;
+        let isConnecting = false;
+        let reconnectAttempt = 0;
+        let reconnectTimer = null;
+        let manualDisconnect = false;
+
+        // Data
+        let latestData = {};
+        let history = []; // array of { time, data }
+        let chartData = {}; // { key: [number, ...] }
+        let chartLabels = [];
+
+        // Chart instance
+        let chart = null;
+        let currentMetric = null; // which metric is being shown
+
+        // DOM refs
+        const statusDot = document.getElementById('statusDot');
+        const statusLabel = document.getElementById('statusLabel');
+        const statusDetail = document.getElementById('statusDetail');
+        const connectBtn = document.getElementById('connectBtn');
+        const clearLogBtn = document.getElementById('clearLogBtn');
+        const toggleLogBtn = document.getElementById('toggleLogBtn');
+        const logContainer = document.getElementById('logContainer');
+        const logCount = document.getElementById('logCount');
+        const statsGrid = document.getElementById('statsGrid');
+        const chartControls = document.getElementById('chartControls');
+        const canvas = document.getElementById('statsChart');
+
+        // ============================================================
+        //  UI HELPERS
+        // ============================================================
+        function setStatus(state, detail = '') {
+            const dot = statusDot;
+            const label = statusLabel;
+            const detailEl = statusDetail;
+
+            dot.className = 'status-dot';
+            if (state === 'online') {
+                dot.classList.add('online');
+                label.textContent = 'Online';
+                detailEl.textContent = detail || 'receiving data';
+            } else if (state === 'connecting') {
+                dot.classList.add('connecting');
+                label.textContent = 'Connecting…';
+                detailEl.textContent = detail || `attempt ${reconnectAttempt + 1}`;
+            } else {
+                dot.classList.add('offline');
+                label.textContent = 'Disconnected';
+                detailEl.textContent = detail || 'waiting to connect';
+            }
+
+            connectBtn.textContent = (state === 'online' || state === 'connecting') ? '● Disconnect' : '⟳ Connect';
+            connectBtn.disabled = (state === 'connecting');
+        }
+
+        function addLogEntry(data) {
+            const time = new Date().toLocaleTimeString();
+            const entry = { time, data };
+
+            // Remove oldest if over limit
+            while (history.length >= MAX_LOG_ENTRIES) {
+                history.shift();
+            }
+            history.push(entry);
+            renderLog();
+        }
+
+        function renderLog() {
+            if (history.length === 0) {
+                logContainer.innerHTML = `<div class="log-empty">No data yet — waiting for the first message…</div>`;
+                logCount.textContent = '0 entries';
+                return;
+            }
+
+            let html = '';
+            const slice = history.slice(-MAX_LOG_ENTRIES);
+            for (const entry of slice) {
+                const pretty = JSON.stringify(entry.data, null, 0);
+                html += `<div class="log-entry">
+                            <span class="time">${entry.time}</span>
+                            <span class="data">${escapeHtml(pretty)}</span>
+                        </div>`;
+            }
+            logContainer.innerHTML = html;
+            logContainer.scrollTop = logContainer.scrollHeight;
+            logCount.textContent = `${slice.length} entries`;
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        // ============================================================
+        //  STATS CARDS
+        // ============================================================
+        function renderStats(data) {
+            const keys = Object.keys(data).filter(k => typeof data[k] !== 'object' && data[k] !== null);
+            if (keys.length === 0) {
+                statsGrid.innerHTML =
+                `<div class="stat-card" style="grid-column:1/-1;text-align:center;color:#4a5a72;">No numeric stats available</div>`;
+                return;
+            }
+
+            // Keep only numeric or short string values
+            const entries = keys
+                .map(k => ({ key: k, value: data[k] }))
+                .filter(e => typeof e.value === 'number' || (typeof e.value === 'string' && e.value.length < 20));
+
+            if (entries.length === 0) {
+                statsGrid.innerHTML =
+                `<div class="stat-card" style="grid-column:1/-1;text-align:center;color:#4a5a72;">No displayable stats</div>`;
+                return;
+            }
+
+            let html = '';
+            for (const e of entries) {
+                const val = typeof e.value === 'number' ?
+                    formatNumber(e.value) :
+                    e.value;
+                const unit = typeof e.value === 'number' ? getUnit(e.key) : '';
+                html += `
+                        <div class="stat-card">
+                            <div class="stat-label">${formatLabel(e.key)}</div>
+                            <div class="stat-value">${val}<span class="unit">${unit}</span></div>
+                        </div>
+                    `;
+            }
+            statsGrid.innerHTML = html;
+        }
+
+        function formatNumber(n) {
+            if (Number.isInteger(n)) return n.toLocaleString();
+            if (n > 1000) return n.toFixed(1).toLocaleString();
+            return n.toFixed(2);
+        }
+
+        function getUnit(key) {
+            const k = key.toLowerCase();
+            if (k.includes('percent') || k.includes('pct')) return '%';
+            if (k.includes('memory') || k.includes('ram') || k.includes('mb')) return 'MB';
+            if (k.includes('cpu')) return '%';
+            if (k.includes('ms') || k.includes('ping') || k.includes('latency')) return 'ms';
+            if (k.includes('seconds') || k.includes('uptime')) return 's';
+            return '';
+        }
+
+        function formatLabel(key) {
+            return key
+                .replace(/([A-Z])/g, ' $1')
+                .replace(/_/g, ' ')
+                .replace(/^./, s => s.toUpperCase())
+                .trim();
+        }
+
+        // ============================================================
+        //  CHART
+        // ============================================================
+        function getNumericKeys(data) {
+            return Object.keys(data).filter(k => typeof data[k] === 'number' && !isNaN(data[k]));
+        }
+
+        function updateChartControls(keys) {
+            if (keys.length === 0) {
+                chartControls.innerHTML = `<span class="text-muted" style="font-size:13px;">no numeric data yet</span>`;
+                return;
+            }
+
+            // If current metric is not in keys, pick the first
+            if (!currentMetric || !keys.includes(currentMetric)) {
+                currentMetric = keys[0];
+            }
+
+            let html = '';
+            for (const k of keys) {
+                const active = k === currentMetric ? 'active' : '';
+                html += `<button class="btn-sm ${active}" data-key="${k}">${formatLabel(k)}</button>`;
+            }
+            chartControls.innerHTML = html;
+
+            // Attach events
+            chartControls.querySelectorAll('.btn-sm').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const key = btn.dataset.key;
+                    if (key === currentMetric) return;
+                    currentMetric = key;
+                    // Update active state
+                    chartControls.querySelectorAll('.btn-sm').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    rebuildChart();
+                });
+            });
+        }
+
+        function rebuildChart() {
+            if (!currentMetric) return;
+            const data = history.map(h => h.data[currentMetric]);
+            const labels = history.map(h => h.time);
+
+            // Keep only recent points
+            const maxPts = MAX_CHART_POINTS;
+            const slice = Math.max(0, data.length - maxPts);
+            const chartDataSlice = data.slice(slice);
+            const chartLabelsSlice = labels.slice(slice);
+
+            if (chartDataSlice.length === 0) {
+                if (chart) { chart.destroy();
+                    chart = null; }
+                return;
+            }
+
+            const ctx = canvas.getContext('2d');
+
+            if (chart) {
+                chart.destroy();
+                chart = null;
+            }
+
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: chartLabelsSlice,
+                    datasets: [{
+                        label: formatLabel(currentMetric),
+                        data: chartDataSlice,
+                        borderColor: '#5865f2',
+                        backgroundColor: 'rgba(88,101,242,0.08)',
+                        borderWidth: 2.5,
+                        pointRadius: 1.5,
+                        pointBackgroundColor: '#5865f2',
+                        pointBorderColor: '#5865f2',
+                        tension: 0.3,
+                        fill: true,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false,
+                        },
+                        tooltip: {
+                            backgroundColor: '#131b26',
+                            titleColor: '#e8edf5',
+                            bodyColor: '#b0c0d8',
+                            borderColor: '#1e2936',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            padding: 10,
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(30,41,54,0.4)', drawBorder: false },
+                            ticks: { color: '#4a5a72', maxTicksLimit: 12, maxRotation: 30 },
+                        },
+                        y: {
+                            grid: { color: 'rgba(30,41,54,0.4)', drawBorder: false },
+                            ticks: { color: '#4a5a72' },
+                            beginAtZero: true,
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'nearest',
+                    },
+                }
+            });
+        }
+
+        function updateChart() {
+            if (!currentMetric) return;
+            // Rebuild entirely for simplicity (keeps things in sync)
+            rebuildChart();
+        }
+
+        // ============================================================
+        //  DATA PROCESSING
+        // ============================================================
+        function handleMessage(data) {
+            latestData = data;
+            renderStats(data);
+
+            // Log
+            addLogEntry(data);
+
+            // Update chart data
+            const numericKeys = getNumericKeys(data);
+            if (numericKeys.length > 0) {
+                // Store history
+                // history is already updated via addLogEntry, but we need to ensure chart data is in sync
+                // We'll rebuild chart from history
+                updateChartControls(numericKeys);
+                updateChart();
+            }
+
+            // Update status detail
+            const ts = data.timestamp || data.ts || data.time;
+            if (ts) {
+                const d = new Date(ts);
+                if (!isNaN(d)) {
+                    statusDetail.textContent = `last update ${d.toLocaleTimeString()}`;
+                }
+            }
+        }
+
+        // ============================================================
+        //  WEBSOCKET
+        // ============================================================
+        function connect() {
+            if (isConnected || isConnecting) {
+                disconnect();
+                return;
+            }
+
+            manualDisconnect = false;
+            reconnectAttempt = 0;
+            doConnect();
+        }
+
+        function doConnect() {
+            if (manualDisconnect) return;
+            if (isConnected) return;
+
+            isConnecting = true;
+            setStatus('connecting', `attempt ${reconnectAttempt + 1}`);
+
+            try {
+                ws = new WebSocket(WS_URL);
+                ws.onopen = onOpen;
+                ws.onmessage = onMessage;
+                ws.onclose = onClose;
+                ws.onerror = onError;
+            } catch (err) {
+                console.error('WebSocket creation error:', err);
+                isConnecting = false;
+                setStatus('offline', 'connection error');
+                scheduleReconnect();
+            }
+        }
+
+        function onOpen() {
+            console.log('[WS] Connected');
+            isConnected = true;
+            isConnecting = false;
+            reconnectAttempt = 0;
+            setStatus('online', 'connected');
+
+            // Clear any pending reconnect
+            if (reconnectTimer) {
+                clearTimeout(reconnectTimer);
+                reconnectTimer = null;
+            }
+        }
+
+        function onMessage(event) {
+            try {
+                const data = JSON.parse(event.data);
+                handleMessage(data);
+            } catch (e) {
+                // If not JSON, treat as raw
+                console.warn('[WS] Non-JSON message:', event.data);
+                try {
+                    handleMessage({ raw: event.data });
+                } catch (_) { /* ignore */ }
+            }
+        }
+
+        function onClose(event) {
+            console.log('[WS] Closed', event.code, event.reason);
+            isConnected = false;
+            isConnecting = false;
+            setStatus('offline', event.reason || 'connection closed');
+
+            if (ws) {
+                ws = null;
+            }
+
+            if (!manualDisconnect) {
+                scheduleReconnect();
+            }
+        }
+
+        function onError(event) {
+            console.error('[WS] Error:', event);
+            // onclose will follow
+        }
+
+        function disconnect() {
+            manualDisconnect = true;
+            if (reconnectTimer) {
+                clearTimeout(reconnectTimer);
+                reconnectTimer = null;
+            }
+            if (ws) {
+                try { ws.close(1000, 'manual disconnect'); } catch (_) {}
+                ws = null;
+            }
+            isConnected = false;
+            isConnecting = false;
+            setStatus('offline', 'disconnected');
+        }
+
+        function scheduleReconnect() {
+            if (manualDisconnect) return;
+            if (isConnected) return;
+
+            const delay = RECONNECT_DELAYS[Math.min(reconnectAttempt, RECONNECT_DELAYS.length - 1)];
+            reconnectAttempt++;
+
+            if (reconnectTimer) {
+                clearTimeout(reconnectTimer);
+                reconnectTimer = null;
+            }
+
+            statusDetail.textContent = `reconnecting in ${(delay/1000).toFixed(1)}s…`;
+
+            reconnectTimer = setTimeout(() => {
+                reconnectTimer = null;
+                if (!manualDisconnect && !isConnected) {
+                    doConnect();
+                }
+            }, delay);
+        }
+
+        // ============================================================
+        //  LOG TOGGLE
+        // ============================================================
+        let logVisible = true;
+
+        toggleLogBtn.addEventListener('click', () => {
+            logVisible = !logVisible;
+            logContainer.style.display = logVisible ? 'block' : 'none';
+            toggleLogBtn.textContent = logVisible ? 'Hide' : 'Show';
+        });
+
+        // ============================================================
+        //  CLEAR LOG
+        // ============================================================
+        clearLogBtn.addEventListener('click', () => {
+            history = [];
+            renderLog();
+            // Also clear chart data
+            if (chart) {
+                chart.destroy();
+                chart = null;
+            }
+            chartData = {};
+            chartLabels = [];
+            chartControls.innerHTML = `<span class="text-muted" style="font-size:13px;">no data yet</span>`;
+            statsGrid.innerHTML =
+                `<div class="stat-card" style="grid-column:1/-1;text-align:center;color:#4a5a72;">Waiting for data…</div>`;
+        });
+
+        // ============================================================
+        //  CONNECT BUTTON
+        // ============================================================
+        connectBtn.addEventListener('click', connect);
+
+        // ============================================================
+        //  INIT
+        // ============================================================
+        setStatus('offline', 'ready');
+        statsGrid.innerHTML =
+            `<div class="stat-card" style="grid-column:1/-1;text-align:center;color:#4a5a72;">Click "Connect" to start</div>`;
+        chartControls.innerHTML = `<span class="text-muted" style="font-size:13px;">connect to see metrics</span>`;
+
+        // Auto-connect on page load
+        setTimeout(() => {
+            connect();
+        }, 600);
+
+        // ============================================================
+        //  CLEANUP
+        // ============================================================
+        window.addEventListener('beforeunload', () => {
+            if (ws) {
+                try { ws.close(1000, 'page unload'); } catch (_) {}
+            }
+            if (reconnectTimer) {
+                clearTimeout(reconnectTimer);
+            }
+        });
+
+        console.log('🔷 Discord Bot Stats Tracker ready');
+        console.log('📡 WS endpoint:', WS_URL);
+        console.log('💡 Auto-reconnect enabled, data every ~5s');
+    </script>
+
+</body>
+</html>
