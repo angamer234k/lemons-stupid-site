@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Discord Embed (Open Graph) -->
+    <meta property="og:title" content="this guy cannot be deadahh rn" />
+    <meta property="og:description" content="this guy is getting a whole ass site on my page" />
+    <meta property="og:type" content="website" />
+
+    <!-- Optional: use first image as preview card -->
+    <meta property="og:image" content="https://cdn.discordapp.com/attachments/1475473794603945986/1527388558820769792/Screenshot_20260716-215633.jpg?ex=6a5a7af1&is=6a592971&hm=b176b1c60d240ab5f703b5796a443e00238a342bca168a2b837c14283f758047&" />
+
+    <title>this guy cannot be deadahh rn</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0b0e11;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 16px 60px;
+            min-height: 100vh;
+        }
+
+        .scroll-container {
+            max-width: 560px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+        }
+
+        .image-card {
+            background: #1e1f22;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+            transition: transform 0.15s ease;
+        }
+
+        .image-card:hover {
+            transform: scale(1.005);
+        }
+
+        .image-card img {
+            display: block;
+            width: 100%;
+            height: auto;
+            object-fit: cover;
+            background: #111214;
+            border-radius: 16px;
+        }
+
+        .image-card .caption {
+            padding: 12px 16px 14px;
+            color: #b5bac1;
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 0.2px;
+            background: #1e1f22;
+            border-top: 1px solid #2b2d31;
+        }
+
+        .image-card .caption span {
+            color: #dee0e3;
+            font-weight: 600;
+        }
+
+        .final-text {
+            margin-top: 16px;
+            padding: 20px 24px;
+            background: #1e1f22;
+            border-radius: 16px;
+            border-left: 4px solid #5865f2;
+            text-align: center;
+            font-size: 18px;
+            font-weight: 600;
+            color: #f2f3f5;
+            letter-spacing: -0.2px;
+            box-shadow: 0 4px 16px rgba(88, 101, 242, 0.15);
+            transition: background 0.2s;
+        }
+
+        .final-text:hover {
+            background: #25272b;
+        }
+
+        .final-text .emoji {
+            margin-right: 6px;
+        }
+
+        /* subtle scroll hint */
+        .scroll-hint {
+            margin-top: 12px;
+            color: #4e5058;
+            font-size: 13px;
+            font-weight: 400;
+            letter-spacing: 0.3px;
+            text-align: center;
+            opacity: 0.6;
+        }
+
+        .scroll-hint svg {
+            vertical-align: middle;
+            margin-right: 6px;
+        }
+
+        /* small screens */
+        @media (max-width: 480px) {
+            body {
+                padding: 12px 10px 40px;
+            }
+            .scroll-container {
+                gap: 20px;
+            }
+            .final-text {
+                font-size: 16px;
+                padding: 16px 18px;
+            }
+            .image-card .caption {
+                font-size: 13px;
+                padding: 10px 14px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="scroll-container">
+
+        <!-- Image 1 -->
+        <div class="image-card">
+            <img
+            src="https://cdn.discordapp.com/attachments/1475473794603945986/1527388558820769792/Screenshot_20260716-215633.jpg?ex=6a5a7af1&is=6a592971&hm=b176b1c60d240ab5f703b5796a443e00238a342bca168a2b837c14283f758047&"
+            alt="Screenshot 1"
+            loading="lazy"
+            />
+            <div class="caption">📸 <span>slide 1</span> · this is MY site!</div>
+        </div>
+
+        <!-- Image 2 -->
+        <div class="image-card">
+            <img
+            src="https://cdn.discordapp.com/attachments/1475473794603945986/1527388568799154239/Screenshot_20260716-215622.jpg?ex=6a5a7af4&is=6a592974&hm=acb604622560dd02e0b987b2ca9486196d9aa867bc480db1902bf414018277d0&"
+            alt="Screenshot 2"
+            loading="lazy"
+            />
+            <div class="caption">📸 <span>slide 2</span> · the confrontation</div>
+        </div>
+
+        <!-- Final text -->
+        <div class="final-text">
+            <span class="emoji">🧠</span> i wasnt lying about the "youre getting a page" part, by the way.
+        </div>
+
+        <!-- subtle scroll indicator -->
+        <div class="scroll-hint">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4e5058" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M7 13l5 5 5-5"/>
+                <path d="M7 6l5 5 5-5"/>
+            </svg>
+            scroll to see more
+        </div>
+
+    </div>
+
+</body>
+</html>
