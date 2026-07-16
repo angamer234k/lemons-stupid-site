@@ -378,10 +378,11 @@
                 countNumber.classList.remove('rainbow');
                 remainingLabel.textContent = 'remaining';
             }
-            if (remaining === GOAL) {countNumber.textContent = "---"}
+            
             // Update number
             countNumber.textContent = remaining.toLocaleString();
             currentGuildsEl.textContent = guilds.toLocaleString();
+if (remaining === GOAL) {countNumber.textContent = "---"}
 
             // Progress bar
             const progress = Math.min((guilds / GOAL) * 100, 100);
