@@ -1,8 +1,7 @@
 import { ImageResponse } from '@vercel/og';
 import WebSocket from 'ws';
 
-export const runtime = 'nodejs'; // required for WebSocket
-
+// Helper to fetch first WS message
 function fetchStats() {
   return new Promise((resolve, reject) => {
     const ws = new WebSocket('wss://honeypot-stats.riskymh.dev/ws');
@@ -18,7 +17,7 @@ function fetchStats() {
         ws.close();
         resolve(parsed);
       } catch {
-        // ignore non-JSON
+        // ignore
       }
     });
 
@@ -34,7 +33,29 @@ function fetchStats() {
   });
 }
 
-export async function GET() {
+function StatCard({ label, value }) {
+  return (
+    <div
+      style={{
+        background: '#111821',
+        border: '1px solid #1a2436',
+        borderRadius: 14,
+        padding: '18px 22px',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      <div style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.5, color: '#5a6f8a' }}>
+        {label}
+      </div>
+      <div style={{ fontSize: 34, fontWeight: 600, color: '#f0f4ff', marginTop: 2 }}>
+        {typeof value === 'number' && Number.isInteger(value) ? value.toLocaleString() : value}
+      </div>
+    </div>
+  );
+}
+
+export default async function handler(req, res) {
   try {
     const stats = await fetchStats();
 
@@ -45,7 +66,7 @@ export async function GET() {
 
     const latestDaily = stats.dailyStats?.[stats.dailyStats.length - 1] ?? null;
 
-    return new ImageResponse(
+    const image = new ImageResponse(
       (
         <div
           style={{
@@ -98,7 +119,7 @@ export async function GET() {
             <StatCard label="Last 7d Engaged Guilds" value={last7dEngaged} />
           </div>
 
-          {/* Latest daily stats (optional) */}
+          {/* Latest daily stats */}
           {latestDaily && (
             <div
               style={{
@@ -139,9 +160,13 @@ export async function GET() {
         height: 600,
       }
     );
+
+    res.setHeader('Content-Type', 'image/png');
+    res.send(image.body);
   } catch (error) {
-    console.error('Image error:', error);
-    return new ImageResponse(
+    console.error(error);
+    // Fallback error image
+    const errorImage = new ImageResponse(
       (
         <div
           style={{
@@ -163,28 +188,7 @@ export async function GET() {
       ),
       { width: 1200, height: 600 }
     );
+    res.setHeader('Content-Type', 'image/png');
+    res.send(errorImage.body);
   }
-}
-
-// Helper component
-function StatCard({ label, value }) {
-  return (
-    <div
-      style={{
-        background: '#111821',
-        border: '1px solid #1a2436',
-        borderRadius: 14,
-        padding: '18px 22px',
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
-      <div style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.5, color: '#5a6f8a' }}>
-        {label}
-      </div>
-      <div style={{ fontSize: 34, fontWeight: 600, color: '#f0f4ff', marginTop: 2 }}>
-        {typeof value === 'number' && Number.isInteger(value) ? value.toLocaleString() : value}
-      </div>
-    </div>
-  );
 }
