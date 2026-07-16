@@ -11,7 +11,6 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet" />
 
     <style>
-        /* ----- RESET ----- */
         * {
             margin: 0;
             padding: 0;
@@ -30,7 +29,6 @@
             padding: 24px;
         }
 
-        /* ----- GLASS CARD CONTAINER ----- */
         .countdown-wrapper {
             max-width: 900px;
             width: 100%;
@@ -42,13 +40,9 @@
             padding: 48px 40px 40px;
             box-shadow: 0 24px 80px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.03);
             text-align: center;
-            transition: border-color 0.3s;
-        }
-        .countdown-wrapper:hover {
-            border-color: rgba(88, 101, 242, 0.15);
         }
 
-        /* ----- HEADER (status + goal) ----- */
+        /* ----- TOP BAR ----- */
         .top-bar {
             display: flex;
             justify-content: space-between;
@@ -89,15 +83,8 @@
             box-shadow: 0 0 20px rgba(237, 66, 69, 0.3);
         }
         @keyframes pulse-dot {
-            0%,
-            100% {
-                opacity: 1;
-                transform: scale(1);
-            }
-            50% {
-                opacity: 0.4;
-                transform: scale(0.8);
-            }
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.8); }
         }
 
         .status-label {
@@ -121,7 +108,7 @@
             font-weight: 700;
         }
 
-        /* ----- MAIN COUNTDOWN NUMBER ----- */
+        /* ----- MAIN COUNTDOWN NUMBER (RAINBOW) ----- */
         .count-number {
             font-size: clamp(80px, 18vw, 200px);
             font-weight: 800;
@@ -135,33 +122,22 @@
             -webkit-text-fill-color: transparent;
             text-shadow: 0 0 60px rgba(88, 101, 242, 0.08);
         }
-        .count-number.positive {
-            background: linear-gradient(145deg, #f0f4ff, #8aa8d8);
+
+        /* Rainbow animation when goal reached */
+        .count-number.rainbow {
+            background: linear-gradient(90deg, #ff0000, #ff8800, #ffff00, #00ff00, #0088ff, #8800ff, #ff0000);
+            background-size: 300% 100%;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            animation: rainbow 2s linear infinite;
+            text-shadow: 0 0 40px rgba(255, 255, 255, 0.1);
         }
-        .count-number.zero {
-            background: linear-gradient(145deg, #3ba55d, #2d8b4a);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: glow-green 1.2s ease-in-out infinite alternate;
-        }
-        .count-number.negative {
-            background: linear-gradient(145deg, #ed4245, #c0363a);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+        @keyframes rainbow {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 300% 50%; }
         }
 
-        @keyframes glow-green {
-            0% {
-                text-shadow: 0 0 40px rgba(59, 165, 93, 0.15);
-            }
-            100% {
-                text-shadow: 0 0 80px rgba(59, 165, 93, 0.4);
-            }
-        }
-
-        /* ----- SUBTEXT (current guilds / remaining) ----- */
+        /* Sub info */
         .sub-info {
             font-size: 15px;
             color: #6a7f9a;
@@ -174,7 +150,7 @@
             font-weight: 700;
         }
 
-        /* ----- PROGRESS BAR ----- */
+        /* Progress bar */
         .progress-track {
             width: 100%;
             height: 6px;
@@ -182,7 +158,6 @@
             border-radius: 8px;
             margin: 24px 0 18px;
             overflow: hidden;
-            position: relative;
         }
         .progress-fill {
             height: 100%;
@@ -197,45 +172,7 @@
             box-shadow: 0 0 24px rgba(59, 165, 93, 0.3);
         }
 
-        /* ----- BOTTOM EXPLANATION (terminal style) ----- */
-        .explanation {
-            margin-top: 28px;
-            padding-top: 20px;
-            border-top: 1px solid rgba(255, 255, 255, 0.04);
-            text-align: left;
-            font-size: 13px;
-            color: #4a5f7a;
-            line-height: 1.7;
-            font-weight: 400;
-        }
-        .explanation .prompt {
-            color: #5865f2;
-            font-weight: 700;
-        }
-        .explanation .cmd {
-            color: #b8c8e0;
-        }
-        .explanation .highlight {
-            color: #faa81a;
-        }
-        .explanation .goal-highlight {
-            color: #8aa8d8;
-            font-weight: 700;
-        }
-        .explanation .blink {
-            animation: blink 1.2s step-end infinite;
-        }
-        @keyframes blink {
-            0%,
-            100% {
-                opacity: 1;
-            }
-            50% {
-                opacity: 0;
-            }
-        }
-
-        /* ----- CONNECT / RETRY BUTTON (minimal) ----- */
+        /* Connect button */
         .connect-btn {
             margin-top: 16px;
             background: rgba(255, 255, 255, 0.03);
@@ -256,49 +193,58 @@
             transform: scale(0.96);
         }
 
-        /* ----- RESPONSIVE ----- */
-        @media (max-width: 600px) {
-            .countdown-wrapper {
-                padding: 28px 20px 28px;
-                border-radius: 24px;
-            }
-            .top-bar {
-                flex-direction: column;
-                align-items: stretch;
-                gap: 8px;
-            }
-            .goal-display {
-                align-self: flex-start;
-            }
-            .count-number {
-                font-size: clamp(60px, 25vw, 120px);
-            }
-            .sub-info {
-                font-size: 13px;
-            }
-            .explanation {
-                font-size: 12px;
-            }
+        /* Explanation (terminal style) */
+        .explanation {
+            margin-top: 28px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.04);
+            text-align: left;
+            font-size: 13px;
+            color: #4a5f7a;
+            line-height: 1.7;
+        }
+        .explanation .prompt {
+            color: #5865f2;
+            font-weight: 700;
+        }
+        .explanation .cmd {
+            color: #b8c8e0;
+        }
+        .explanation .highlight {
+            color: #faa81a;
+        }
+        .explanation .goal-highlight {
+            color: #8aa8d8;
+            font-weight: 700;
+        }
+        .explanation .blink {
+            animation: blink 1.2s step-end infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
         }
 
+        /* Responsive */
+        @media (max-width: 600px) {
+            .countdown-wrapper { padding: 28px 20px 28px; }
+            .top-bar { flex-direction: column; align-items: stretch; gap: 8px; }
+            .goal-display { align-self: flex-start; }
+            .count-number { font-size: clamp(60px, 25vw, 120px); }
+            .sub-info { font-size: 13px; }
+            .explanation { font-size: 12px; }
+        }
         @media (max-width: 400px) {
-            .countdown-wrapper {
-                padding: 20px 14px 20px;
-            }
-            .count-number {
-                font-size: 48px;
-            }
-            .status-badge {
-                font-size: 11px;
-            }
+            .countdown-wrapper { padding: 20px 14px 20px; }
+            .count-number { font-size: 48px; }
+            .status-badge { font-size: 11px; }
         }
     </style>
 </head>
 <body>
 
     <div class="countdown-wrapper">
-
-        <!-- ===== TOP BAR ===== -->
+        <!-- TOP BAR -->
         <div class="top-bar">
             <div class="status-badge">
                 <span class="status-dot offline" id="statusDot"></span>
@@ -308,48 +254,44 @@
                 </span>
             </div>
             <div class="goal-display">
-                🎯 Goal: <span id="goalDisplay">----</span> guilds
+                🎯 Goal: <span id="goalDisplay">70,000</span> guilds
             </div>
         </div>
 
-        <!-- ===== MAIN COUNTDOWN ===== -->
-        <div class="count-number positive" id="countNumber">
-            0
-        </div>
-
+        <!-- COUNTDOWN -->
+        <div class="count-number" id="countNumber">0</div>
         <div class="sub-info">
             <span id="remainingLabel">remaining</span>
             &nbsp;·&nbsp;
             current: <strong id="currentGuilds">0</strong>
         </div>
 
-        <!-- ===== PROGRESS BAR ===== -->
+        <!-- PROGRESS -->
         <div class="progress-track">
             <div class="progress-fill" id="progressFill"></div>
         </div>
 
-        <!-- ===== CONNECT BUTTON ===== -->
+        <!-- CONNECT BUTTON -->
         <button class="connect-btn" id="connectBtn">⟳ Connect</button>
 
-        <!-- ===== BOTTOM EXPLANATION (terminal style) ===== -->
+        <!-- EXPLANATION -->
         <div class="explanation">
             <div><span class="prompt">$</span> <span class="cmd">guilds --countdown --goal 70000</span></div>
             <div style="margin-top:6px;">
                 <span class="prompt">➜</span> Live countdown from
                 <span class="highlight">honeypot-stats.riskymh.dev/ws</span>
-                &nbsp;·&nbsp; updates mostly every <span class="highlight">~5s</span>
+                &nbsp;·&nbsp; updates every <span class="highlight">~5s</span>
             </div>
             <div style="margin-top:4px; opacity:0.7;">
                 <span class="prompt">◆</span> This page shows the remaining guilds until we hit
-                <span class="goal-highlight" id="goalInExplanation">our goal 🎊</span>.
+                <span class="goal-highlight" id="goalInExplanation">70,000</span>.
                 <br />
                 <span style="display:inline-block;margin-top:2px;">
-                    <span class="prompt">▸</span> Green = goal reached &nbsp;·&nbsp; Auto‑reconnects if dropped.
+                    <span class="prompt">▸</span> Auto‑reconnects if dropped &nbsp;·&nbsp; 🌈 celebration at goal!
                     <span class="blink">▍</span>
                 </span>
             </div>
         </div>
-
     </div>
 
     <script>
@@ -357,9 +299,7 @@
         //  CONFIG
         // ================================================================
         const WS_URL = 'wss://honeypot-stats.riskymh.dev/ws';
-
-        // 🎯 CHANGE THIS TO YOUR DESIRED GOAL
-        const GOAL = 70000;
+        const GOAL = 70000;   // 🎯 CHANGE THIS TO YOUR GOAL
 
         // ================================================================
         //  STATE
@@ -370,6 +310,7 @@
         let reconnectAttempt = 0;
         let reconnectTimer = null;
         let manualDisconnect = false;
+        let goalReached = false;
 
         let currentGuilds = 0;
         let remaining = GOAL;
@@ -424,26 +365,26 @@
             currentGuilds = guilds;
             remaining = GOAL - guilds;
 
-            // Update current guilds text
-            currentGuildsEl.textContent = guilds.toLocaleString();
-
-            // Update remaining number
-            countNumber.textContent = remaining.toLocaleString();
-
-            // Update label
-            if (remaining > 0) {
-                remainingLabel.textContent = 'remaining';
-                countNumber.className = 'count-number positive';
-            } else if (remaining === 0) {
-                remainingLabel.textContent = '🎯 GOAL REACHED!';
-                countNumber.className = 'count-number zero';
+            // If goal reached or exceeded, show 0 and celebrate
+            if (remaining <= 0) {
+                remaining = 0;
+                if (!goalReached) {
+                    goalReached = true;
+                    countNumber.classList.add('rainbow');
+                    remainingLabel.textContent = '0';
+                }
             } else {
-                remainingLabel.textContent = 'overshot by';
-                countNumber.className = 'count-number positive';
+                goalReached = false;
+                countNumber.classList.remove('rainbow');
+                remainingLabel.textContent = 'remaining';
             }
 
-            // Update progress bar
-            const progress = Math.min(Math.max((guilds / GOAL) * 100, 0), 100);
+            // Update number
+            countNumber.textContent = remaining.toLocaleString();
+            currentGuildsEl.textContent = guilds.toLocaleString();
+
+            // Progress bar
+            const progress = Math.min((guilds / GOAL) * 100, 100);
             progressFill.style.width = progress + '%';
             if (progress >= 100) {
                 progressFill.classList.add('complete');
@@ -489,8 +430,7 @@
             isConnecting = false;
             reconnectAttempt = 0;
             setStatus('online', 'connected');
-            if (reconnectTimer) { clearTimeout(reconnectTimer);
-                reconnectTimer = null; }
+            if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
         }
 
         function onMessage(e) {
@@ -519,8 +459,7 @@
 
         function disconnect() {
             manualDisconnect = true;
-            if (reconnectTimer) { clearTimeout(reconnectTimer);
-                reconnectTimer = null; }
+            if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
             if (ws) { try { ws.close(1000, 'manual'); } catch (_) {} ws = null; }
             isConnected = false;
             isConnecting = false;
@@ -531,8 +470,7 @@
             if (manualDisconnect || isConnected) return;
             const delay = [1000, 2000, 4000, 8000, 15000, 30000][Math.min(reconnectAttempt, 5)];
             reconnectAttempt++;
-            if (reconnectTimer) { clearTimeout(reconnectTimer);
-                reconnectTimer = null; }
+            if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
             statusDetail.textContent = `reconnect in ${(delay/1000).toFixed(1)}s`;
             reconnectTimer = setTimeout(() => {
                 reconnectTimer = null;
