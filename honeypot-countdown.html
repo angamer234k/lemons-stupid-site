@@ -11,11 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet" />
 
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'JetBrains Mono', 'Fira Code', 'Ubuntu Mono', monospace;
@@ -42,7 +38,6 @@
             text-align: center;
         }
 
-        /* TOP BAR */
         .top-bar {
             display: flex;
             justify-content: space-between;
@@ -144,7 +139,6 @@
             font-weight: 700;
         }
 
-        /* COUNT NUMBER */
         .count-number {
             font-size: clamp(80px, 18vw, 200px);
             font-weight: 800;
@@ -190,7 +184,6 @@
             font-weight: 700;
         }
 
-        /* PROGRESS */
         .progress-track {
             width: 100%;
             height: 6px;
@@ -232,7 +225,6 @@
             transform: scale(0.96);
         }
 
-        /* EXPLANATION */
         .explanation {
             margin-top: 28px;
             padding-top: 20px;
@@ -284,7 +276,6 @@
 <body>
 
     <div class="countdown-wrapper">
-        <!-- TOP BAR -->
         <div class="top-bar">
             <div class="status-badge">
                 <span class="status-dot offline" id="statusDot"></span>
@@ -304,7 +295,6 @@
             </div>
         </div>
 
-        <!-- COUNTDOWN -->
         <div class="count-number" id="countNumber">0</div>
         <div class="sub-info">
             <span id="remainingLabel">remaining</span>
@@ -312,15 +302,12 @@
             current: <strong id="currentValue">0</strong>
         </div>
 
-        <!-- PROGRESS -->
         <div class="progress-track">
             <div class="progress-fill" id="progressFill"></div>
         </div>
 
-        <!-- CONNECT -->
         <button class="connect-btn" id="connectBtn">⟳ Connect</button>
 
-        <!-- EXPLANATION -->
         <div class="explanation">
             <div><span class="prompt">$</span> <span class="cmd" id="cmdDisplay">guilds --countdown --goal 70000</span></div>
             <div style="margin-top:6px;">
@@ -358,9 +345,8 @@
         let reconnectTimer = null;
         let manualDisconnect = false;
 
-        let currentMetric = 'guilds'; // 'guilds' or 'moderations'
-        let currentValue = 0;
-        let remaining = GOAL_GUILDS;
+        let currentMetric = 'guilds';
+        let lastData = null;          // stores the last full message
         let goalReached = false;
 
         // DOM refs
@@ -389,9 +375,85 @@
             return currentMetric === 'guilds' ? 'guilds' : 'moderations';
         }
 
+        function getCurrentValue() {
+            if (!lastData) return null;
+            return currentMetric === 'guilds' ? (lastData.guilds ?? null) : (lastData.moderations ?? null);
+        }
+
         function formatNumber(n) {
-            if (typeof n !== 'number') return '0';
-            return n.toLocaleString();
+            if (n === null || n === undefined || typeof n !== 'number') return '0';
+            return Math.round(n).toLocaleString();
+        }
+
+        // ================================================================
+        //  UPDATE UI (core)
+        // ================================================================
+        function updateDisplay(value) {
+            if (!isConnected) {
+                // Offline: show --- (handled in setStatus)
+                return;
+            }
+
+            if (value === null || value === undefined) {
+                // No data yet – show placeholder
+                countNumber.textContent = '—';
+                countNumber.className = 'count-number offline';
+                remainingLabel.textContent = 'waiting for data';
+                currentValueEl.textContent = '—';
+                progressFill.style.width = '0%';
+                progressFill.classList.remove('complete');
+                return;
+            }
+
+            const goal = getGoal();
+            const remaining = goal - value;
+
+            // Update current value display
+            currentValueEl.textContent = formatNumber(value);
+
+            // Update goal display (in case it changed)
+            goalDisplay.textContent = formatNumber(goal);
+            goalInExplanation.textContent = formatNumber(goal);
+            metricNameDisplay.textContent = getMetricLabel();
+            cmdDisplay.textContent = `${getMetricLabel()} --countdown --goal ${formatNumber(goal)}`;
+
+            // Check goal reached
+            if (remaining <= 0) {
+                const displayRemaining = 0;
+                if (!goalReached) {
+                    goalReached = true;
+                    countNumber.classList.add('rainbow');
+                    remainingLabel.textContent = '🎯 GOAL REACHED!';
+                }
+                countNumber.textContent = '0';
+                countNumber.className = 'count-number rainbow';
+                progressFill.style.width = '100%';
+                progressFill.classList.add('complete');
+                currentValueEl.textContent = formatNumber(value);
+                return;
+            }
+
+            // Not reached yet
+            goalReached = false;
+            countNumber.classList.remove('rainbow');
+            countNumber.className = 'count-number';
+            countNumber.textContent = formatNumber(remaining);
+            remainingLabel.textContent = 'remaining';
+
+            // Progress bar
+            const progress = Math.min((value / goal) * 100, 100);
+            progressFill.style.width = progress + '%';
+            if (progress >= 100) {
+                progressFill.classList.add('complete');
+            } else {
+                progressFill.classList.remove('complete');
+            }
+        }
+
+        // Refresh UI from the cached data
+        function refreshDisplay() {
+            const value = getCurrentValue();
+            updateDisplay(value);
         }
 
         // ================================================================
@@ -420,67 +482,17 @@
             connectBtn.textContent = (state === 'online' || state === 'connecting') ? '● Disconnect' : '⟳ Connect';
             connectBtn.disabled = (state === 'connecting');
 
-            // If offline, show --- in countdown
+            // If offline, show ---
             if (state === 'offline' || state === 'connecting') {
                 countNumber.textContent = '—';
                 countNumber.className = 'count-number offline';
                 remainingLabel.textContent = '⚠️ waiting';
+                currentValueEl.textContent = '—';
                 progressFill.style.width = '0%';
                 progressFill.classList.remove('complete');
-                currentValueEl.textContent = '—';
             } else {
-                // Online: refresh display with current data
-                updateDisplay(currentValue);
-            }
-        }
-
-        // ================================================================
-        //  UPDATE UI
-        // ================================================================
-        function updateDisplay(value) {
-            if (!isConnected) {
-                // If not connected, show --- (handled in setStatus)
-                return;
-            }
-
-            currentValue = value;
-            const goal = getGoal();
-            remaining = goal - value;
-
-            // Update current value display
-            currentValueEl.textContent = formatNumber(value);
-
-            // Update goal display
-            goalDisplay.textContent = formatNumber(goal);
-            goalInExplanation.textContent = formatNumber(goal);
-            metricNameDisplay.textContent = getMetricLabel();
-            cmdDisplay.textContent = `${getMetricLabel()} --countdown --goal ${formatNumber(goal)}`;
-
-            // Check if goal reached
-            if (remaining <= 0) {
-                remaining = 0;
-                if (!goalReached) {
-                    goalReached = true;
-                    countNumber.classList.add('rainbow');
-                    remainingLabel.textContent = '🎯 GOAL REACHED!';
-                }
-            } else {
-                goalReached = false;
-                countNumber.classList.remove('rainbow');
-                remainingLabel.textContent = 'remaining';
-            }
-
-            // Update number
-            countNumber.textContent = formatNumber(remaining);
-            countNumber.className = 'count-number' + (goalReached ? ' rainbow' : '');
-
-            // Progress bar
-            const progress = Math.min((value / goal) * 100, 100);
-            progressFill.style.width = progress + '%';
-            if (progress >= 100) {
-                progressFill.classList.add('complete');
-            } else {
-                progressFill.classList.remove('complete');
+                // Online: refresh with current data
+                refreshDisplay();
             }
         }
 
@@ -501,18 +513,8 @@
             goalReached = false;
             countNumber.classList.remove('rainbow');
 
-            // Re-display with current value (if connected)
-            if (isConnected) {
-                updateDisplay(currentValue);
-            } else {
-                // If offline, just update the goal display and keep ---
-                const goal = getGoal();
-                goalDisplay.textContent = formatNumber(goal);
-                goalInExplanation.textContent = formatNumber(goal);
-                metricNameDisplay.textContent = getMetricLabel();
-                cmdDisplay.textContent = `${getMetricLabel()} --countdown --goal ${formatNumber(goal)}`;
-                // count stays ---
-            }
+            // Refresh display immediately with cached data
+            refreshDisplay();
         });
 
         // ================================================================
@@ -558,23 +560,13 @@
         function onMessage(e) {
             try {
                 const data = JSON.parse(e.data);
-                let value = 0;
-                if (currentMetric === 'guilds' && data.guilds !== undefined) {
-                    value = data.guilds;
-                } else if (currentMetric === 'moderations' && data.moderations !== undefined) {
-                    value = data.moderations;
-                } else {
-                    // try to detect if we have both
-                    if (data.guilds !== undefined && currentMetric === 'guilds') value = data.guilds;
-                    else if (data.moderations !== undefined && currentMetric === 'moderations') value = data.moderations;
-                    else return;
-                }
-                if (typeof value === 'number') {
-                    updateDisplay(value);
-                    statusDetail.textContent = `last ${new Date().toLocaleTimeString()}`;
-                }
+                // Store the full data
+                lastData = data;
+                // Refresh UI with the current metric
+                refreshDisplay();
+                statusDetail.textContent = `last ${new Date().toLocaleTimeString()}`;
             } catch (_) {
-                // ignore
+                // ignore non-JSON
             }
         }
 
@@ -620,7 +612,6 @@
         //  INIT
         // ================================================================
         setStatus('offline', 'ready');
-        // Show initial goal
         const initialGoal = getGoal();
         goalDisplay.textContent = formatNumber(initialGoal);
         goalInExplanation.textContent = formatNumber(initialGoal);
