@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>4x4 Discord Pixel Art</title>
+    <style>
+        body { font-family: Arial; background: #2c2f33; color: #fff; display: flex; justify-content: center; padding: 20px; }
+        .container { background: #23272a; padding: 25px; border-radius: 12px; max-width: 500px; }
+        .grid { display: grid; grid-template-columns: repeat(4, 60px); gap: 4px; margin: 20px 0; }
+        .pixel { width: 60px; height: 60px; border: 2px solid #555; cursor: pointer; background: #1e1e1e; border-radius: 4px; }
+        .pixel:hover { border-color: #fff; }
+        .colors { display: flex; flex-wrap: wrap; gap: 8px; margin: 15px 0; }
+        .color-btn { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #555; cursor: pointer; transition: 0.2s; }
+        .color-btn:hover { transform: scale(1.1); }
+        .color-btn.active { border-color: #fff; box-shadow: 0 0 12px #fff; }
+        .output-area { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+        textarea { width: 100%; height: 120px; background: #1e1e1e; color: #fff; border: 1px solid #444; border-radius: 6px; padding: 10px; font-family: monospace; resize: vertical; }
+        .btn { background: #5865f2; color: #fff; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .btn:hover { background: #4752c4; }
+        .clear-btn { background: #ed4245; margin-left: 10px; }
+        .clear-btn:hover { background: #c03537; }
+        .flex-row { display: flex; gap: 10px; }
+        .label { font-size: 14px; color: #b9bbbe; margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>🎨 4x4 Pixel Art for Discord</h2>
+    <div class="label">1. Pick a color below</div>
+    <div class="colors" id="colorPalette"></div>
+    <div class="label">2. Click pixels to paint</div>
+    <div class="grid" id="gridContainer"></div>
+    <div class="flex-row">
+        <button class="btn" id="generateBtn">⬇ Generate Discord Text</button>
+        <button class="btn clear-btn" id="clearBtn">🗑 Clear</button>
+    </div>
+    <div class="output-area">
+        <div class="label">Copy this into Discord inside a code block:</div>
+        <textarea id="outputText" readonly></textarea>
+        <button class="btn" id="copyBtn">📋 Copy to Clipboard</button>
+    </div>
+</div>
+<script>
+    const COLORS = [
+        { name: 'Black', fg: 30, bg: 40, hex: '#1e1e1e' },
+        { name: 'Red', fg: 31, bg: 41, hex: '#e74c3c' },
+        { name: 'Green', fg: 32, bg: 42, hex: '#2ecc71' },
+        { name: 'Yellow', fg: 33, bg: 43, hex: '#f1c40f' },
+        { name: 'Blue', fg: 34, bg: 44, hex: '#3498db' },
+        { name: 'Pink', fg: 35, bg: 45, hex: '#e67e22' }, // ANSI 35 is magenta
+        { name: 'Cyan', fg: 36, bg: 46, hex: '#1abc9c' },
+        { name: 'White', fg: 37, bg: 47, hex: '#ecf0f1' },
+        { name: 'Gray', fg: 90, bg: 100, hex: '#95a5a6' },
+        { name: 'Bright Red', fg: 91, bg: 101, hex: '#ff6b6b' },
+        { name: 'Bright Green', fg: 92, bg: 102, hex: '#55efc4' },
+        { name: 'Bright Yellow', fg: 93, bg: 103, hex: '#fdcb6e' },
+        { name: 'Bright Blue', fg: 94, bg: 104, hex: '#74b9ff' },
+        { name: 'Bright Pink', fg: 95, bg: 105, hex: '#fd79a8' },
+        { name: 'Bright Cyan', fg: 96, bg: 106, hex: '#81ecec' },
+        { name: 'Bright White', fg: 97, bg: 107, hex: '#dfe6e9' },
+    ];
+
+    const SIZE = 4;
+    let grid = Array(SIZE).fill().map(() => Array(SIZE).fill(0));
+    let selectedColor = 0; // index into COLORS
+
+    function renderGrid() {
+        const container = document.getElementById('gridContainer');
+        container.innerHTML = '';
+        for (let r = 0; r < SIZE; r++) {
+            for (let c = 0; c < SIZE; c++) {
+                const div = document.createElement('div');
+                div.className = 'pixel';
+                const colorIndex = grid[r][c];
+                div.style.background = COLORS[colorIndex]?.hex || '#1e1e1e';
+                div.dataset.row = r;
+                div.dataset.col = c;
+                div.addEventListener('click', () => {
+                    grid[r][c] = selectedColor;
+                    renderGrid();
+                });
+                container.appendChild(div);
+            }
+        }
+    }
+
+    function renderPalette() {
+        const palette = document.getElementById('colorPalette');
+        palette.innerHTML = '';
+        COLORS.forEach((color, index) => {
+            const btn = document.createElement('div');
+            btn.className = 'color-btn' + (index === selectedColor ? ' active' : '');
+            btn.style.background = color.hex;
+            btn.title = color.name;
+            btn.addEventListener('click', () => {
+                selectedColor = index;
+                renderPalette();
+            });
+            palette.appendChild(btn);
+        });
+    }
+
+    function generateAnsi() {
+        // Build ANSI string using the Gist's approach: background colors on spaces.
+        // For each row, we set background color for each pixel.
+        let lines = [];
+        for (let r = 0; r < SIZE; r++) {
+            let parts = [];
+            for (let c = 0; c < SIZE; c++) {
+                const bgCode = COLORS[grid[r][c]].bg;
+                // Use a space for background color, or a full block for foreground.
+                // Using space gives a clean square.
+                parts.push(`\x1b[${bgCode}m \x1b[0m`);
+            }
+            lines.push(parts.join(''));
+        }
+        return lines.join('\n');
+    }
+
+    document.getElementById('generateBtn').addEventListener('click', () => {
+        const ansi = generateAnsi();
+        // Wrap in a code block with ```ansi
+        const output = '```ansi\n' + ansi + '\n```';
+        document.getElementById('outputText').value = output;
+    });
+
+    document.getElementById('copyBtn').addEventListener('click', () => {
+        const text = document.getElementById('outputText');
+        text.select();
+        document.execCommand('copy');
+        alert('Copied! Paste it into Discord.');
+    });
+
+    document.getElementById('clearBtn').addEventListener('click', () => {
+        grid = Array(SIZE).fill().map(() => Array(SIZE).fill(0));
+        renderGrid();
+        document.getElementById('outputText').value = '';
+    });
+
+    // Init
+    renderPalette();
+    renderGrid();
+</script>
+</body>
+</html>
