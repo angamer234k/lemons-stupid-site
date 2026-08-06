@@ -88,9 +88,40 @@
       line-height: 1.4;
     }
 
+    /* Online / last seen */
+    .status-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.95rem;
+      font-weight: bold;
+      color: #ffffff;
+      background: #2c3744;
+      border: 2px solid #4b6ca5;
+      border-radius: 50px;
+      padding: 6px 14px;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #666;
+      flex-shrink: 0;
+    }
+
+    .status-dot.online {
+      background: #4ade80;
+      box-shadow: 0 0 8px #4ade80;
+    }
+
+    .status-dot.offline {
+      background: #94a3b8;
+    }
+
     /* Live MSK clock */
     .clock-box {
-      margin-top: 6px;
+      margin-top: 2px;
       background: #2c3744;
       border: 2px solid #4b6ca5;
       border-radius: 12px;
@@ -99,7 +130,7 @@
       flex-direction: column;
       align-items: center;
       gap: 2px;
-      min-width: 160px;
+      min-width: 180px;
     }
 
     .clock-label {
@@ -116,8 +147,14 @@
       font-weight: bold;
       color: #ffffff;
       letter-spacing: 1px;
-      tabular-nums: true;
       font-variant-numeric: tabular-nums;
+    }
+
+    .clock-date {
+      font-size: 0.8rem;
+      color: #cbd5e1;
+      font-weight: bold;
+      margin-top: 2px;
     }
 
     .section-title {
@@ -187,10 +224,17 @@
 
     <div class="bio-text">hiya! im lemon (@GJ4JHK on RBLX)</div>
 
-    <!-- Live Moscow time -->
+    <!-- Online / last seen -->
+    <div class="status-box" id="status-box">
+      <div class="status-dot" id="status-dot"></div>
+      <span id="status-text">checking...</span>
+    </div>
+
+    <!-- Live Moscow time + date -->
     <div class="clock-box">
       <div class="clock-label">MSK 👀</div>
       <div class="clock-time" id="msk-clock">--:--:--</div>
+      <div class="clock-date" id="msk-date">---</div>
     </div>
 
     <div class="section-title">my hobbies are:</div>
@@ -211,8 +255,10 @@
 </div>
 
 <script>
+  // ── MSK Clock + Date ────────────────────────────────────────────
   function updateMskClock() {
     const now = new Date();
+
     const time = now.toLocaleTimeString('en-GB', {
       timeZone: 'Europe/Moscow',
       hour: '2-digit',
@@ -220,11 +266,69 @@
       second: '2-digit',
       hour12: false
     });
+
+    const date = now.toLocaleDateString('en-GB', {
+      timeZone: 'Europe/Moscow',
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    });
+
     document.getElementById('msk-clock').textContent = time;
+    document.getElementById('msk-date').textContent = date;
   }
 
   updateMskClock();
   setInterval(updateMskClock, 1000);
+
+  // ── Online / Last seen ──────────────────────────────────────────
+  const ONLINE_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes = online
+
+  function formatTimeAgo(ts) {
+    const diff = Date.now() - ts;
+    const mins = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+
+    if (mins < 1) return 'just now';
+    if (mins < 60) return mins + 'm ago';
+    if (hours < 24) return hours + 'h ago';
+    return days + 'd ago';
+  }
+
+  async function updateStatus() {
+    const dot = document.getElementById('status-dot');
+    const text = document.getElementById('status-text');
+
+    try {
+      const res = await fetch('/api/last-online');
+      const data = await res.json();
+
+      if (!data.lastOnline) {
+        dot.className = 'status-dot offline';
+        text.textContent = 'never seen';
+        return;
+      }
+
+      const age = Date.now() - data.lastOnline;
+
+      if (age < ONLINE_THRESHOLD_MS) {
+        dot.className = 'status-dot online';
+        text.textContent = 'online';
+      } else {
+        dot.className = 'status-dot offline';
+        text.textContent = 'last seen ' + formatTimeAgo(data.lastOnline);
+      }
+    } catch (err) {
+      dot.className = 'status-dot offline';
+      text.textContent = 'status unknown';
+    }
+  }
+
+  updateStatus();
+  // refresh status every 30s
+  setInterval(updateStatus, 30000);
 </script>
 
 </body>
