@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>send lemon a message</title>
+
+  <meta property="og:title" content="send lemon a message" />
+  <meta property="og:description" content="drop a message for lemon 🍋" />
+  <meta name="twitter:card" content="summary" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Lemon&display=swap" rel="stylesheet" />
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      background: #1e1e2a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Arial', 'Helvetica', sans-serif;
+      padding: 20px;
+    }
+
+    .card-wrapper {
+      width: 85vw;
+      max-width: 520px;
+      padding: 3px;
+      border-radius: 16px;
+      background: linear-gradient(180deg, #ffffff 0%, #888888 100%);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    .card {
+      width: 100%;
+      background-color: #67809f;
+      border-radius: 13px;
+      padding: 32px 24px 36px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .lemon-heading {
+      font-family: 'Lemon', cursive, 'Comic Sans MS', sans-serif;
+      font-size: 2.4rem;
+      color: #fdff94;
+      text-shadow:
+        -2px -2px 0 #535353,
+         2px -2px 0 #535353,
+        -2px  2px 0 #535353,
+         2px  2px 0 #535353;
+      text-align: center;
+      letter-spacing: 1px;
+    }
+
+    .subtitle {
+      color: #ffffff;
+      font-weight: bold;
+      font-size: 1rem;
+      text-align: center;
+      opacity: 0.9;
+    }
+
+    form {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-top: 8px;
+    }
+
+    label {
+      color: #ffe77f;
+      font-weight: bold;
+      font-size: 0.85rem;
+      letter-spacing: 0.5px;
+    }
+
+    input, textarea {
+      width: 100%;
+      background: #2c3744;
+      border: 2px solid #4b6ca5;
+      border-radius: 10px;
+      color: #ffffff;
+      font-size: 1rem;
+      padding: 12px 14px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input:focus, textarea:focus {
+      border-color: #6b8fc7;
+    }
+
+    textarea {
+      min-height: 140px;
+      resize: vertical;
+    }
+
+    .char-count {
+      text-align: right;
+      font-size: 0.75rem;
+      color: #cbd5e1;
+      margin-top: -8px;
+    }
+
+    button {
+      margin-top: 6px;
+      height: 44px;
+      background: #2c3744;
+      border: 2px solid #4b6ca5;
+      border-radius: 50px;
+      color: #ffffff;
+      font-weight: bold;
+      font-size: 1.05rem;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, transform 0.15s;
+    }
+
+    button:hover:not(:disabled) {
+      background: #3e4d5e;
+      border-color: #6b8fc7;
+      transform: translateY(-1px);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .status {
+      margin-top: 8px;
+      font-weight: bold;
+      font-size: 0.95rem;
+      text-align: center;
+      min-height: 1.4em;
+    }
+
+    .status.ok { color: #4ade80; }
+    .status.err { color: #f87171; }
+
+    .back {
+      margin-top: 10px;
+      color: #cbd5e1;
+      font-size: 0.9rem;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .back:hover { color: #ffe77f; }
+
+    @media (max-width: 500px) {
+      .lemon-heading { font-size: 1.9rem; }
+      .card { padding: 24px 16px 28px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="card-wrapper">
+  <div class="card">
+
+    <div class="lemon-heading">send a message</div>
+    <div class="subtitle">drop something for lemon 🍋</div>
+
+    <form id="msg-form">
+      <div>
+        <label for="name">name (optional)</label>
+        <input type="text" id="name" name="name" maxlength="50" placeholder="Anonymous" autocomplete="off" />
+      </div>
+
+      <div>
+        <label for="message">message</label>
+        <textarea id="message" name="message" maxlength="1000" placeholder="say something..." required></textarea>
+        <div class="char-count"><span id="count">0</span>/1000</div>
+      </div>
+
+      <button type="submit" id="submit-btn">send 🍋</button>
+    </form>
+
+    <div class="status" id="status"></div>
+
+    <a class="back" href="/">← back to profile</a>
+
+  </div>
+</div>
+
+<script>
+  const form = document.getElementById('msg-form');
+  const messageEl = document.getElementById('message');
+  const countEl = document.getElementById('count');
+  const statusEl = document.getElementById('status');
+  const btn = document.getElementById('submit-btn');
+
+  messageEl.addEventListener('input', () => {
+    countEl.textContent = messageEl.value.length;
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const name = document.getElementById('name').value.trim();
+    const message = messageEl.value.trim();
+
+    if (!message) return;
+
+    btn.disabled = true;
+    statusEl.textContent = 'sending...';
+    statusEl.className = 'status';
+
+    try {
+      const res = await fetch('/api/message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, message })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        statusEl.textContent = 'sent! 🍋';
+        statusEl.className = 'status ok';
+        form.reset();
+        countEl.textContent = '0';
+      } else {
+        statusEl.textContent = data.error || 'something went wrong';
+        statusEl.className = 'status err';
+      }
+    } catch (err) {
+      statusEl.textContent = 'network error';
+      statusEl.className = 'status err';
+    }
+
+    btn.disabled = false;
+  });
+</script>
+
+</body>
+</html>
