@@ -27,6 +27,7 @@ export default async function handler(req, res) {
 
   let name = (body.name || '').toString().trim().slice(0, 50);
   let message = (body.message || '').toString().trim();
+  let token = (body.token || '').toString().trim();
 
   if (!message) {
     return res.status(400).json({ error: 'message is required' });
@@ -38,36 +39,54 @@ export default async function handler(req, res) {
 
   if (!name) name = 'Anonymous';
 
-  // ── Global rate limit (30 seconds) ──────────────────────────────
-  try {
-    const rateRes = await fetch(`${redisUrl}/get/rate:message`, {
-      headers: { Authorization: `Bearer ${redisToken}` }
-    });
-    const rateData = await rateRes.json();
+  // ── Check invite token (bypasses rate limit) ─────────────────────
+  let hasValidToken = false;
 
-    if (rateData.result) {
-      return res.status(429).json({ error: 'slow down — wait 30 seconds between messages' });
+  if (token) {
+    try {
+      const tokenRes = await fetch(`${redisUrl}/get/invite:${encodeURIComponent(token)}`, {
+        headers: { Authorization: `Bearer ${redisToken}` }
+      });
+      const tokenData = await tokenRes.json();
+      if (tokenData.result) {
+        hasValidToken = true;
+      }
+    } catch (err) {
+      console.error('Token check error:', err);
     }
+  }
 
-    // set rate key with 30s expiry
-    await fetch(`${redisUrl}/set/rate:message/1?EX=30`, {
-      headers: { Authorization: `Bearer ${redisToken}` }
-    });
-  } catch (err) {
-    console.error('Rate limit error:', err);
-    // continue anyway if rate limit fails
+  // ── Global rate limit (30 seconds) — skipped if valid token ─────
+  if (!hasValidToken) {
+    try {
+      const rateRes = await fetch(`${redisUrl}/get/rate:message`, {
+        headers: { Authorization: `Bearer ${redisToken}` }
+      });
+      const rateData = await rateRes.json();
+
+      if (rateData.result) {
+        return res.status(429).json({ error: 'slow down — wait 30 seconds between messages' });
+      }
+
+      // set rate key with 30s expiry
+      await fetch(`${redisUrl}/set/rate:message/1?EX=30`, {
+        headers: { Authorization: `Bearer ${redisToken}` }
+      });
+    } catch (err) {
+      console.error('Rate limit error:', err);
+    }
   }
 
   const timestamp = Date.now();
   const entry = {
     name,
     message,
-    timestamp
+    timestamp,
+    token: hasValidToken ? token : null
   };
 
   // ── Store message in Redis list ─────────────────────────────────
   try {
-    // LPUSH messages <json>
     await fetch(`${redisUrl}/lpush/messages/${encodeURIComponent(JSON.stringify(entry))}`, {
       headers: { Authorization: `Bearer ${redisToken}` }
     });
@@ -91,16 +110,15 @@ export default async function handler(req, res) {
           secret: nudgeSecret,
           name,
           message,
-          timestamp
+          timestamp,
+          invited: hasValidToken
         }),
-        // short timeout so the user doesn't wait forever
         signal: AbortSignal.timeout(8000)
       });
     } catch (err) {
-      // Don't fail the request if nudge is down — message is already stored
       console.error('Nudge failed (message still saved):', err.message);
     }
   }
 
-  return res.status(200).json({ ok: true });
+  return res.status(200).json({ ok: true, invited: hasValidToken });
 }
