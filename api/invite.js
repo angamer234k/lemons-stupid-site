@@ -15,10 +15,6 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Redis not configured' });
   }
 
-  if (!secret) {
-    return res.status(500).json({ error: 'ONLINE_SECRET not set' });
-  }
-
   // Parse body
   let body = req.body;
   if (typeof body === 'string') {
@@ -27,6 +23,33 @@ export default async function handler(req, res) {
 
   const password = body?.password || req.query?.password;
   const token = (body?.token || req.query?.token || '').toString().trim();
+
+  // ── GET → public validity check (no password needed) ────────────
+  if (req.method === 'GET') {
+    if (!token) {
+      return res.status(400).json({ error: 'token is required' });
+    }
+
+    try {
+      const r = await fetch(`${redisUrl}/get/invite:${encodeURIComponent(token)}`, {
+        headers: { Authorization: `Bearer ${redisToken}` }
+      });
+      const data = await r.json();
+
+      return res.status(200).json({
+        token,
+        valid: !!data.result
+      });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Failed to check token' });
+    }
+  }
+
+  // Everything below requires the secret
+  if (!secret) {
+    return res.status(500).json({ error: 'ONLINE_SECRET not set' });
+  }
 
   if (password !== secret) {
     return res.status(401).json({ error: 'wrong password 👀' });
@@ -38,7 +61,6 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'token is required' });
     }
 
-    // optional expiry in seconds (default: no expiry)
     const expiresIn = body?.expiresIn ? Number(body.expiresIn) : null;
 
     try {
@@ -78,28 +100,6 @@ export default async function handler(req, res) {
     } catch (err) {
       console.error(err);
       return res.status(500).json({ error: 'Failed to revoke token' });
-    }
-  }
-
-  // ── GET → check if a token is valid ─────────────────────────────
-  if (req.method === 'GET') {
-    if (!token) {
-      return res.status(400).json({ error: 'token is required' });
-    }
-
-    try {
-      const r = await fetch(`${redisUrl}/get/invite:${encodeURIComponent(token)}`, {
-        headers: { Authorization: `Bearer ${redisToken}` }
-      });
-      const data = await r.json();
-
-      return res.status(200).json({
-        token,
-        valid: !!data.result
-      });
-    } catch (err) {
-      console.error(err);
-      return res.status(500).json({ error: 'Failed to check token' });
     }
   }
 
