@@ -65,6 +65,17 @@
       opacity: 0.9;
     }
 
+    .invite-badge {
+      background: #2c3744;
+      border: 2px solid #4ade80;
+      color: #4ade80;
+      font-weight: bold;
+      font-size: 0.8rem;
+      padding: 4px 12px;
+      border-radius: 50px;
+      letter-spacing: 0.5px;
+    }
+
     form {
       width: 100%;
       display: flex;
@@ -167,6 +178,7 @@
 
     <div class="lemon-heading">send a message</div>
     <div class="subtitle">drop something for lemon 🍋</div>
+    <div class="invite-badge" id="invite-badge" style="display:none;">invite active — no slowmode</div>
 
     <form id="msg-form">
       <div>
@@ -196,6 +208,15 @@
   const countEl = document.getElementById('count');
   const statusEl = document.getElementById('status');
   const btn = document.getElementById('submit-btn');
+  const badge = document.getElementById('invite-badge');
+
+  // Grab token from URL (?token=xxx)
+  const params = new URLSearchParams(window.location.search);
+  const inviteToken = params.get('token') || '';
+
+  if (inviteToken) {
+    badge.style.display = 'inline-block';
+  }
 
   messageEl.addEventListener('input', () => {
     countEl.textContent = messageEl.value.length;
@@ -217,13 +238,13 @@
       const res = await fetch('/api/message', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, message })
+        body: JSON.stringify({ name, message, token: inviteToken })
       });
 
       const data = await res.json();
 
       if (res.ok) {
-        statusEl.textContent = 'sent! 🍋';
+        statusEl.textContent = data.invited ? 'sent! (invite) 🍋' : 'sent! 🍋';
         statusEl.className = 'status ok';
         form.reset();
         countEl.textContent = '0';
