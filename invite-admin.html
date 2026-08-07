@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>invite admin</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Lemon&display=swap" rel="stylesheet" />
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      background: #1e1e2a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Arial', 'Helvetica', sans-serif;
+      padding: 20px;
+    }
+
+    .card-wrapper {
+      width: 85vw;
+      max-width: 480px;
+      padding: 3px;
+      border-radius: 16px;
+      background: linear-gradient(180deg, #ffffff 0%, #888888 100%);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    .card {
+      width: 100%;
+      background-color: #67809f;
+      border-radius: 13px;
+      padding: 28px 22px 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .lemon-heading {
+      font-family: 'Lemon', cursive, 'Comic Sans MS', sans-serif;
+      font-size: 2rem;
+      color: #fdff94;
+      text-shadow:
+        -2px -2px 0 #535353,
+         2px -2px 0 #535353,
+        -2px  2px 0 #535353,
+         2px  2px 0 #535353;
+      text-align: center;
+    }
+
+    .subtitle {
+      color: #ffffff;
+      font-weight: bold;
+      font-size: 0.95rem;
+      opacity: 0.9;
+      text-align: center;
+    }
+
+    label {
+      color: #ffe77f;
+      font-weight: bold;
+      font-size: 0.85rem;
+      align-self: flex-start;
+      width: 100%;
+    }
+
+    input {
+      width: 100%;
+      background: #2c3744;
+      border: 2px solid #4b6ca5;
+      border-radius: 10px;
+      color: #ffffff;
+      font-size: 1rem;
+      padding: 11px 14px;
+      font-family: inherit;
+      outline: none;
+    }
+
+    input:focus { border-color: #6b8fc7; }
+
+    .row {
+      width: 100%;
+      display: flex;
+      gap: 10px;
+    }
+
+    button {
+      height: 42px;
+      background: #2c3744;
+      border: 2px solid #4b6ca5;
+      border-radius: 50px;
+      color: #ffffff;
+      font-weight: bold;
+      font-size: 0.95rem;
+      cursor: pointer;
+      padding: 0 18px;
+      transition: background 0.15s, border-color 0.15s;
+      flex: 1;
+    }
+
+    button:hover:not(:disabled) {
+      background: #3e4d5e;
+      border-color: #6b8fc7;
+    }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    button.danger {
+      border-color: #f87171;
+      color: #f87171;
+    }
+
+    button.danger:hover:not(:disabled) {
+      background: #3e2c2c;
+      border-color: #fca5a5;
+    }
+
+    .status {
+      font-weight: bold;
+      font-size: 0.9rem;
+      text-align: center;
+      min-height: 1.3em;
+      width: 100%;
+    }
+
+    .status.ok { color: #4ade80; }
+    .status.err { color: #f87171; }
+
+    .link-box {
+      width: 100%;
+      background: #2c3744;
+      border: 2px solid #4b6ca5;
+      border-radius: 10px;
+      padding: 12px;
+      color: #cbd5e1;
+      font-size: 0.85rem;
+      word-break: break-all;
+      display: none;
+    }
+
+    .link-box.visible { display: block; }
+
+    .hidden { display: none !important; }
+
+    .section {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .back {
+      margin-top: 6px;
+      color: #cbd5e1;
+      font-size: 0.9rem;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .back:hover { color: #ffe77f; }
+  </style>
+</head>
+<body>
+
+<div class="card-wrapper">
+  <div class="card">
+
+    <div class="lemon-heading">invite admin</div>
+    <div class="subtitle">manage message invite tokens</div>
+
+    <!-- Login -->
+    <div class="section" id="login-section">
+      <label for="password">password</label>
+      <input type="password" id="password" placeholder="ONLINE_SECRET" autocomplete="off" />
+      <button id="login-btn">unlock</button>
+      <div class="status" id="login-status"></div>
+    </div>
+
+    <!-- Main panel (hidden until unlocked) -->
+    <div class="section hidden" id="main-section">
+      <label for="token">token name</label>
+      <input type="text" id="token" placeholder="e.g. lemon123" autocomplete="off" />
+
+      <label for="expires">expires in (seconds, optional)</label>
+      <input type="number" id="expires" placeholder="leave empty = permanent" min="1" />
+
+      <div class="row">
+        <button id="create-btn">create</button>
+        <button id="check-btn">check</button>
+        <button id="revoke-btn" class="danger">revoke</button>
+      </div>
+
+      <div class="status" id="status"></div>
+      <div class="link-box" id="link-box"></div>
+    </div>
+
+    <a class="back" href="/">← back</a>
+
+  </div>
+</div>
+
+<script>
+  const loginSection = document.getElementById('login-section');
+  const mainSection = document.getElementById('main-section');
+  const passwordEl = document.getElementById('password');
+  const loginBtn = document.getElementById('login-btn');
+  const loginStatus = document.getElementById('login-status');
+  const tokenEl = document.getElementById('token');
+  const expiresEl = document.getElementById('expires');
+  const statusEl = document.getElementById('status');
+  const linkBox = document.getElementById('link-box');
+
+  let secret = sessionStorage.getItem('invite_secret') || '';
+
+  // Auto-unlock if already in session
+  if (secret) {
+    loginSection.classList.add('hidden');
+    mainSection.classList.remove('hidden');
+  }
+
+  loginBtn.addEventListener('click', async () => {
+    const pw = passwordEl.value.trim();
+    if (!pw) return;
+
+    loginBtn.disabled = true;
+    loginStatus.textContent = 'checking...';
+    loginStatus.className = 'status';
+
+    // Test the password by trying to check a dummy token
+    try {
+      const res = await fetch(`/api/invite?password=${encodeURIComponent(pw)}&token=__test__`);
+      const data = await res.json();
+
+      if (res.status === 401) {
+        loginStatus.textContent = 'wrong password';
+        loginStatus.className = 'status err';
+      } else {
+        secret = pw;
+        sessionStorage.setItem('invite_secret', pw);
+        loginSection.classList.add('hidden');
+        mainSection.classList.remove('hidden');
+      }
+    } catch {
+      loginStatus.textContent = 'network error';
+      loginStatus.className = 'status err';
+    }
+
+    loginBtn.disabled = false;
+  });
+
+  async function call(method, extra = {}) {
+    const token = tokenEl.value.trim();
+    if (!token && method !== 'GET') {
+      statusEl.textContent = 'token required';
+      statusEl.className = 'status err';
+      return null;
+    }
+
+    statusEl.textContent = 'working...';
+    statusEl.className = 'status';
+    linkBox.classList.remove('visible');
+
+    const body = { password: secret, token, ...extra };
+
+    try {
+      const res = await fetch('/api/invite', {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        statusEl.textContent = data.error || 'error';
+        statusEl.className = 'status err';
+        return null;
+      }
+
+      return data;
+    } catch {
+      statusEl.textContent = 'network error';
+      statusEl.className = 'status err';
+      return null;
+    }
+  }
+
+  document.getElementById('create-btn').addEventListener('click', async () => {
+    const expiresIn = expiresEl.value ? Number(expiresEl.value) : null;
+    const data = await call('POST', expiresIn ? { expiresIn } : {});
+
+    if (data) {
+      statusEl.textContent = 'token created ✓';
+      statusEl.className = 'status ok';
+      linkBox.textContent = data.link;
+      linkBox.classList.add('visible');
+    }
+  });
+
+  document.getElementById('check-btn').addEventListener('click', async () => {
+    const token = tokenEl.value.trim();
+    if (!token) {
+      statusEl.textContent = 'token required';
+      statusEl.className = 'status err';
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/invite?password=${encodeURIComponent(secret)}&token=${encodeURIComponent(token)}`);
+      const data = await res.json();
+
+      if (data.valid) {
+        statusEl.textContent = 'token is valid ✓';
+        statusEl.className = 'status ok';
+        linkBox.textContent = `https://лемон.space/message?token=${encodeURIComponent(token)}`;
+        linkBox.classList.add('visible');
+      } else {
+        statusEl.textContent = 'token not found / expired';
+        statusEl.className = 'status err';
+        linkBox.classList.remove('visible');
+      }
+    } catch {
+      statusEl.textContent = 'network error';
+      statusEl.className = 'status err';
+    }
+  });
+
+  document.getElementById('revoke-btn').addEventListener('click', async () => {
+    const data = await call('DELETE');
+    if (data) {
+      statusEl.textContent = `revoked: ${data.revoked}`;
+      statusEl.className = 'status ok';
+      linkBox.classList.remove('visible');
+    }
+  });
+</script>
+
+</body>
+</html>
