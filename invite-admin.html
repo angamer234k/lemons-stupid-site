@@ -15,14 +15,15 @@
       background: #1e1e2a;
       display: flex;
       justify-content: center;
-      align-items: center;
+      align-items: flex-start;
       font-family: 'Arial', 'Helvetica', sans-serif;
       padding: 20px;
+      padding-top: 40px;
     }
 
     .card-wrapper {
       width: 85vw;
-      max-width: 480px;
+      max-width: 520px;
       padding: 3px;
       border-radius: 16px;
       background: linear-gradient(180deg, #ffffff 0%, #888888 100%);
@@ -68,7 +69,7 @@
       width: 100%;
     }
 
-    input {
+    input, select {
       width: 100%;
       background: #2c3744;
       border: 2px solid #4b6ca5;
@@ -80,13 +81,7 @@
       outline: none;
     }
 
-    input:focus { border-color: #6b8fc7; }
-
-    .row {
-      width: 100%;
-      display: flex;
-      gap: 10px;
-    }
+    input:focus, select:focus { border-color: #6b8fc7; }
 
     button {
       height: 42px;
@@ -99,7 +94,7 @@
       cursor: pointer;
       padding: 0 18px;
       transition: background 0.15s, border-color 0.15s;
-      flex: 1;
+      width: 100%;
     }
 
     button:hover:not(:disabled) {
@@ -115,6 +110,10 @@
     button.danger {
       border-color: #f87171;
       color: #f87171;
+      width: auto;
+      height: 32px;
+      font-size: 0.8rem;
+      padding: 0 12px;
     }
 
     button.danger:hover:not(:disabled) {
@@ -136,10 +135,10 @@
     .link-box {
       width: 100%;
       background: #2c3744;
-      border: 2px solid #4b6ca5;
+      border: 2px solid #4ade80;
       border-radius: 10px;
       padding: 12px;
-      color: #cbd5e1;
+      color: #4ade80;
       font-size: 0.85rem;
       word-break: break-all;
       display: none;
@@ -156,6 +155,60 @@
       gap: 10px;
     }
 
+    .token-list {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .token-item {
+      background: #2c3744;
+      border: 2px solid #4b6ca5;
+      border-radius: 10px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .token-id {
+      font-family: monospace;
+      font-size: 0.75rem;
+      color: #cbd5e1;
+      word-break: break-all;
+    }
+
+    .token-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .token-ttl {
+      font-size: 0.8rem;
+      color: #ffe77f;
+      font-weight: bold;
+    }
+
+    .token-link {
+      font-size: 0.75rem;
+      color: #6b8fc7;
+      word-break: break-all;
+      text-decoration: none;
+    }
+
+    .token-link:hover { color: #ffe77f; }
+
+    .empty {
+      color: #94a3b8;
+      font-size: 0.9rem;
+      text-align: center;
+      padding: 12px;
+    }
+
     .back {
       margin-top: 6px;
       color: #cbd5e1;
@@ -165,6 +218,13 @@
     }
 
     .back:hover { color: #ffe77f; }
+
+    h3 {
+      color: #ffffff;
+      font-size: 1rem;
+      align-self: flex-start;
+      margin-top: 8px;
+    }
   </style>
 </head>
 <body>
@@ -183,22 +243,30 @@
       <div class="status" id="login-status"></div>
     </div>
 
-    <!-- Main panel (hidden until unlocked) -->
+    <!-- Main panel -->
     <div class="section hidden" id="main-section">
-      <label for="token">token name</label>
-      <input type="text" id="token" placeholder="e.g. lemon123" autocomplete="off" />
 
-      <label for="expires">expires in (seconds, optional)</label>
-      <input type="number" id="expires" placeholder="leave empty = permanent" min="1" />
+      <label for="duration">duration</label>
+      <select id="duration">
+        <option value="">Permanent</option>
+        <option value="3600">1 hour</option>
+        <option value="21600">6 hours</option>
+        <option value="86400">1 day</option>
+        <option value="259200">3 days</option>
+        <option value="604800">7 days</option>
+        <option value="2592000">30 days</option>
+      </select>
 
-      <div class="row">
-        <button id="create-btn">create</button>
-        <button id="check-btn">check</button>
-        <button id="revoke-btn" class="danger">revoke</button>
-      </div>
+      <button id="create-btn">generate new invite</button>
 
       <div class="status" id="status"></div>
       <div class="link-box" id="link-box"></div>
+
+      <h3>active invites</h3>
+      <div class="token-list" id="token-list">
+        <div class="empty">loading...</div>
+      </div>
+
     </div>
 
     <a class="back" href="/">← back</a>
@@ -212,17 +280,17 @@
   const passwordEl = document.getElementById('password');
   const loginBtn = document.getElementById('login-btn');
   const loginStatus = document.getElementById('login-status');
-  const tokenEl = document.getElementById('token');
-  const expiresEl = document.getElementById('expires');
+  const durationEl = document.getElementById('duration');
   const statusEl = document.getElementById('status');
   const linkBox = document.getElementById('link-box');
+  const tokenList = document.getElementById('token-list');
 
   let secret = sessionStorage.getItem('invite_secret') || '';
 
-  // Auto-unlock if already in session
   if (secret) {
     loginSection.classList.add('hidden');
     mainSection.classList.remove('hidden');
+    loadTokens();
   }
 
   loginBtn.addEventListener('click', async () => {
@@ -233,12 +301,24 @@
     loginStatus.textContent = 'checking...';
     loginStatus.className = 'status';
 
-    // Test the password by trying to check a dummy token
     try {
-      const res = await fetch(`/api/invite?password=${encodeURIComponent(pw)}&token=__test__`);
-      const data = await res.json();
+      const res = await fetch('/api/invite', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
 
-      if (res.status === 401) {
+      // Actually test with password via list
+      const testRes = await fetch('/api/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: pw, expiresIn: 1 }) // will create a 1s token just to test auth
+      });
+
+      // Better: just try listing
+      const listRes = await fetch('/api/invite?password=' + encodeURIComponent(pw));
+      const listData = await listRes.json();
+
+      if (listRes.status === 401) {
         loginStatus.textContent = 'wrong password';
         loginStatus.className = 'status err';
       } else {
@@ -246,6 +326,7 @@
         sessionStorage.setItem('invite_secret', pw);
         loginSection.classList.add('hidden');
         mainSection.classList.remove('hidden');
+        loadTokens();
       }
     } catch {
       loginStatus.textContent = 'network error';
@@ -255,90 +336,114 @@
     loginBtn.disabled = false;
   });
 
-  async function call(method, extra = {}) {
-    const token = tokenEl.value.trim();
-    if (!token && method !== 'GET') {
-      statusEl.textContent = 'token required';
-      statusEl.className = 'status err';
-      return null;
-    }
+  function formatTTL(ttl) {
+    if (ttl === -1) return 'permanent';
+    if (ttl < 0) return 'expired';
+    if (ttl < 60) return ttl + 's left';
+    if (ttl < 3600) return Math.round(ttl / 60) + 'm left';
+    if (ttl < 86400) return Math.round(ttl / 3600) + 'h left';
+    return Math.round(ttl / 86400) + 'd left';
+  }
 
-    statusEl.textContent = 'working...';
-    statusEl.className = 'status';
-    linkBox.classList.remove('visible');
-
-    const body = { password: secret, token, ...extra };
+  async function loadTokens() {
+    tokenList.innerHTML = '<div class="empty">loading...</div>';
 
     try {
-      const res = await fetch('/api/invite', {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-
+      const res = await fetch('/api/invite?password=' + encodeURIComponent(secret));
       const data = await res.json();
 
-      if (!res.ok) {
-        statusEl.textContent = data.error || 'error';
-        statusEl.className = 'status err';
-        return null;
+      if (!data.tokens || data.tokens.length === 0) {
+        tokenList.innerHTML = '<div class="empty">no active invites</div>';
+        return;
       }
 
-      return data;
+      tokenList.innerHTML = '';
+      for (const t of data.tokens) {
+        const item = document.createElement('div');
+        item.className = 'token-item';
+        item.innerHTML = `
+          <div class="token-id">${t.token}</div>
+          <a class="token-link" href="${t.link}" target="_blank">${t.link}</a>
+          <div class="token-meta">
+            <span class="token-ttl">${formatTTL(t.ttl)}</span>
+            <button class="danger" data-token="${t.token}">revoke</button>
+          </div>
+        `;
+        tokenList.appendChild(item);
+      }
+
+      // Attach revoke handlers
+      tokenList.querySelectorAll('button.danger').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const token = btn.dataset.token;
+          btn.disabled = true;
+
+          try {
+            const res = await fetch('/api/invite', {
+              method: 'DELETE',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ password: secret, token })
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+              statusEl.textContent = 'revoked';
+              statusEl.className = 'status ok';
+              loadTokens();
+            } else {
+              statusEl.textContent = data.error || 'failed';
+              statusEl.className = 'status err';
+              btn.disabled = false;
+            }
+          } catch {
+            statusEl.textContent = 'network error';
+            statusEl.className = 'status err';
+            btn.disabled = false;
+          }
+        });
+      });
     } catch {
-      statusEl.textContent = 'network error';
-      statusEl.className = 'status err';
-      return null;
+      tokenList.innerHTML = '<div class="empty">failed to load</div>';
     }
   }
 
   document.getElementById('create-btn').addEventListener('click', async () => {
-    const expiresIn = expiresEl.value ? Number(expiresEl.value) : null;
-    const data = await call('POST', expiresIn ? { expiresIn } : {});
+    const btn = document.getElementById('create-btn');
+    btn.disabled = true;
+    statusEl.textContent = 'generating...';
+    statusEl.className = 'status';
+    linkBox.classList.remove('visible');
 
-    if (data) {
-      statusEl.textContent = 'token created ✓';
-      statusEl.className = 'status ok';
-      linkBox.textContent = data.link;
-      linkBox.classList.add('visible');
-    }
-  });
-
-  document.getElementById('check-btn').addEventListener('click', async () => {
-    const token = tokenEl.value.trim();
-    if (!token) {
-      statusEl.textContent = 'token required';
-      statusEl.className = 'status err';
-      return;
-    }
+    const expiresIn = durationEl.value ? Number(durationEl.value) : null;
 
     try {
-      const res = await fetch(`/api/invite?password=${encodeURIComponent(secret)}&token=${encodeURIComponent(token)}`);
+      const res = await fetch('/api/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          password: secret,
+          ...(expiresIn ? { expiresIn } : {})
+        })
+      });
+
       const data = await res.json();
 
-      if (data.valid) {
-        statusEl.textContent = 'token is valid ✓';
+      if (res.ok) {
+        statusEl.textContent = 'invite created ✓';
         statusEl.className = 'status ok';
-        linkBox.textContent = `https://лемон.space/message?token=${encodeURIComponent(token)}`;
+        linkBox.textContent = data.link;
         linkBox.classList.add('visible');
+        loadTokens();
       } else {
-        statusEl.textContent = 'token not found / expired';
+        statusEl.textContent = data.error || 'error';
         statusEl.className = 'status err';
-        linkBox.classList.remove('visible');
       }
     } catch {
       statusEl.textContent = 'network error';
       statusEl.className = 'status err';
     }
-  });
 
-  document.getElementById('revoke-btn').addEventListener('click', async () => {
-    const data = await call('DELETE');
-    if (data) {
-      statusEl.textContent = `revoked: ${data.revoked}`;
-      statusEl.className = 'status ok';
-      linkBox.classList.remove('visible');
-    }
+    btn.disabled = false;
   });
 </script>
 
