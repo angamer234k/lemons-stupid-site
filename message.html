@@ -287,8 +287,8 @@
       if (res.ok) {
         statusEl.textContent = data.invited ? 'sent! (invite) 🍋' : 'sent! 🍋';
         statusEl.className = 'status ok';
-        form.reset();
-        countEl.textContent = '0';
+        // form.reset();
+        // countEl.textContent = '0';
       } else {
         statusEl.textContent = data.error || 'something went wrong';
         statusEl.className = 'status err';
