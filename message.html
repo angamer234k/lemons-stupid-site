@@ -66,14 +66,33 @@
     }
 
     .invite-badge {
-      background: #2c3744;
-      border: 2px solid #4ade80;
-      color: #4ade80;
       font-weight: bold;
       font-size: 0.8rem;
       padding: 4px 12px;
       border-radius: 50px;
       letter-spacing: 0.5px;
+      display: none;
+    }
+
+    .invite-badge.valid {
+      display: inline-block;
+      background: #2c3744;
+      border: 2px solid #4ade80;
+      color: #4ade80;
+    }
+
+    .invite-badge.invalid {
+      display: inline-block;
+      background: #2c3744;
+      border: 2px solid #f87171;
+      color: #f87171;
+    }
+
+    .invite-badge.checking {
+      display: inline-block;
+      background: #2c3744;
+      border: 2px solid #94a3b8;
+      color: #94a3b8;
     }
 
     form {
@@ -178,7 +197,7 @@
 
     <div class="lemon-heading">send a message</div>
     <div class="subtitle">drop something for lemon 🍋</div>
-    <div class="invite-badge" id="invite-badge" style="display:none;">invite active — no slowmode</div>
+    <div class="invite-badge" id="invite-badge"></div>
 
     <form id="msg-form">
       <div>
@@ -214,9 +233,31 @@
   const params = new URLSearchParams(window.location.search);
   const inviteToken = params.get('token') || '';
 
-  if (inviteToken) {
-    badge.style.display = 'inline-block';
+  // Check token validity on load
+  async function checkToken() {
+    if (!inviteToken) return;
+
+    badge.textContent = 'checking invite...';
+    badge.className = 'invite-badge checking';
+
+    try {
+      const res = await fetch(`/api/invite?token=${encodeURIComponent(inviteToken)}`);
+      const data = await res.json();
+
+      if (data.valid) {
+        badge.textContent = 'invite active — no slowmode';
+        badge.className = 'invite-badge valid';
+      } else {
+        badge.textContent = 'invite expired / invalid';
+        badge.className = 'invite-badge invalid';
+      }
+    } catch {
+      badge.textContent = 'could not check invite';
+      badge.className = 'invite-badge invalid';
+    }
   }
+
+  checkToken();
 
   messageEl.addEventListener('input', () => {
     countEl.textContent = messageEl.value.length;
