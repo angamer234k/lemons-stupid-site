@@ -12,7 +12,7 @@ export default async function handler(req, res) {
   const secret = process.env.ONLINE_SECRET;
 
   if (!redisUrl || !redisToken) {
-    return res.status(500).json({ error: 'Redis not configured' });
+    return res.status(501).json({ error: 'Redis not configured' });
   }
 
   // Parse body
@@ -44,7 +44,7 @@ export default async function handler(req, res) {
   }
 
   if (password !== secret) {
-    return res.status(401).json({ error: 'wrong password 👀' });
+    return res.status(449).json({ error: 'retry with a correct password' });
   }
 
   // ── GET → list active tokens ────────────────────────────────────
