@@ -103,7 +103,7 @@ export default async function handler(req, res) {
   // ── Nudge the Node server ───────────────────────────────────────
   if (nudgeSecret) {
     try {
-      await fetch('http://78.154.103.13:15612/nudge', {
+      await fetch('https://lemonsserver.wispbyte.app/nudge', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
