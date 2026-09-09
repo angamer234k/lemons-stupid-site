@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>lemon's message wall</title>
+  <meta property="og:title" content="lemon's message wall" />
+  <meta property="og:description" content="public drops for lemon 🍋" />
+  <meta name="twitter:card" content="summary" />
+  <link href="https://fonts.googleapis.com/css2?family=Lemon&display=swap" rel="stylesheet" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      background: #1e1e2a;
+      font-family: Arial, Helvetica, sans-serif;
+      padding: 20px;
+      color: #fff;
+    }
+    .wrap { max-width: 640px; margin: 0 auto; }
+    .card-wrapper {
+      padding: 3px;
+      border-radius: 16px;
+      background: linear-gradient(180deg, #fff 0%, #888 100%);
+      box-shadow: 0 12px 40px rgba(0,0,0,.5);
+      margin-bottom: 16px;
+    }
+    .card {
+      background: #67809f;
+      border-radius: 13px;
+      padding: 24px 20px;
+    }
+    .lemon-heading {
+      font-family: 'Lemon', cursive, 'Comic Sans MS', sans-serif;
+      font-size: 2.2rem;
+      color: #fdff94;
+      text-shadow: -2px -2px 0 #535353, 2px -2px 0 #535353, -2px 2px 0 #535353, 2px 2px 0 #535353;
+      text-align: center;
+    }
+    .sub { text-align: center; font-weight: bold; opacity: .9; margin-top: 8px; }
+    .nav {
+      display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 14px;
+    }
+    .chip {
+      height: 28px; padding: 0 14px; border-radius: 50px;
+      background: #2c3744; border: 2px solid #4b6ca5; color: #fff;
+      font-weight: bold; font-size: 14px; text-decoration: none;
+      display: inline-flex; align-items: center;
+    }
+    .chip:hover { background: #3e4d5e; border-color: #6b8fc7; }
+    .meta { text-align: center; color: #cbd5e1; font-size: .85rem; margin: 12px 0; font-weight: bold; }
+    .list { display: flex; flex-direction: column; gap: 10px; }
+    .msg {
+      background: #2c3744;
+      border: 2px solid #4b6ca5;
+      border-radius: 12px;
+      padding: 12px 14px;
+    }
+    .msg.invited { border-color: #4ade80; box-shadow: 0 0 0 1px rgba(74,222,128,.25); }
+    .msg-top {
+      display: flex; justify-content: space-between; gap: 8px; align-items: center;
+      margin-bottom: 6px; flex-wrap: wrap;
+    }
+    .name { color: #ffe77f; font-weight: bold; }
+    .time { color: #94a3b8; font-size: .75rem; font-weight: bold; }
+    .body { white-space: pre-wrap; word-break: break-word; line-height: 1.4; }
+    .tags { margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap; }
+    .tag {
+      font-size: .7rem; font-weight: bold; padding: 2px 8px; border-radius: 999px;
+      background: #1e1e2a; border: 1px solid #4b6ca5; color: #cbd5e1;
+    }
+    .tag.vip { border-color: #4ade80; color: #4ade80; }
+    .empty, .err { text-align: center; font-weight: bold; color: #cbd5e1; padding: 20px; }
+    .err { color: #f87171; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card-wrapper"><div class="card">
+    <div class="lemon-heading">message wall</div>
+    <div class="sub">public drops for lemon 🍋</div>
+    <div class="nav">
+      <a class="chip" href="/">profile</a>
+      <a class="chip" href="/message">send message</a>
+      <a class="chip" href="/status">status</a>
+    </div>
+  </div></div>
+
+  <div class="meta" id="meta">loading…</div>
+  <div class="list" id="list"></div>
+</div>
+<script>
+function ago(ts) {
+  if (!ts) return '';
+  const d = Date.now() - ts;
+  const m = Math.floor(d / 60000);
+  const h = Math.floor(d / 3600000);
+  const day = Math.floor(d / 86400000);
+  if (m < 1) return 'just now';
+  if (m < 60) return m + 'm ago';
+  if (h < 24) return h + 'h ago';
+  return day + 'd ago';
+}
+function esc(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+async function load() {
+  const list = document.getElementById('list');
+  const meta = document.getElementById('meta');
+  try {
+    const res = await fetch('/api/wall?limit=40', { cache: 'no-store' });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'fail');
+    const msgs = data.messages || [];
+    meta.textContent = msgs.length ? (msgs.length + ' public messages') : 'no public messages yet';
+    if (!msgs.length) {
+      list.innerHTML = '<div class="empty">be the first — tick “post on wall” when you message</div>';
+      return;
+    }
+    list.innerHTML = msgs.map(function (m) {
+      var tags = '';
+      if (m.invited) tags += '<span class="tag vip">invite</span>';
+      if (m.hasImage) tags += '<span class="tag">had image</span>';
+      return '<div class="msg' + (m.invited ? ' invited' : '') + '">' +
+        '<div class="msg-top"><span class="name">' + esc(m.name) + '</span>' +
+        '<span class="time">' + esc(ago(m.timestamp)) + '</span></div>' +
+        '<div class="body">' + esc(m.message) + '</div>' +
+        (tags ? '<div class="tags">' + tags + '</div>' : '') +
+        '</div>';
+    }).join('');
+  } catch (e) {
+    meta.textContent = '';
+    list.innerHTML = '<div class="err">could not load wall</div>';
+  }
+}
+load();
+setInterval(load, 45000);
+</script>
+</body>
+</html>

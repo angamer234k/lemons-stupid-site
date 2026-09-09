@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>lemon status</title>
+  <meta property="og:title" content="lemon status" />
+  <meta property="og:description" content="is lemon / the bot / the host up?" />
+  <meta name="twitter:card" content="summary" />
+  <link href="https://fonts.googleapis.com/css2?family=Lemon&display=swap" rel="stylesheet" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      background: #1e1e2a;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      font-family: Arial, Helvetica, sans-serif;
+      padding: 20px;
+      color: #fff;
+    }
+    .card-wrapper {
+      width: 85vw; max-width: 520px; padding: 3px; border-radius: 16px;
+      background: linear-gradient(180deg, #fff 0%, #888 100%);
+      box-shadow: 0 12px 40px rgba(0,0,0,.5);
+    }
+    .card {
+      background: #67809f; border-radius: 13px; padding: 28px 20px 32px;
+      display: flex; flex-direction: column; gap: 14px; align-items: stretch;
+    }
+    .lemon-heading {
+      font-family: 'Lemon', cursive, 'Comic Sans MS', sans-serif;
+      font-size: 2.2rem; color: #fdff94; text-align: center;
+      text-shadow: -2px -2px 0 #535353, 2px -2px 0 #535353, -2px 2px 0 #535353, 2px 2px 0 #535353;
+    }
+    .sub { text-align: center; font-weight: bold; opacity: .9; }
+    .nav { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+    .chip {
+      height: 28px; padding: 0 14px; border-radius: 50px;
+      background: #2c3744; border: 2px solid #4b6ca5; color: #fff;
+      font-weight: bold; font-size: 14px; text-decoration: none;
+      display: inline-flex; align-items: center;
+    }
+    .row {
+      background: #2c3744; border: 2px solid #4b6ca5; border-radius: 12px;
+      padding: 12px 14px;
+    }
+    .row h3 {
+      font-size: .75rem; letter-spacing: .06em; text-transform: uppercase;
+      color: #ffe77f; margin-bottom: 6px;
+    }
+    .line { display: flex; justify-content: space-between; gap: 10px; font-weight: bold; margin: 4px 0; flex-wrap: wrap; }
+    .muted { color: #94a3b8; font-size: .85rem; }
+    .on { color: #4ade80; }
+    .off { color: #f87171; }
+    .meh { color: #fbbf24; }
+    .foot { text-align: center; color: #cbd5e1; font-size: .8rem; font-weight: bold; }
+  </style>
+</head>
+<body>
+<div class="card-wrapper"><div class="card">
+  <div class="lemon-heading">status</div>
+  <div class="sub">site · bot · host</div>
+  <div class="nav">
+    <a class="chip" href="/">profile</a>
+    <a class="chip" href="/message">message</a>
+    <a class="chip" href="/wall">wall</a>
+  </div>
+
+  <div class="row">
+    <h3>Lemon (site presence)</h3>
+    <div class="line"><span>status</span><span id="site-status" class="meh">…</span></div>
+    <div class="line muted"><span>last online</span><span id="site-last">—</span></div>
+  </div>
+
+  <div class="row">
+    <h3>Bot</h3>
+    <div class="line"><span>reachable</span><span id="bot-reach" class="meh">…</span></div>
+    <div class="line"><span>ready</span><span id="bot-ready">—</span></div>
+    <div class="line muted"><span>uptime</span><span id="bot-up">—</span></div>
+    <div class="line muted"><span>protocol</span><span id="bot-proto">—</span></div>
+  </div>
+
+  <div class="row">
+    <h3>Host (roblox / machine)</h3>
+    <div class="line"><span>online</span><span id="host-on" class="meh">…</span></div>
+    <div class="line muted"><span>today uptime</span><span id="host-today">—</span></div>
+    <div class="line muted"><span>streak</span><span id="host-streak">—</span></div>
+    <div class="muted" id="host-desc" style="margin-top:6px"></div>
+  </div>
+
+  <div class="foot" id="updated">checking…</div>
+</div></div>
+<script>
+function ago(ts) {
+  if (!ts) return 'never';
+  const d = Date.now() - ts;
+  const m = Math.floor(d / 60000);
+  const h = Math.floor(d / 3600000);
+  const day = Math.floor(d / 86400000);
+  if (m < 1) return 'just now';
+  if (m < 60) return m + 'm ago';
+  if (h < 24) return h + 'h ago';
+  return day + 'd ago';
+}
+function dur(ms) {
+  if (ms == null) return '—';
+  const s = Math.floor(ms / 1000);
+  const m = Math.floor(s / 60);
+  const h = Math.floor(m / 60);
+  const d = Math.floor(h / 24);
+  if (d > 0) return d + 'd ' + (h % 24) + 'h';
+  if (h > 0) return h + 'h ' + (m % 60) + 'm';
+  if (m > 0) return m + 'm';
+  return s + 's';
+}
+function setState(el, ok, yes, no) {
+  el.textContent = ok ? yes : no;
+  el.className = ok ? 'on' : 'off';
+}
+async function load() {
+  try {
+    const res = await fetch('/api/status', { cache: 'no-store' });
+    const data = await res.json();
+
+    setState(document.getElementById('site-status'), data.site && data.site.online, 'online', 'offline');
+    document.getElementById('site-last').textContent = ago(data.site && data.site.lastOnline);
+
+    const bot = data.bot || {};
+    setState(document.getElementById('bot-reach'), !!bot.reachable, 'yes', 'no');
+    document.getElementById('bot-ready').textContent = bot.reachable ? (bot.ready ? 'yes' : 'no') : '—';
+    document.getElementById('bot-ready').className = bot.reachable && bot.ready ? 'on' : (bot.reachable ? 'off' : '');
+    document.getElementById('bot-up').textContent = bot.reachable ? dur(bot.uptimeMs) : '—';
+    document.getElementById('bot-proto').textContent = bot.messageProtocol != null ? ('v' + bot.messageProtocol) : '—';
+
+    const host = data.host;
+    if (host) {
+      setState(document.getElementById('host-on'), !!host.online, 'online', 'offline');
+      document.getElementById('host-today').textContent =
+        host.todayUptimePercent != null ? (host.todayUptimePercent + '%') : '—';
+      document.getElementById('host-streak').textContent = dur(host.currentStreakMs);
+      document.getElementById('host-desc').textContent = host.description || '';
+    } else {
+      document.getElementById('host-on').textContent = 'unknown';
+      document.getElementById('host-on').className = 'meh';
+    }
+
+    document.getElementById('updated').textContent = 'updated ' + new Date().toLocaleTimeString();
+  } catch (e) {
+    document.getElementById('updated').textContent = 'failed to load status';
+  }
+}
+load();
+setInterval(load, 20000);
+</script>
+</body>
+</html>
