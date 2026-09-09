@@ -17,6 +17,7 @@ export default async function handler(req, res) {
   const limit = Math.min(Math.max(Number(req.query?.limit) || 40, 1), 50);
 
   try {
+    // only approved / auto-approved messages
     const r = await fetch(`${redisUrl}/lrange/wall/0/${limit - 1}`, {
       headers: { Authorization: `Bearer ${redisToken}` },
     });
@@ -29,6 +30,7 @@ export default async function handler(req, res) {
         const parsed = typeof item === 'string' ? JSON.parse(item) : item;
         if (!parsed || !parsed.message) continue;
         messages.push({
+          id: parsed.id || null,
           name: (parsed.name || 'Anonymous').toString().slice(0, 50),
           message: parsed.message.toString().slice(0, 2000),
           timestamp: Number(parsed.timestamp) || null,

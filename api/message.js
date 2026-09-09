@@ -4,6 +4,7 @@ const DEFAULT_INVITE_PERKS = {
   maxImageMB: 2.5,
   wallHighlight: true,
   canPublic: true,
+  autoApproveWall: true,
 };
 
 function parseInviteValue(raw) {
@@ -21,6 +22,10 @@ function parseInviteValue(raw) {
   } catch {
     return { active: true, perks: { ...DEFAULT_INVITE_PERKS } };
   }
+}
+
+function makeId() {
+  return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
 }
 
 export default async function handler(req, res) {
@@ -62,7 +67,6 @@ export default async function handler(req, res) {
 
   if (!name) name = 'Anonymous';
 
-  // ── Check invite token ──────────────────────────────────────────
   let hasValidToken = false;
   let perks = {
     noSlowmode: false,
@@ -70,6 +74,7 @@ export default async function handler(req, res) {
     maxImageMB: 1.5,
     wallHighlight: false,
     canPublic: true,
+    autoApproveWall: false,
   };
 
   if (token) {
@@ -94,9 +99,8 @@ export default async function handler(req, res) {
     });
   }
 
-  // image validation
   let hasImage = false;
-  const maxImageChars = perks.maxImageMB * 1024 * 1024 * 1.4; // base64 overhead-ish
+  const maxImageChars = perks.maxImageMB * 1024 * 1024 * 1.4;
   if (image && typeof image === 'string') {
     if (image.length > maxImageChars) {
       return res.status(400).json({
@@ -112,7 +116,6 @@ export default async function handler(req, res) {
     image = null;
   }
 
-  // rate limit — skipped with noSlowmode invite
   if (!hasValidToken || !perks.noSlowmode) {
     try {
       const rateRes = await fetch(`${redisUrl}/get/rate:message`, {
@@ -137,7 +140,9 @@ export default async function handler(req, res) {
   }
 
   const timestamp = Date.now();
+  const id = makeId();
   const entry = {
+    id,
     name,
     message,
     timestamp,
@@ -147,7 +152,6 @@ export default async function handler(req, res) {
     invited: hasValidToken,
   };
 
-  // private inbox list (always)
   try {
     await fetch(`${redisUrl}/lpush/messages/${encodeURIComponent(JSON.stringify(entry))}`, {
       headers: { Authorization: `Bearer ${redisToken}` }
@@ -160,28 +164,36 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Failed to store message' });
   }
 
-  // public wall list (opt-in)
+  // Wall moderation:
+  // - invite + autoApproveWall → live immediately
+  // - everyone else → pending until lemon approves
+  let wallStatus = null;
   if (isPublic) {
     const wallEntry = {
+      id,
       name,
       message,
       timestamp,
       invited: hasValidToken && !!perks.wallHighlight,
       hasImage: !!hasImage,
     };
+    const autoLive = hasValidToken && perks.autoApproveWall !== false;
+    const listKey = autoLive ? 'wall' : 'wall:pending';
+    wallStatus = autoLive ? 'live' : 'pending';
+
     try {
-      await fetch(`${redisUrl}/lpush/wall/${encodeURIComponent(JSON.stringify(wallEntry))}`, {
+      await fetch(`${redisUrl}/lpush/${listKey}/${encodeURIComponent(JSON.stringify(wallEntry))}`, {
         headers: { Authorization: `Bearer ${redisToken}` }
       });
-      await fetch(`${redisUrl}/ltrim/wall/0/49`, {
+      await fetch(`${redisUrl}/ltrim/${listKey}/0/49`, {
         headers: { Authorization: `Bearer ${redisToken}` }
       });
     } catch (err) {
       console.error('Wall store error:', err);
+      wallStatus = null;
     }
   }
 
-  // nudge bot
   if (nudgeSecret) {
     try {
       const nudgeBody = {
@@ -189,8 +201,10 @@ export default async function handler(req, res) {
         name,
         message,
         timestamp,
+        id,
         invited: hasValidToken,
         public: isPublic,
+        wallStatus,
       };
       if (hasImage && image) {
         nudgeBody.image = image;
@@ -213,5 +227,6 @@ export default async function handler(req, res) {
     invited: hasValidToken,
     hasImage: !!hasImage,
     public: isPublic,
+    wallStatus,
   });
 }
