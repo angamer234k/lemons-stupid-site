@@ -28,6 +28,8 @@ export default async function handler(req, res) {
   let name = (body.name || '').toString().trim().slice(0, 50);
   let message = (body.message || '').toString().trim();
   let token = (body.token || '').toString().trim();
+  let image = body.image || null; // data URL or raw base64
+  let imageName = (body.imageName || 'image.png').toString().slice(0, 80);
 
   if (!message) {
     return res.status(400).json({ error: 'message is required' });
@@ -38,6 +40,23 @@ export default async function handler(req, res) {
   }
 
   if (!name) name = 'Anonymous';
+
+  // Basic image validation (optional)
+  let hasImage = false;
+  if (image && typeof image === 'string') {
+    // Expect data:image/...;base64,... or pure base64
+    const maxChars = 2.2 * 1024 * 1024; // ~1.5MB binary after base64 overhead
+    if (image.length > maxChars) {
+      return res.status(400).json({ error: 'image too large (max ~1.5 MB)' });
+    }
+    if (image.startsWith('data:image/') || /^[A-Za-z0-9+/=\s]+$/.test(image.slice(0, 200))) {
+      hasImage = true;
+    } else {
+      return res.status(400).json({ error: 'invalid image data' });
+    }
+  } else {
+    image = null;
+  }
 
   // ── Check invite token (bypasses rate limit) ─────────────────────
   let hasValidToken = false;
@@ -82,10 +101,11 @@ export default async function handler(req, res) {
     name,
     message,
     timestamp,
-    token: hasValidToken ? token : null
+    token: hasValidToken ? token : null,
+    hasImage: !!hasImage
   };
 
-  // ── Store message in Redis list ─────────────────────────────────
+  // ── Store message in Redis list (no full image — too big) ───────
   try {
     await fetch(`${redisUrl}/lpush/messages/${encodeURIComponent(JSON.stringify(entry))}`, {
       headers: { Authorization: `Bearer ${redisToken}` }
@@ -103,22 +123,28 @@ export default async function handler(req, res) {
   // ── Nudge the Node server ───────────────────────────────────────
   if (nudgeSecret) {
     try {
+      const nudgeBody = {
+        secret: nudgeSecret,
+        name,
+        message,
+        timestamp,
+        invited: hasValidToken
+      };
+      if (hasImage && image) {
+        nudgeBody.image = image;
+        nudgeBody.imageName = imageName;
+      }
+
       await fetch('https://lemonsserver.wispbyte.app/nudge', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          secret: nudgeSecret,
-          name,
-          message,
-          timestamp,
-          invited: hasValidToken
-        }),
-        signal: AbortSignal.timeout(8000)
+        body: JSON.stringify(nudgeBody),
+        signal: AbortSignal.timeout(15000)
       });
     } catch (err) {
       console.error('Nudge failed (message still saved):', err.message);
     }
   }
 
-  return res.status(200).json({ ok: true, invited: hasValidToken });
+  return res.status(200).json({ ok: true, invited: hasValidToken, hasImage: !!hasImage });
 }

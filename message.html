@@ -139,6 +139,85 @@
       margin-top: -8px;
     }
 
+    .image-row {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .image-input-wrap {
+      position: relative;
+    }
+
+    input[type="file"] {
+      width: 100%;
+      padding: 10px 12px;
+      cursor: pointer;
+      background: #2c3744;
+      border: 2px dashed #4b6ca5;
+      border-radius: 10px;
+      color: #cbd5e1;
+      font-size: 0.9rem;
+    }
+
+    input[type="file"]::file-selector-button {
+      background: #3e4d5e;
+      border: none;
+      border-radius: 8px;
+      color: #ffe77f;
+      font-weight: bold;
+      padding: 6px 12px;
+      margin-right: 10px;
+      cursor: pointer;
+    }
+
+    .image-hint {
+      font-size: 0.75rem;
+      color: #94a3b8;
+    }
+
+    .preview-wrap {
+      display: none;
+      position: relative;
+      margin-top: 4px;
+    }
+
+    .preview-wrap.show {
+      display: block;
+    }
+
+    .preview-wrap img {
+      max-width: 100%;
+      max-height: 180px;
+      border-radius: 10px;
+      border: 2px solid #4b6ca5;
+      object-fit: contain;
+      background: #1e1e2a;
+    }
+
+    .remove-img {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #2c3744;
+      border: 2px solid #f87171;
+      color: #f87171;
+      font-weight: bold;
+      font-size: 1rem;
+      cursor: pointer;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .remove-img:hover {
+      background: #3e2c2c;
+    }
+
     button {
       margin-top: 6px;
       height: 44px;
@@ -211,6 +290,18 @@
         <div class="char-count"><span id="count">0</span>/1000</div>
       </div>
 
+      <div class="image-row">
+        <label for="image">image (optional)</label>
+        <div class="image-input-wrap">
+          <input type="file" id="image" name="image" accept="image/jpeg,image/png,image/gif,image/webp" />
+        </div>
+        <div class="image-hint">jpg / png / gif / webp · max ~1.5 MB</div>
+        <div class="preview-wrap" id="preview-wrap">
+          <img id="preview" alt="preview" />
+          <button type="button" class="remove-img" id="remove-img" title="remove">×</button>
+        </div>
+      </div>
+
       <button type="submit" id="submit-btn">send 🍋</button>
     </form>
 
@@ -228,10 +319,18 @@
   const statusEl = document.getElementById('status');
   const btn = document.getElementById('submit-btn');
   const badge = document.getElementById('invite-badge');
+  const imageInput = document.getElementById('image');
+  const previewWrap = document.getElementById('preview-wrap');
+  const previewImg = document.getElementById('preview');
+  const removeImgBtn = document.getElementById('remove-img');
+
+  const MAX_IMAGE_BYTES = 1.5 * 1024 * 1024; // 1.5 MB
 
   // Grab token from URL (?token=xxx)
   const params = new URLSearchParams(window.location.search);
   const inviteToken = params.get('token') || '';
+
+  let selectedFile = null;
 
   // Check token validity on load
   async function checkToken() {
@@ -263,6 +362,55 @@
     countEl.textContent = messageEl.value.length;
   });
 
+  imageInput.addEventListener('change', () => {
+    const file = imageInput.files?.[0];
+    if (!file) {
+      clearImage();
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      statusEl.textContent = 'only images allowed';
+      statusEl.className = 'status err';
+      clearImage();
+      return;
+    }
+
+    if (file.size > MAX_IMAGE_BYTES) {
+      statusEl.textContent = 'image too big (max ~1.5 MB)';
+      statusEl.className = 'status err';
+      clearImage();
+      return;
+    }
+
+    selectedFile = file;
+    const url = URL.createObjectURL(file);
+    previewImg.src = url;
+    previewWrap.classList.add('show');
+    statusEl.textContent = '';
+    statusEl.className = 'status';
+  });
+
+  removeImgBtn.addEventListener('click', () => {
+    clearImage();
+  });
+
+  function clearImage() {
+    selectedFile = null;
+    imageInput.value = '';
+    previewImg.src = '';
+    previewWrap.classList.remove('show');
+  }
+
+  function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result); // data:image/...;base64,...
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -272,14 +420,29 @@
     if (!message) return;
 
     btn.disabled = true;
-    statusEl.textContent = 'sending...';
+    statusEl.textContent = selectedFile ? 'uploading image + sending...' : 'sending...';
     statusEl.className = 'status';
 
     try {
+      let imageData = null;
+      if (selectedFile) {
+        imageData = await fileToBase64(selectedFile);
+      }
+
+      const payload = {
+        name,
+        message,
+        token: inviteToken,
+      };
+      if (imageData) {
+        payload.image = imageData;
+        payload.imageName = selectedFile.name || 'image.png';
+      }
+
       const res = await fetch('/api/message', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, message, token: inviteToken })
+        body: JSON.stringify(payload)
       });
 
       const data = await res.json();
@@ -287,8 +450,10 @@
       if (res.ok) {
         statusEl.textContent = data.invited ? 'sent! (invite) 🍋' : 'sent! 🍋';
         statusEl.className = 'status ok';
+        // optional: clear form
         // form.reset();
         // countEl.textContent = '0';
+        // clearImage();
       } else {
         statusEl.textContent = data.error || 'something went wrong';
         statusEl.className = 'status err';
