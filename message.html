@@ -410,13 +410,13 @@
       const detail = data.error || 'site and bot are out of sync';
       const versions =
         data.site != null || data.bot != null
-          ? ` (site v${data.site ?? '?'} · bot v${data.bot ?? '?'})`
+          ? ' (site v' + (data.site != null ? data.site : '?') + ' · bot v' + (data.bot != null ? data.bot : '?') + ')'
           : '';
       syncError.innerHTML =
-        'can't send messages right now 🍋' +
-        `<span class="detail">${escapeHtml(detail)}${escapeHtml(versions)}</span>`;
+        'cant send messages right now 🍋' +
+        '<span class="detail">' + escapeHtml(detail) + escapeHtml(versions) + '</span>';
       syncError.style.display = 'block';
-    } catch {
+    } catch (err) {
       const elapsed = Date.now() - started;
       if (elapsed < MIN_SYNC_MS) {
         await new Promise(r => setTimeout(r, MIN_SYNC_MS - elapsed));
@@ -424,8 +424,8 @@
       syncOk = false;
       syncLoading.style.display = 'none';
       syncError.innerHTML =
-        'can't send messages right now 🍋' +
-        `<span class="detail">failed to check if site and bot match — try refresh</span>`;
+        'cant send messages right now 🍋' +
+        '<span class="detail">failed to check if site and bot match — try refresh</span>';
       syncError.style.display = 'block';
     }
   }
@@ -446,7 +446,7 @@
     badge.className = 'invite-badge checking';
 
     try {
-      const res = await fetch(`/api/invite?token=${encodeURIComponent(inviteToken)}`);
+      const res = await fetch('/api/invite?token=' + encodeURIComponent(inviteToken));
       const data = await res.json();
 
       if (data.valid) {
@@ -469,7 +469,7 @@
   });
 
   imageInput.addEventListener('change', () => {
-    const file = imageInput.files?.[0];
+    const file = imageInput.files && imageInput.files[0];
     if (!file) {
       clearImage();
       return;
@@ -537,8 +537,8 @@
       }
 
       const payload = {
-        name,
-        message,
+        name: name,
+        message: message,
         token: inviteToken,
       };
       if (imageData) {
