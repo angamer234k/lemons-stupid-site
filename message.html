@@ -95,6 +95,42 @@
       color: #94a3b8;
     }
 
+    #sync-gate {
+      width: 100%;
+      text-align: center;
+      padding: 12px 8px;
+    }
+
+    #sync-gate .sync-loading {
+      color: #cbd5e1;
+      font-weight: bold;
+      font-size: 0.95rem;
+    }
+
+    #sync-gate .sync-error {
+      color: #f87171;
+      font-weight: bold;
+      font-size: 0.95rem;
+      line-height: 1.45;
+    }
+
+    #sync-gate .sync-error .detail {
+      display: block;
+      margin-top: 8px;
+      font-size: 0.8rem;
+      color: #fca5a5;
+      font-weight: normal;
+    }
+
+    #form-section {
+      width: 100%;
+      display: none;
+    }
+
+    #form-section.ready {
+      display: block;
+    }
+
     form {
       width: 100%;
       display: flex;
@@ -278,34 +314,41 @@
     <div class="subtitle">drop something for lemon 🍋</div>
     <div class="invite-badge" id="invite-badge"></div>
 
-    <form id="msg-form">
-      <div>
-        <label for="name">name (optional)</label>
-        <input type="text" id="name" name="name" maxlength="50" placeholder="Anonymous" autocomplete="off" />
-      </div>
+    <div id="sync-gate">
+      <div class="sync-loading" id="sync-loading">checking connection…</div>
+      <div class="sync-error" id="sync-error" style="display:none;"></div>
+    </div>
 
-      <div>
-        <label for="message">message</label>
-        <textarea id="message" name="message" maxlength="1000" placeholder="say something..." required></textarea>
-        <div class="char-count"><span id="count">0</span>/1000</div>
-      </div>
-
-      <div class="image-row">
-        <label for="image">image (optional)</label>
-        <div class="image-input-wrap">
-          <input type="file" id="image" name="image" accept="image/jpeg,image/png,image/gif,image/webp" />
+    <div id="form-section">
+      <form id="msg-form">
+        <div>
+          <label for="name">name (optional)</label>
+          <input type="text" id="name" name="name" maxlength="50" placeholder="Anonymous" autocomplete="off" />
         </div>
-        <div class="image-hint">jpg / png / gif / webp · max ~1.5 MB</div>
-        <div class="preview-wrap" id="preview-wrap">
-          <img id="preview" alt="preview" />
-          <button type="button" class="remove-img" id="remove-img" title="remove">×</button>
+
+        <div>
+          <label for="message">message</label>
+          <textarea id="message" name="message" maxlength="1000" placeholder="say something..." required></textarea>
+          <div class="char-count"><span id="count">0</span>/1000</div>
         </div>
-      </div>
 
-      <button type="submit" id="submit-btn">send 🍋</button>
-    </form>
+        <div class="image-row">
+          <label for="image">image (optional)</label>
+          <div class="image-input-wrap">
+            <input type="file" id="image" name="image" accept="image/jpeg,image/png,image/gif,image/webp" />
+          </div>
+          <div class="image-hint">jpg / png / gif / webp · max ~1.5 MB</div>
+          <div class="preview-wrap" id="preview-wrap">
+            <img id="preview" alt="preview" />
+            <button type="button" class="remove-img" id="remove-img" title="remove">×</button>
+          </div>
+        </div>
 
-    <div class="status" id="status"></div>
+        <button type="submit" id="submit-btn">send 🍋</button>
+      </form>
+
+      <div class="status" id="status"></div>
+    </div>
 
     <a class="back" href="/">← back to profile</a>
 
@@ -323,16 +366,79 @@
   const previewWrap = document.getElementById('preview-wrap');
   const previewImg = document.getElementById('preview');
   const removeImgBtn = document.getElementById('remove-img');
+  const syncGate = document.getElementById('sync-gate');
+  const syncLoading = document.getElementById('sync-loading');
+  const syncError = document.getElementById('sync-error');
+  const formSection = document.getElementById('form-section');
 
   const MAX_IMAGE_BYTES = 1.5 * 1024 * 1024; // 1.5 MB
+  const MIN_SYNC_MS = 900; // feel a bit of load time
 
   // Grab token from URL (?token=xxx)
   const params = new URLSearchParams(window.location.search);
   const inviteToken = params.get('token') || '';
 
   let selectedFile = null;
+  let syncOk = false;
 
-  // Check token validity on load
+  async function checkSync() {
+    const started = Date.now();
+    syncLoading.style.display = 'block';
+    syncError.style.display = 'none';
+    formSection.classList.remove('ready');
+
+    try {
+      const res = await fetch('/api/sync', { cache: 'no-store' });
+      const data = await res.json();
+
+      const elapsed = Date.now() - started;
+      if (elapsed < MIN_SYNC_MS) {
+        await new Promise(r => setTimeout(r, MIN_SYNC_MS - elapsed));
+      }
+
+      if (data.ok) {
+        syncOk = true;
+        syncGate.style.display = 'none';
+        formSection.classList.add('ready');
+        checkToken();
+        return;
+      }
+
+      // desync / bot offline
+      syncOk = false;
+      syncLoading.style.display = 'none';
+      const detail = data.error || 'site and bot are out of sync';
+      const versions =
+        data.site != null || data.bot != null
+          ? ` (site v${data.site ?? '?'} · bot v${data.bot ?? '?'})`
+          : '';
+      syncError.innerHTML =
+        'can't send messages right now 🍋' +
+        `<span class="detail">${escapeHtml(detail)}${escapeHtml(versions)}</span>`;
+      syncError.style.display = 'block';
+    } catch {
+      const elapsed = Date.now() - started;
+      if (elapsed < MIN_SYNC_MS) {
+        await new Promise(r => setTimeout(r, MIN_SYNC_MS - elapsed));
+      }
+      syncOk = false;
+      syncLoading.style.display = 'none';
+      syncError.innerHTML =
+        'can't send messages right now 🍋' +
+        `<span class="detail">failed to check if site and bot match — try refresh</span>`;
+      syncError.style.display = 'block';
+    }
+  }
+
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  // Check token validity on load (only after sync ok)
   async function checkToken() {
     if (!inviteToken) return;
 
@@ -356,7 +462,7 @@
     }
   }
 
-  checkToken();
+  checkSync();
 
   messageEl.addEventListener('input', () => {
     countEl.textContent = messageEl.value.length;
@@ -413,6 +519,7 @@
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (!syncOk) return;
 
     const name = document.getElementById('name').value.trim();
     const message = messageEl.value.trim();
@@ -450,10 +557,6 @@
       if (res.ok) {
         statusEl.textContent = data.invited ? 'sent! (invite) 🍋' : 'sent! 🍋';
         statusEl.className = 'status ok';
-        // optional: clear form
-        // form.reset();
-        // countEl.textContent = '0';
-        // clearImage();
       } else {
         statusEl.textContent = data.error || 'something went wrong';
         statusEl.className = 'status err';
