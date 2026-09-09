@@ -127,7 +127,7 @@
       </div>
       <label class="check-row">
         <input type="checkbox" id="public" />
-        <span>post on the public wall<small>shows on /wall — still DMs lemon either way</small></span>
+        <span>request public wall post<small>needs lemon approval unless you have an invite · still DMs either way</small></span>
       </label>
       <div class="image-row">
         <label for="image">image (optional)</label>
@@ -171,6 +171,7 @@
 
   let maxChars = 1000;
   let maxImageBytes = 1.5 * 1024 * 1024;
+  let hasInvite = false;
   const MIN_SYNC_MS = 700;
   const params = new URLSearchParams(window.location.search);
   const inviteToken = params.get('token') || '';
@@ -237,6 +238,7 @@
       const res = await fetch('/api/invite?token=' + encodeURIComponent(inviteToken));
       const data = await res.json();
       if (data.valid) {
+        hasInvite = true;
         const p = data.perks || {};
         if (p.maxChars) maxChars = Number(p.maxChars) || maxChars;
         if (p.maxImageMB) maxImageBytes = Number(p.maxImageMB) * 1024 * 1024;
@@ -245,7 +247,7 @@
         if (p.noSlowmode) bits.push('no slowmode');
         if (p.maxChars) bits.push(p.maxChars + ' chars');
         if (p.maxImageMB) bits.push(p.maxImageMB + 'MB images');
-        if (p.wallHighlight) bits.push('wall highlight');
+        if (p.wallHighlight || p.autoApproveWall !== false) bits.push('wall auto-approve');
         badge.textContent = 'invite active — ' + (bits.length ? bits.join(' · ') : 'boosted');
         badge.className = 'invite-badge valid';
       } else {
@@ -317,9 +319,9 @@
       });
       const data = await res.json();
       if (res.ok) {
-        var t = 'sent! 🍋';
-        if (data.invited) t = 'sent! (invite) 🍋';
-        if (data.public) t += ' · on wall';
+        var t = data.invited ? 'sent! (invite) 🍋' : 'sent! 🍋';
+        if (data.wallStatus === 'live') t += ' · live on wall';
+        else if (data.wallStatus === 'pending') t += ' · wall pending approval';
         statusEl.textContent = t;
         statusEl.className = 'status ok';
       } else {

@@ -38,6 +38,9 @@
       text-align: center;
     }
     .sub { text-align: center; font-weight: bold; opacity: .9; margin-top: 8px; }
+    .note {
+      text-align: center; font-size: .8rem; color: #cbd5e1; font-weight: bold; margin-top: 8px; line-height: 1.35;
+    }
     .nav {
       display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 14px;
     }
@@ -79,6 +82,7 @@
   <div class="card-wrapper"><div class="card">
     <div class="lemon-heading">message wall</div>
     <div class="sub">public drops for lemon 🍋</div>
+    <div class="note">moderated — random posts wait for approval · invite posts go live</div>
     <div class="nav">
       <a class="chip" href="/">profile</a>
       <a class="chip" href="/message">send message</a>
@@ -118,7 +122,7 @@ async function load() {
     const msgs = data.messages || [];
     meta.textContent = msgs.length ? (msgs.length + ' public messages') : 'no public messages yet';
     if (!msgs.length) {
-      list.innerHTML = '<div class="empty">be the first — tick “post on wall” when you message</div>';
+      list.innerHTML = '<div class="empty">nothing live yet — request a wall post from /message</div>';
       return;
     }
     list.innerHTML = msgs.map(function (m) {
