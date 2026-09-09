@@ -73,6 +73,28 @@
       background: #1e1e2a; border: 1px solid #4b6ca5; color: #cbd5e1;
     }
     .tag.vip { border-color: #4ade80; color: #4ade80; }
+    .reply {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: #1e1e2a;
+      border-left: 3px solid #fdff94;
+    }
+    .reply-label {
+      font-size: .7rem;
+      font-weight: bold;
+      color: #fdff94;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .reply-body {
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.4;
+      font-size: .95rem;
+    }
+    .reply-time { color: #94a3b8; font-size: .7rem; font-weight: bold; margin-top: 4px; }
     .empty, .err { text-align: center; font-weight: bold; color: #cbd5e1; padding: 20px; }
     .err { color: #f87171; }
   </style>
@@ -82,7 +104,7 @@
   <div class="card-wrapper"><div class="card">
     <div class="lemon-heading">message wall</div>
     <div class="sub">public drops for lemon 🍋</div>
-    <div class="note">moderated — random posts wait for approval · invite posts go live</div>
+    <div class="note">moderated · lemon can reply from discord</div>
     <div class="nav">
       <a class="chip" href="/">profile</a>
       <a class="chip" href="/message">send message</a>
@@ -129,11 +151,22 @@ async function load() {
       var tags = '';
       if (m.invited) tags += '<span class="tag vip">invite</span>';
       if (m.hasImage) tags += '<span class="tag">had image</span>';
+      if (m.reply) tags += '<span class="tag vip">replied</span>';
+      var replyHtml = '';
+      if (m.reply && m.reply.text) {
+        replyHtml =
+          '<div class="reply">' +
+          '<div class="reply-label">🍋 lemon replied</div>' +
+          '<div class="reply-body">' + esc(m.reply.text) + '</div>' +
+          (m.reply.timestamp ? '<div class="reply-time">' + esc(ago(m.reply.timestamp)) + '</div>' : '') +
+          '</div>';
+      }
       return '<div class="msg' + (m.invited ? ' invited' : '') + '">' +
         '<div class="msg-top"><span class="name">' + esc(m.name) + '</span>' +
         '<span class="time">' + esc(ago(m.timestamp)) + '</span></div>' +
         '<div class="body">' + esc(m.message) + '</div>' +
         (tags ? '<div class="tags">' + tags + '</div>' : '') +
+        replyHtml +
         '</div>';
     }).join('');
   } catch (e) {

@@ -22,7 +22,6 @@ async function readList(redisUrl, redisToken, key, limit = 50) {
 
 async function rewriteList(redisUrl, redisToken, key, items) {
   await redisJson(redisUrl, redisToken, `/del/${key}`);
-  // push oldest first so newest ends up at head (lpush order)
   for (let i = items.length - 1; i >= 0; i--) {
     await fetch(`${redisUrl}/lpush/${key}/${encodeURIComponent(JSON.stringify(items[i]))}`, {
       headers: { Authorization: `Bearer ${redisToken}` },
@@ -67,7 +66,6 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'wrong password' });
   }
 
-  // GET → pending + live (admin view)
   if (req.method === 'GET') {
     try {
       const pending = await readList(redisUrl, redisToken, 'wall:pending', 50);
@@ -128,7 +126,26 @@ export default async function handler(req, res) {
         return res.status(404).json({ error: 'not found on wall' });
       }
       await rewriteList(redisUrl, redisToken, 'wall', next);
+      // also drop reply if any
+      await redisJson(redisUrl, redisToken, `/del/wall:reply:${encodeURIComponent(id)}`);
       return res.status(200).json({ ok: true, action: 'delete', id });
+    }
+
+    if (action === 'reply') {
+      if (!id) return res.status(400).json({ error: 'id required' });
+      const text = (body?.text || '').toString().trim().slice(0, 1000);
+      if (!text) return res.status(400).json({ error: 'text required' });
+
+      const reply = {
+        text,
+        timestamp: Date.now(),
+        author: 'lemon',
+      };
+      await fetch(
+        `${redisUrl}/set/wall:reply:${encodeURIComponent(id)}/${encodeURIComponent(JSON.stringify(reply))}`,
+        { headers: { Authorization: `Bearer ${redisToken}` } }
+      );
+      return res.status(200).json({ ok: true, action: 'reply', id, reply });
     }
 
     if (action === 'flush-live') {
@@ -142,7 +159,7 @@ export default async function handler(req, res) {
     }
 
     return res.status(400).json({
-      error: 'action must be approve | reject | delete | flush-live | flush-pending',
+      error: 'action must be approve | reject | delete | reply | flush-live | flush-pending',
     });
   } catch (err) {
     console.error(err);

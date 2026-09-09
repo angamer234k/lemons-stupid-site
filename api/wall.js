@@ -17,7 +17,6 @@ export default async function handler(req, res) {
   const limit = Math.min(Math.max(Number(req.query?.limit) || 40, 1), 50);
 
   try {
-    // only approved / auto-approved messages
     const r = await fetch(`${redisUrl}/lrange/wall/0/${limit - 1}`, {
       headers: { Authorization: `Bearer ${redisToken}` },
     });
@@ -29,6 +28,23 @@ export default async function handler(req, res) {
       try {
         const parsed = typeof item === 'string' ? JSON.parse(item) : item;
         if (!parsed || !parsed.message) continue;
+
+        let reply = null;
+        if (parsed.id) {
+          try {
+            const rr = await fetch(
+              `${redisUrl}/get/wall:reply:${encodeURIComponent(parsed.id)}`,
+              { headers: { Authorization: `Bearer ${redisToken}` } }
+            );
+            const rd = await rr.json();
+            if (rd.result) {
+              reply = typeof rd.result === 'string' ? JSON.parse(rd.result) : rd.result;
+            }
+          } catch {
+            // no reply
+          }
+        }
+
         messages.push({
           id: parsed.id || null,
           name: (parsed.name || 'Anonymous').toString().slice(0, 50),
@@ -36,6 +52,13 @@ export default async function handler(req, res) {
           timestamp: Number(parsed.timestamp) || null,
           invited: !!parsed.invited,
           hasImage: !!parsed.hasImage,
+          reply: reply
+            ? {
+                text: String(reply.text || '').slice(0, 1000),
+                timestamp: Number(reply.timestamp) || null,
+                author: reply.author || 'lemon',
+              }
+            : null,
         });
       } catch {
         // skip bad entries
