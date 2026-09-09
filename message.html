@@ -4,320 +4,98 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>send lemon a message</title>
-
   <meta property="og:title" content="send lemon a message" />
   <meta property="og:description" content="drop a message for lemon 🍋" />
   <meta name="twitter:card" content="summary" />
-
   <link href="https://fonts.googleapis.com/css2?family=Lemon&display=swap" rel="stylesheet" />
-
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-
     body {
-      min-height: 100vh;
-      background: #1e1e2a;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-family: 'Arial', 'Helvetica', sans-serif;
-      padding: 20px;
+      min-height: 100vh; background: #1e1e2a; display: flex; justify-content: center; align-items: center;
+      font-family: Arial, Helvetica, sans-serif; padding: 20px;
     }
-
     .card-wrapper {
-      width: 85vw;
-      max-width: 520px;
-      padding: 3px;
-      border-radius: 16px;
-      background: linear-gradient(180deg, #ffffff 0%, #888888 100%);
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+      width: 85vw; max-width: 520px; padding: 3px; border-radius: 16px;
+      background: linear-gradient(180deg, #fff 0%, #888 100%);
+      box-shadow: 0 12px 40px rgba(0,0,0,.5);
     }
-
     .card {
-      width: 100%;
-      background-color: #67809f;
-      border-radius: 13px;
-      padding: 32px 24px 36px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 16px;
+      width: 100%; background: #67809f; border-radius: 13px; padding: 32px 24px 36px;
+      display: flex; flex-direction: column; align-items: center; gap: 16px;
     }
-
     .lemon-heading {
-      font-family: 'Lemon', cursive, 'Comic Sans MS', sans-serif;
-      font-size: 2.4rem;
-      color: #fdff94;
-      text-shadow:
-        -2px -2px 0 #535353,
-         2px -2px 0 #535353,
-        -2px  2px 0 #535353,
-         2px  2px 0 #535353;
-      text-align: center;
-      letter-spacing: 1px;
+      font-family: 'Lemon', cursive, 'Comic Sans MS', sans-serif; font-size: 2.4rem; color: #fdff94;
+      text-shadow: -2px -2px 0 #535353, 2px -2px 0 #535353, -2px 2px 0 #535353, 2px 2px 0 #535353;
+      text-align: center; letter-spacing: 1px;
     }
-
-    .subtitle {
-      color: #ffffff;
-      font-weight: bold;
-      font-size: 1rem;
-      text-align: center;
-      opacity: 0.9;
-    }
-
+    .subtitle { color: #fff; font-weight: bold; font-size: 1rem; text-align: center; opacity: .9; }
     .invite-badge {
-      font-weight: bold;
-      font-size: 0.8rem;
-      padding: 4px 12px;
-      border-radius: 50px;
-      letter-spacing: 0.5px;
-      display: none;
+      font-weight: bold; font-size: .8rem; padding: 4px 12px; border-radius: 50px;
+      letter-spacing: .5px; display: none; text-align: center; line-height: 1.35;
     }
-
-    .invite-badge.valid {
-      display: inline-block;
-      background: #2c3744;
-      border: 2px solid #4ade80;
-      color: #4ade80;
-    }
-
-    .invite-badge.invalid {
-      display: inline-block;
-      background: #2c3744;
-      border: 2px solid #f87171;
-      color: #f87171;
-    }
-
-    .invite-badge.checking {
-      display: inline-block;
-      background: #2c3744;
-      border: 2px solid #94a3b8;
-      color: #94a3b8;
-    }
-
-    #sync-gate {
-      width: 100%;
-      text-align: center;
-      padding: 12px 8px;
-    }
-
-    #sync-gate .sync-loading {
-      color: #cbd5e1;
-      font-weight: bold;
-      font-size: 0.95rem;
-    }
-
-    #sync-gate .sync-error {
-      color: #f87171;
-      font-weight: bold;
-      font-size: 0.95rem;
-      line-height: 1.45;
-    }
-
-    #sync-gate .sync-error .detail {
-      display: block;
-      margin-top: 8px;
-      font-size: 0.8rem;
-      color: #fca5a5;
-      font-weight: normal;
-    }
-
-    #form-section {
-      width: 100%;
-      display: none;
-    }
-
-    #form-section.ready {
-      display: block;
-    }
-
+    .invite-badge.valid { display: inline-block; background: #2c3744; border: 2px solid #4ade80; color: #4ade80; }
+    .invite-badge.invalid { display: inline-block; background: #2c3744; border: 2px solid #f87171; color: #f87171; }
+    .invite-badge.checking { display: inline-block; background: #2c3744; border: 2px solid #94a3b8; color: #94a3b8; }
+    #sync-gate { width: 100%; text-align: center; padding: 12px 8px; }
+    #sync-gate .sync-loading { color: #cbd5e1; font-weight: bold; font-size: .95rem; }
+    #sync-gate .sync-error { color: #f87171; font-weight: bold; font-size: .95rem; line-height: 1.45; }
+    #sync-gate .sync-error .detail { display: block; margin-top: 8px; font-size: .8rem; color: #fca5a5; font-weight: normal; }
+    #form-section { width: 100%; display: none; }
+    #form-section.ready { display: block; }
     .soft-warn {
-      display: none;
-      width: 100%;
-      background: #2c3744;
-      border: 2px solid #fbbf24;
-      color: #fde68a;
-      border-radius: 10px;
-      padding: 10px 12px;
-      font-size: 0.85rem;
-      font-weight: bold;
-      line-height: 1.4;
-      text-align: center;
-      margin-bottom: 4px;
+      display: none; width: 100%; background: #2c3744; border: 2px solid #fbbf24; color: #fde68a;
+      border-radius: 10px; padding: 10px 12px; font-size: .85rem; font-weight: bold; line-height: 1.4; text-align: center;
     }
-
-    .soft-warn.show {
-      display: block;
-    }
-
-    form {
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      margin-top: 8px;
-    }
-
-    label {
-      color: #ffe77f;
-      font-weight: bold;
-      font-size: 0.85rem;
-      letter-spacing: 0.5px;
-    }
-
+    .soft-warn.show { display: block; }
+    form { width: 100%; display: flex; flex-direction: column; gap: 14px; margin-top: 8px; }
+    label { color: #ffe77f; font-weight: bold; font-size: .85rem; letter-spacing: .5px; }
     input, textarea {
-      width: 100%;
-      background: #2c3744;
-      border: 2px solid #4b6ca5;
-      border-radius: 10px;
-      color: #ffffff;
-      font-size: 1rem;
-      padding: 12px 14px;
-      font-family: inherit;
-      outline: none;
-      transition: border-color 0.15s;
+      width: 100%; background: #2c3744; border: 2px solid #4b6ca5; border-radius: 10px; color: #fff;
+      font-size: 1rem; padding: 12px 14px; font-family: inherit; outline: none;
     }
-
-    input:focus, textarea:focus {
-      border-color: #6b8fc7;
+    input:focus, textarea:focus { border-color: #6b8fc7; }
+    textarea { min-height: 140px; resize: vertical; }
+    .char-count { text-align: right; font-size: .75rem; color: #cbd5e1; margin-top: -8px; }
+    .check-row {
+      display: flex; align-items: flex-start; gap: 10px; background: #2c3744;
+      border: 2px solid #4b6ca5; border-radius: 10px; padding: 10px 12px;
     }
-
-    textarea {
-      min-height: 140px;
-      resize: vertical;
-    }
-
-    .char-count {
-      text-align: right;
-      font-size: 0.75rem;
-      color: #cbd5e1;
-      margin-top: -8px;
-    }
-
-    .image-row {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .image-input-wrap {
-      position: relative;
-    }
-
+    .check-row input { width: auto; margin-top: 2px; }
+    .check-row span { color: #fff; font-size: .85rem; font-weight: bold; line-height: 1.35; }
+    .check-row small { display: block; color: #94a3b8; font-weight: normal; margin-top: 2px; }
+    .image-row { display: flex; flex-direction: column; gap: 8px; }
     input[type="file"] {
-      width: 100%;
-      padding: 10px 12px;
-      cursor: pointer;
-      background: #2c3744;
-      border: 2px dashed #4b6ca5;
-      border-radius: 10px;
-      color: #cbd5e1;
-      font-size: 0.9rem;
+      width: 100%; padding: 10px 12px; cursor: pointer; background: #2c3744;
+      border: 2px dashed #4b6ca5; border-radius: 10px; color: #cbd5e1; font-size: .9rem;
     }
-
     input[type="file"]::file-selector-button {
-      background: #3e4d5e;
-      border: none;
-      border-radius: 8px;
-      color: #ffe77f;
-      font-weight: bold;
-      padding: 6px 12px;
-      margin-right: 10px;
-      cursor: pointer;
+      background: #3e4d5e; border: none; border-radius: 8px; color: #ffe77f;
+      font-weight: bold; padding: 6px 12px; margin-right: 10px; cursor: pointer;
     }
-
-    .image-hint {
-      font-size: 0.75rem;
-      color: #94a3b8;
-    }
-
-    .preview-wrap {
-      display: none;
-      position: relative;
-      margin-top: 4px;
-    }
-
-    .preview-wrap.show {
-      display: block;
-    }
-
+    .image-hint { font-size: .75rem; color: #94a3b8; }
+    .preview-wrap { display: none; position: relative; margin-top: 4px; }
+    .preview-wrap.show { display: block; }
     .preview-wrap img {
-      max-width: 100%;
-      max-height: 180px;
-      border-radius: 10px;
-      border: 2px solid #4b6ca5;
-      object-fit: contain;
-      background: #1e1e2a;
+      max-width: 100%; max-height: 180px; border-radius: 10px; border: 2px solid #4b6ca5;
+      object-fit: contain; background: #1e1e2a;
     }
-
     .remove-img {
-      position: absolute;
-      top: 6px;
-      right: 6px;
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: #2c3744;
-      border: 2px solid #f87171;
-      color: #f87171;
-      font-weight: bold;
-      font-size: 1rem;
-      cursor: pointer;
-      line-height: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      position: absolute; top: 6px; right: 6px; width: 28px; height: 28px; border-radius: 50%;
+      background: #2c3744; border: 2px solid #f87171; color: #f87171; font-weight: bold;
+      font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
     }
-
-    .remove-img:hover {
-      background: #3e2c2c;
-    }
-
     button {
-      margin-top: 6px;
-      height: 44px;
-      background: #2c3744;
-      border: 2px solid #4b6ca5;
-      border-radius: 50px;
-      color: #ffffff;
-      font-weight: bold;
-      font-size: 1.05rem;
-      cursor: pointer;
-      transition: background 0.15s, border-color 0.15s, transform 0.15s;
+      margin-top: 6px; height: 44px; background: #2c3744; border: 2px solid #4b6ca5;
+      border-radius: 50px; color: #fff; font-weight: bold; font-size: 1.05rem; cursor: pointer;
     }
-
-    button:hover:not(:disabled) {
-      background: #3e4d5e;
-      border-color: #6b8fc7;
-      transform: translateY(-1px);
-    }
-
-    button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-
-    .status {
-      margin-top: 8px;
-      font-weight: bold;
-      font-size: 0.95rem;
-      text-align: center;
-      min-height: 1.4em;
-    }
-
+    button:hover:not(:disabled) { background: #3e4d5e; border-color: #6b8fc7; }
+    button:disabled { opacity: .6; cursor: not-allowed; }
+    .status { margin-top: 8px; font-weight: bold; font-size: .95rem; text-align: center; min-height: 1.4em; }
     .status.ok { color: #4ade80; }
     .status.err { color: #f87171; }
-
-    .back {
-      margin-top: 10px;
-      color: #cbd5e1;
-      font-size: 0.9rem;
-      text-decoration: none;
-      font-weight: bold;
-    }
-
+    .links { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 6px; }
+    .back { color: #cbd5e1; font-size: .9rem; text-decoration: none; font-weight: bold; }
     .back:hover { color: #ffe77f; }
-
     @media (max-width: 500px) {
       .lemon-heading { font-size: 1.9rem; }
       .card { padding: 24px 16px 28px; }
@@ -325,61 +103,57 @@
   </style>
 </head>
 <body>
+<div class="card-wrapper"><div class="card">
+  <div class="lemon-heading">send a message</div>
+  <div class="subtitle">drop something for lemon 🍋</div>
+  <div class="invite-badge" id="invite-badge"></div>
 
-<div class="card-wrapper">
-  <div class="card">
-
-    <div class="lemon-heading">send a message</div>
-    <div class="subtitle">drop something for lemon 🍋</div>
-    <div class="invite-badge" id="invite-badge"></div>
-
-    <div id="sync-gate">
-      <div class="sync-loading" id="sync-loading">checking connection…</div>
-      <div class="sync-error" id="sync-error" style="display:none;"></div>
-    </div>
-
-    <div id="form-section">
-      <div class="soft-warn" id="soft-warn"></div>
-
-      <form id="msg-form">
-        <div>
-          <label for="name">name (optional)</label>
-          <input type="text" id="name" name="name" maxlength="50" placeholder="Anonymous" autocomplete="off" />
-        </div>
-
-        <div>
-          <label for="message">message</label>
-          <textarea id="message" name="message" maxlength="1000" placeholder="say something..." required></textarea>
-          <div class="char-count"><span id="count">0</span>/1000</div>
-        </div>
-
-        <div class="image-row">
-          <label for="image">image (optional)</label>
-          <div class="image-input-wrap">
-            <input type="file" id="image" name="image" accept="image/jpeg,image/png,image/gif,image/webp" />
-          </div>
-          <div class="image-hint">jpg / png / gif / webp · max ~1.5 MB</div>
-          <div class="preview-wrap" id="preview-wrap">
-            <img id="preview" alt="preview" />
-            <button type="button" class="remove-img" id="remove-img" title="remove">×</button>
-          </div>
-        </div>
-
-        <button type="submit" id="submit-btn">send 🍋</button>
-      </form>
-
-      <div class="status" id="status"></div>
-    </div>
-
-    <a class="back" href="/">← back to profile</a>
-
+  <div id="sync-gate">
+    <div class="sync-loading" id="sync-loading">checking connection…</div>
+    <div class="sync-error" id="sync-error" style="display:none;"></div>
   </div>
-</div>
 
+  <div id="form-section">
+    <div class="soft-warn" id="soft-warn"></div>
+    <form id="msg-form">
+      <div>
+        <label for="name">name (optional)</label>
+        <input type="text" id="name" name="name" maxlength="50" placeholder="Anonymous" autocomplete="off" />
+      </div>
+      <div>
+        <label for="message">message</label>
+        <textarea id="message" name="message" maxlength="1000" placeholder="say something..." required></textarea>
+        <div class="char-count"><span id="count">0</span>/<span id="max-count">1000</span></div>
+      </div>
+      <label class="check-row">
+        <input type="checkbox" id="public" />
+        <span>post on the public wall<small>shows on /wall — still DMs lemon either way</small></span>
+      </label>
+      <div class="image-row">
+        <label for="image">image (optional)</label>
+        <input type="file" id="image" name="image" accept="image/jpeg,image/png,image/gif,image/webp" />
+        <div class="image-hint" id="image-hint">jpg / png / gif / webp · max ~1.5 MB</div>
+        <div class="preview-wrap" id="preview-wrap">
+          <img id="preview" alt="preview" />
+          <button type="button" class="remove-img" id="remove-img" title="remove">×</button>
+        </div>
+      </div>
+      <button type="submit" id="submit-btn">send 🍋</button>
+    </form>
+    <div class="status" id="status"></div>
+  </div>
+
+  <div class="links">
+    <a class="back" href="/">← profile</a>
+    <a class="back" href="/wall">wall</a>
+    <a class="back" href="/status">status</a>
+  </div>
+</div></div>
 <script>
   const form = document.getElementById('msg-form');
   const messageEl = document.getElementById('message');
   const countEl = document.getElementById('count');
+  const maxCountEl = document.getElementById('max-count');
   const statusEl = document.getElementById('status');
   const btn = document.getElementById('submit-btn');
   const badge = document.getElementById('invite-badge');
@@ -387,21 +161,28 @@
   const previewWrap = document.getElementById('preview-wrap');
   const previewImg = document.getElementById('preview');
   const removeImgBtn = document.getElementById('remove-img');
+  const imageHint = document.getElementById('image-hint');
   const syncGate = document.getElementById('sync-gate');
   const syncLoading = document.getElementById('sync-loading');
   const syncError = document.getElementById('sync-error');
   const formSection = document.getElementById('form-section');
   const softWarn = document.getElementById('soft-warn');
+  const publicEl = document.getElementById('public');
 
-  const MAX_IMAGE_BYTES = 1.5 * 1024 * 1024; // 1.5 MB
+  let maxChars = 1000;
+  let maxImageBytes = 1.5 * 1024 * 1024;
   const MIN_SYNC_MS = 700;
-
-  // Grab token from URL (?token=xxx)
   const params = new URLSearchParams(window.location.search);
   const inviteToken = params.get('token') || '';
-
   let selectedFile = null;
   let syncOk = false;
+
+  function applyLimits() {
+    messageEl.maxLength = maxChars;
+    maxCountEl.textContent = String(maxChars);
+    imageHint.textContent = 'jpg / png / gif / webp · max ~' + (maxImageBytes / (1024 * 1024)) + ' MB';
+  }
+  applyLimits();
 
   async function checkSync() {
     const started = Date.now();
@@ -410,17 +191,11 @@
     formSection.classList.remove('ready');
     softWarn.classList.remove('show');
     softWarn.textContent = '';
-
     try {
       const res = await fetch('/api/sync', { cache: 'no-store' });
       const data = await res.json();
-
       const elapsed = Date.now() - started;
-      if (elapsed < MIN_SYNC_MS) {
-        await new Promise(r => setTimeout(r, MIN_SYNC_MS - elapsed));
-      }
-
-      // allow = exact match OR site slightly ahead of bot
+      if (elapsed < MIN_SYNC_MS) await new Promise(r => setTimeout(r, MIN_SYNC_MS - elapsed));
       if (data.allow) {
         syncOk = true;
         syncGate.style.display = 'none';
@@ -432,53 +207,46 @@
         checkToken();
         return;
       }
-
-      // hard fail
       syncOk = false;
       syncLoading.style.display = 'none';
       const detail = data.error || 'site and bot are out of sync';
-      const versions =
-        data.site != null || data.bot != null
-          ? ' (site v' + (data.site != null ? data.site : '?') + ' · bot v' + (data.bot != null ? data.bot : '?') + ')'
-          : '';
-      syncError.innerHTML =
-        'cant send messages, read below!' +
-        '<span class="detail">' + escapeHtml(detail) + escapeHtml(versions) + '</span>';
+      const versions = (data.site != null || data.bot != null)
+        ? ' (site v' + (data.site != null ? data.site : '?') + ' · bot v' + (data.bot != null ? data.bot : '?') + ')'
+        : '';
+      syncError.innerHTML = 'cant send messages, read below!<span class="detail">' + escapeHtml(detail) + escapeHtml(versions) + '</span>';
       syncError.style.display = 'block';
     } catch (err) {
       const elapsed = Date.now() - started;
-      if (elapsed < MIN_SYNC_MS) {
-        await new Promise(r => setTimeout(r, MIN_SYNC_MS - elapsed));
-      }
+      if (elapsed < MIN_SYNC_MS) await new Promise(r => setTimeout(r, MIN_SYNC_MS - elapsed));
       syncOk = false;
       syncLoading.style.display = 'none';
-      syncError.innerHTML =
-        'cant send messages, read below!' +
-        '<span class="detail">failed to check if site and bot match — try refresh</span>';
+      syncError.innerHTML = 'cant send messages, read below!<span class="detail">failed to check if site and bot match — try refresh</span>';
       syncError.style.display = 'block';
     }
   }
 
   function escapeHtml(s) {
-    return String(s)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
   async function checkToken() {
     if (!inviteToken) return;
-
     badge.textContent = 'checking invite...';
     badge.className = 'invite-badge checking';
-
     try {
       const res = await fetch('/api/invite?token=' + encodeURIComponent(inviteToken));
       const data = await res.json();
-
       if (data.valid) {
-        badge.textContent = 'invite active — no slowmode';
+        const p = data.perks || {};
+        if (p.maxChars) maxChars = Number(p.maxChars) || maxChars;
+        if (p.maxImageMB) maxImageBytes = Number(p.maxImageMB) * 1024 * 1024;
+        applyLimits();
+        var bits = [];
+        if (p.noSlowmode) bits.push('no slowmode');
+        if (p.maxChars) bits.push(p.maxChars + ' chars');
+        if (p.maxImageMB) bits.push(p.maxImageMB + 'MB images');
+        if (p.wallHighlight) bits.push('wall highlight');
+        badge.textContent = 'invite active — ' + (bits.length ? bits.join(' · ') : 'boosted');
         badge.className = 'invite-badge valid';
       } else {
         badge.textContent = 'invite expired / invalid';
@@ -491,99 +259,68 @@
   }
 
   checkSync();
+  messageEl.addEventListener('input', function () { countEl.textContent = messageEl.value.length; });
 
-  messageEl.addEventListener('input', () => {
-    countEl.textContent = messageEl.value.length;
-  });
-
-  imageInput.addEventListener('change', () => {
+  imageInput.addEventListener('change', function () {
     const file = imageInput.files && imageInput.files[0];
-    if (!file) {
-      clearImage();
-      return;
-    }
-
+    if (!file) { clearImage(); return; }
     if (!file.type.startsWith('image/')) {
-      statusEl.textContent = 'only images allowed';
-      statusEl.className = 'status err';
-      clearImage();
-      return;
+      statusEl.textContent = 'only images allowed'; statusEl.className = 'status err'; clearImage(); return;
     }
-
-    if (file.size > MAX_IMAGE_BYTES) {
-      statusEl.textContent = 'image too big (max ~1.5 MB)';
-      statusEl.className = 'status err';
-      clearImage();
-      return;
+    if (file.size > maxImageBytes) {
+      statusEl.textContent = 'image too big'; statusEl.className = 'status err'; clearImage(); return;
     }
-
     selectedFile = file;
-    const url = URL.createObjectURL(file);
-    previewImg.src = url;
+    previewImg.src = URL.createObjectURL(file);
     previewWrap.classList.add('show');
-    statusEl.textContent = '';
-    statusEl.className = 'status';
+    statusEl.textContent = ''; statusEl.className = 'status';
   });
-
-  removeImgBtn.addEventListener('click', () => {
-    clearImage();
-  });
-
+  removeImgBtn.addEventListener('click', clearImage);
   function clearImage() {
-    selectedFile = null;
-    imageInput.value = '';
-    previewImg.src = '';
-    previewWrap.classList.remove('show');
+    selectedFile = null; imageInput.value = ''; previewImg.src = ''; previewWrap.classList.remove('show');
   }
-
   function fileToBase64(file) {
-    return new Promise((resolve, reject) => {
+    return new Promise(function (resolve, reject) {
       const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
+      reader.onload = function () { resolve(reader.result); };
       reader.onerror = reject;
       reader.readAsDataURL(file);
     });
   }
 
-  form.addEventListener('submit', async (e) => {
+  form.addEventListener('submit', async function (e) {
     e.preventDefault();
     if (!syncOk) return;
-
     const name = document.getElementById('name').value.trim();
     const message = messageEl.value.trim();
-
     if (!message) return;
-
     btn.disabled = true;
     statusEl.textContent = selectedFile ? 'uploading image + sending...' : 'sending...';
     statusEl.className = 'status';
-
     try {
       let imageData = null;
-      if (selectedFile) {
-        imageData = await fileToBase64(selectedFile);
-      }
-
+      if (selectedFile) imageData = await fileToBase64(selectedFile);
       const payload = {
         name: name,
         message: message,
         token: inviteToken,
+        public: !!publicEl.checked,
       };
       if (imageData) {
         payload.image = imageData;
         payload.imageName = selectedFile.name || 'image.png';
       }
-
       const res = await fetch('/api/message', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
-
       const data = await res.json();
-
       if (res.ok) {
-        statusEl.textContent = data.invited ? 'sent! (invite) 🍋' : 'sent! 🍋';
+        var t = 'sent! 🍋';
+        if (data.invited) t = 'sent! (invite) 🍋';
+        if (data.public) t += ' · on wall';
+        statusEl.textContent = t;
         statusEl.className = 'status ok';
       } else {
         statusEl.textContent = data.error || 'something went wrong';
@@ -593,10 +330,8 @@
       statusEl.textContent = 'network error';
       statusEl.className = 'status err';
     }
-
     btn.disabled = false;
   });
 </script>
-
 </body>
 </html>
