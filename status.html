@@ -11,14 +11,8 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      min-height: 100vh;
-      background: #1e1e2a;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      font-family: Arial, Helvetica, sans-serif;
-      padding: 20px;
-      color: #fff;
+      min-height: 100vh; background: #1e1e2a; display: flex; justify-content: center; align-items: flex-start;
+      font-family: Arial, Helvetica, sans-serif; padding: 20px; color: #fff;
     }
     .card-wrapper {
       width: 85vw; max-width: 520px; padding: 3px; border-radius: 16px;
@@ -35,6 +29,12 @@
       text-shadow: -2px -2px 0 #535353, 2px -2px 0 #535353, -2px 2px 0 #535353, 2px 2px 0 #535353;
     }
     .sub { text-align: center; font-weight: bold; opacity: .9; }
+    .mood-box {
+      display: none; text-align: center; background: #2c3744; border: 2px solid #ffe77f;
+      border-radius: 12px; padding: 12px; font-weight: bold;
+    }
+    .mood-box.show { display: block; }
+    .mood-emoji { font-size: 1.6rem; }
     .nav { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
     .chip {
       height: 28px; padding: 0 14px; border-radius: 50px;
@@ -62,10 +62,15 @@
 <div class="card-wrapper"><div class="card">
   <div class="lemon-heading">status</div>
   <div class="sub">site · bot · host</div>
+  <div class="mood-box" id="mood-box">
+    <div class="mood-emoji" id="mood-emoji">🍋</div>
+    <div id="mood-text"></div>
+  </div>
   <div class="nav">
     <a class="chip" href="/">profile</a>
     <a class="chip" href="/message">message</a>
     <a class="chip" href="/wall">wall</a>
+    <a class="chip" href="/mod">mod</a>
   </div>
 
   <div class="row">
@@ -123,6 +128,16 @@ async function load() {
   try {
     const res = await fetch('/api/status', { cache: 'no-store' });
     const data = await res.json();
+
+    const mood = data.mood;
+    const moodBox = document.getElementById('mood-box');
+    if (mood && (mood.text || mood.emoji)) {
+      document.getElementById('mood-emoji').textContent = mood.emoji || '🍋';
+      document.getElementById('mood-text').textContent = mood.text || '';
+      moodBox.classList.add('show');
+    } else {
+      moodBox.classList.remove('show');
+    }
 
     setState(document.getElementById('site-status'), data.site && data.site.online, 'online', 'offline');
     document.getElementById('site-last').textContent = ago(data.site && data.site.lastOnline);
