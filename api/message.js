@@ -28,18 +28,47 @@ function makeId() {
   return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
 }
 
+function clientIp(req) {
+  const xf = (req.headers['x-forwarded-for'] || '').toString().split(',')[0].trim();
+  return xf || req.headers['x-real-ip'] || 'unknown';
+}
+
+async function isBanned(redisUrl, redisToken, { name, token, ip }) {
+  try {
+    const [namesRes, tokensRes, ipsRes] = await Promise.all([
+      fetch(`${redisUrl}/smembers/ban:names`, {
+        headers: { Authorization: `Bearer ${redisToken}` },
+      }),
+      fetch(`${redisUrl}/smembers/ban:tokens`, {
+        headers: { Authorization: `Bearer ${redisToken}` },
+      }),
+      fetch(`${redisUrl}/smembers/ban:ips`, {
+        headers: { Authorization: `Bearer ${redisToken}` },
+      }),
+    ]);
+    const names = (await namesRes.json()).result || [];
+    const tokens = (await tokensRes.json()).result || [];
+    const ips = (await ipsRes.json()).result || [];
+
+    const nameL = (name || '').toLowerCase();
+    for (const n of names) {
+      if (n && nameL.includes(String(n).toLowerCase())) return 'name';
+    }
+    if (token && tokens.includes(token)) return 'token';
+    if (ip && ips.includes(ip)) return 'ip';
+  } catch (err) {
+    console.error('ban check error', err);
+  }
+  return null;
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
   const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
@@ -60,12 +89,15 @@ export default async function handler(req, res) {
   let image = body.image || null;
   let imageName = (body.imageName || 'image.png').toString().slice(0, 80);
   let isPublic = !!body.public;
+  const ip = clientIp(req);
 
-  if (!message) {
-    return res.status(400).json({ error: 'message is required' });
-  }
-
+  if (!message) return res.status(400).json({ error: 'message is required' });
   if (!name) name = 'Anonymous';
+
+  const banned = await isBanned(redisUrl, redisToken, { name, token, ip });
+  if (banned) {
+    return res.status(403).json({ error: 'blocked' });
+  }
 
   let hasValidToken = false;
   let perks = {
@@ -80,7 +112,7 @@ export default async function handler(req, res) {
   if (token) {
     try {
       const tokenRes = await fetch(`${redisUrl}/get/invite:${encodeURIComponent(token)}`, {
-        headers: { Authorization: `Bearer ${redisToken}` }
+        headers: { Authorization: `Bearer ${redisToken}` },
       });
       const tokenData = await tokenRes.json();
       const invite = parseInviteValue(tokenData.result);
@@ -116,28 +148,30 @@ export default async function handler(req, res) {
     image = null;
   }
 
+  // Per-identity rate limit (Redis) — not sessionStorage
+  // invite + noSlowmode → skip
+  // else rate by IP (and by token if present but without noSlowmode)
   if (!hasValidToken || !perks.noSlowmode) {
+    const rateKey = hasValidToken
+      ? `rate:token:${token}`
+      : `rate:ip:${encodeURIComponent(ip)}`;
     try {
-      const rateRes = await fetch(`${redisUrl}/get/rate:message`, {
-        headers: { Authorization: `Bearer ${redisToken}` }
+      const rateRes = await fetch(`${redisUrl}/get/${rateKey}`, {
+        headers: { Authorization: `Bearer ${redisToken}` },
       });
       const rateData = await rateRes.json();
-
       if (rateData.result) {
         return res.status(429).json({ error: 'slow down — wait 30 seconds between messages' });
       }
-
-      await fetch(`${redisUrl}/set/rate:message/1?EX=30`, {
-        headers: { Authorization: `Bearer ${redisToken}` }
+      await fetch(`${redisUrl}/set/${rateKey}/1?EX=30`, {
+        headers: { Authorization: `Bearer ${redisToken}` },
       });
     } catch (err) {
       console.error('Rate limit error:', err);
     }
   }
 
-  if (isPublic && perks.canPublic === false) {
-    isPublic = false;
-  }
+  if (isPublic && perks.canPublic === false) isPublic = false;
 
   const timestamp = Date.now();
   const id = makeId();
@@ -150,23 +184,21 @@ export default async function handler(req, res) {
     hasImage: !!hasImage,
     public: isPublic,
     invited: hasValidToken,
+    ip: ip !== 'unknown' ? ip : null,
   };
 
   try {
     await fetch(`${redisUrl}/lpush/messages/${encodeURIComponent(JSON.stringify(entry))}`, {
-      headers: { Authorization: `Bearer ${redisToken}` }
+      headers: { Authorization: `Bearer ${redisToken}` },
     });
     await fetch(`${redisUrl}/ltrim/messages/0/49`, {
-      headers: { Authorization: `Bearer ${redisToken}` }
+      headers: { Authorization: `Bearer ${redisToken}` },
     });
   } catch (err) {
     console.error('Store error:', err);
     return res.status(500).json({ error: 'Failed to store message' });
   }
 
-  // Wall moderation:
-  // - invite + autoApproveWall → live immediately
-  // - everyone else → pending until lemon approves
   let wallStatus = null;
   if (isPublic) {
     const wallEntry = {
@@ -183,10 +215,10 @@ export default async function handler(req, res) {
 
     try {
       await fetch(`${redisUrl}/lpush/${listKey}/${encodeURIComponent(JSON.stringify(wallEntry))}`, {
-        headers: { Authorization: `Bearer ${redisToken}` }
+        headers: { Authorization: `Bearer ${redisToken}` },
       });
       await fetch(`${redisUrl}/ltrim/${listKey}/0/49`, {
-        headers: { Authorization: `Bearer ${redisToken}` }
+        headers: { Authorization: `Bearer ${redisToken}` },
       });
     } catch (err) {
       console.error('Wall store error:', err);
@@ -210,12 +242,11 @@ export default async function handler(req, res) {
         nudgeBody.image = image;
         nudgeBody.imageName = imageName;
       }
-
       await fetch('https://lemonsserver.wispbyte.app/nudge', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(nudgeBody),
-        signal: AbortSignal.timeout(15000)
+        signal: AbortSignal.timeout(15000),
       });
     } catch (err) {
       console.error('Nudge failed (message still saved):', err.message);

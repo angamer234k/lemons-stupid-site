@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>wall mod</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lemon&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { min-height: 100vh; background: #1e1e2a; color: #fff; font-family: Arial, sans-serif; padding: 20px; }
+    .wrap { max-width: 720px; margin: 0 auto; }
+    h1 { font-family: Lemon, cursive; color: #fdff94; text-align: center; margin-bottom: 8px;
+      text-shadow: -2px -2px 0 #535353, 2px -2px 0 #535353, -2px 2px 0 #535353, 2px 2px 0 #535353; }
+    .sub { text-align: center; color: #cbd5e1; font-weight: bold; margin-bottom: 16px; }
+    .card { background: #67809f; border-radius: 13px; padding: 16px; margin-bottom: 14px; }
+    input, button { font: inherit; }
+    input[type=password], input[type=text] {
+      width: 100%; background: #2c3744; border: 2px solid #4b6ca5; border-radius: 10px;
+      color: #fff; padding: 10px 12px; margin: 6px 0;
+    }
+    button {
+      background: #2c3744; border: 2px solid #4b6ca5; color: #fff; font-weight: bold;
+      border-radius: 999px; padding: 8px 14px; cursor: pointer; margin: 4px 4px 0 0;
+    }
+    button.ok { border-color: #4ade80; color: #4ade80; }
+    button.bad { border-color: #f87171; color: #f87171; }
+    .msg { background: #2c3744; border: 2px solid #4b6ca5; border-radius: 10px; padding: 10px 12px; margin-top: 8px; }
+    .msg .meta { color: #94a3b8; font-size: .75rem; font-weight: bold; margin-bottom: 4px; }
+    .name { color: #ffe77f; font-weight: bold; }
+    .err { color: #f87171; font-weight: bold; }
+    .row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+    h2 { font-size: .85rem; letter-spacing: .06em; text-transform: uppercase; color: #ffe77f; margin-bottom: 8px; }
+    .chip { background: #1e1e2a; border: 1px solid #4b6ca5; border-radius: 999px; padding: 2px 10px; font-size: .75rem; }
+    a { color: #ffe77f; font-weight: bold; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>wall mod</h1>
+  <p class="sub">approve · reject · bans · flush</p>
+
+  <div class="card" id="login">
+    <h2>password</h2>
+    <input type="password" id="pw" placeholder="ONLINE_SECRET" />
+    <button class="ok" id="unlock">unlock</button>
+    <p class="err" id="loginErr"></p>
+  </div>
+
+  <div id="app" style="display:none">
+    <div class="card">
+      <div class="row">
+        <button id="refresh">refresh</button>
+        <button class="bad" id="flushPending">flush pending</button>
+        <button class="bad" id="flushLive">flush live</button>
+        <a href="/wall">view wall</a>
+      </div>
+      <p id="counts" style="margin-top:8px;font-weight:bold;color:#cbd5e1"></p>
+    </div>
+
+    <div class="card">
+      <h2>pending</h2>
+      <div id="pending"></div>
+    </div>
+
+    <div class="card">
+      <h2>live</h2>
+      <div id="live"></div>
+    </div>
+
+    <div class="card">
+      <h2>bans</h2>
+      <div class="row">
+        <select id="banType" style="background:#2c3744;color:#fff;border:2px solid #4b6ca5;border-radius:8px;padding:8px">
+          <option value="names">name contains</option>
+          <option value="tokens">invite token</option>
+          <option value="ips">ip</option>
+        </select>
+        <input type="text" id="banVal" placeholder="value" style="flex:1;min-width:140px" />
+        <button class="ok" id="banAdd">ban</button>
+      </div>
+      <div id="banList" style="margin-top:10px"></div>
+    </div>
+  </div>
+</div>
+<script>
+const K = 'lemon_mod_secret';
+let secret = localStorage.getItem(K) || '';
+const $ = (id) => document.getElementById(id);
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+async function modGet() {
+  const r = await fetch('/api/wall-mod?password=' + encodeURIComponent(secret), { cache: 'no-store' });
+  const d = await r.json();
+  if (!r.ok) throw new Error(d.error || 'fail');
+  return d;
+}
+async function modPost(body) {
+  const r = await fetch('/api/wall-mod', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(Object.assign({ password: secret }, body)),
+  });
+  const d = await r.json();
+  if (!r.ok) throw new Error(d.error || 'fail');
+  return d;
+}
+async function bansGet() {
+  const r = await fetch('/api/bans?password=' + encodeURIComponent(secret));
+  const d = await r.json();
+  if (!r.ok) throw new Error(d.error || 'fail');
+  return d;
+}
+async function bansMut(method, type, value) {
+  const r = await fetch('/api/bans', {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password: secret, type, value }),
+  });
+  const d = await r.json();
+  if (!r.ok) throw new Error(d.error || 'fail');
+  return d;
+}
+
+function renderList(el, items, mode) {
+  if (!items.length) {
+    el.innerHTML = '<p style="color:#94a3b8;font-weight:bold">empty</p>';
+    return;
+  }
+  el.innerHTML = items.map(function (m) {
+    var btns = mode === 'pending'
+      ? '<button class="ok" data-a="approve" data-id="' + esc(m.id) + '">approve</button>' +
+        '<button class="bad" data-a="reject" data-id="' + esc(m.id) + '">reject</button>'
+      : '<button class="bad" data-a="delete" data-id="' + esc(m.id) + '">delete</button>';
+    return '<div class="msg"><div class="meta"><span class="name">' + esc(m.name) + '</span> · ' +
+      esc(m.id || '') + (m.invited ? ' · invite' : '') + '</div><div>' + esc(m.message) +
+      '</div><div class="row" style="margin-top:6px">' + btns + '</div></div>';
+  }).join('');
+  el.querySelectorAll('button[data-a]').forEach(function (b) {
+    b.onclick = async function () {
+      try {
+        await modPost({ action: b.getAttribute('data-a'), id: b.getAttribute('data-id') });
+        await refresh();
+      } catch (e) { alert(e.message); }
+    };
+  });
+}
+
+function renderBans(d) {
+  var html = '';
+  [['names', d.names], ['tokens', d.tokens], ['ips', d.ips]].forEach(function (pair) {
+    var type = pair[0], arr = pair[1] || [];
+    html += '<p style="margin:8px 0 4px;font-weight:bold;color:#ffe77f">' + type + '</p>';
+    if (!arr.length) html += '<span class="chip">none</span>';
+    arr.forEach(function (v) {
+      html += '<span class="chip">' + esc(v) +
+        ' <button class="bad" data-type="' + type + '" data-v="' + esc(v) +
+        '" style="padding:0 6px;margin:0">×</button></span> ';
+    });
+  });
+  $('banList').innerHTML = html;
+  $('banList').querySelectorAll('button[data-type]').forEach(function (b) {
+    b.onclick = async function () {
+      try {
+        await bansMut('DELETE', b.getAttribute('data-type'), b.getAttribute('data-v'));
+        await refresh();
+      } catch (e) { alert(e.message); }
+    };
+  });
+}
+
+async function refresh() {
+  const d = await modGet();
+  $('counts').textContent = d.pendingCount + ' pending · ' + d.liveCount + ' live';
+  renderList($('pending'), d.pending || [], 'pending');
+  renderList($('live'), d.live || [], 'live');
+  renderBans(await bansGet());
+}
+
+async function unlock() {
+  try {
+    await modGet();
+    localStorage.setItem(K, secret);
+    $('login').style.display = 'none';
+    $('app').style.display = 'block';
+    await refresh();
+  } catch (e) {
+    $('loginErr').textContent = e.message;
+  }
+}
+
+$('unlock').onclick = function () {
+  secret = $('pw').value.trim();
+  unlock();
+};
+$('refresh').onclick = function () { refresh().catch(function (e) { alert(e.message); }); };
+$('flushPending').onclick = async function () {
+  if (!confirm('flush all pending?')) return;
+  try { await modPost({ action: 'flush-pending' }); await refresh(); } catch (e) { alert(e.message); }
+};
+$('flushLive').onclick = async function () {
+  if (!confirm('flush ALL live wall posts?')) return;
+  try { await modPost({ action: 'flush-live' }); await refresh(); } catch (e) { alert(e.message); }
+};
+$('banAdd').onclick = async function () {
+  try {
+    await bansMut('POST', $('banType').value, $('banVal').value.trim());
+    $('banVal').value = '';
+    await refresh();
+  } catch (e) { alert(e.message); }
+};
+
+if (secret) unlock().catch(function () { localStorage.removeItem(K); secret = ''; });
+</script>
+</body>
+</html>

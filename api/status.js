@@ -52,6 +52,13 @@ export default async function handler(req, res) {
       lastOnline,
       online: siteOnline,
     },
+    mood: bot?.mood
+      ? {
+          text: bot.mood.text || '',
+          emoji: bot.mood.emoji || '🍋',
+          updatedAt: bot.mood.updatedAt || null,
+        }
+      : null,
     bot: bot
       ? {
           reachable: true,
