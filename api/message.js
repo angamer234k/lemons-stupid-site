@@ -1,3 +1,28 @@
+const DEFAULT_INVITE_PERKS = {
+  noSlowmode: true,
+  maxChars: 2000,
+  maxImageMB: 2.5,
+  wallHighlight: true,
+  canPublic: true,
+};
+
+function parseInviteValue(raw) {
+  if (!raw) return null;
+  if (raw === '1' || raw === 1) {
+    return { active: true, perks: { ...DEFAULT_INVITE_PERKS } };
+  }
+  try {
+    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    if (!parsed || parsed.active === false) return null;
+    return {
+      active: true,
+      perks: { ...DEFAULT_INVITE_PERKS, ...(parsed.perks || {}) },
+    };
+  } catch {
+    return { active: true, perks: { ...DEFAULT_INVITE_PERKS } };
+  }
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -19,7 +44,6 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Redis not configured' });
   }
 
-  // Parse body
   let body = req.body;
   if (typeof body === 'string') {
     try { body = JSON.parse(body); } catch { body = {}; }
@@ -28,26 +52,56 @@ export default async function handler(req, res) {
   let name = (body.name || '').toString().trim().slice(0, 50);
   let message = (body.message || '').toString().trim();
   let token = (body.token || '').toString().trim();
-  let image = body.image || null; // data URL or raw base64
+  let image = body.image || null;
   let imageName = (body.imageName || 'image.png').toString().slice(0, 80);
+  let isPublic = !!body.public;
 
   if (!message) {
     return res.status(400).json({ error: 'message is required' });
   }
 
-  if (message.length > 1000) {
-    return res.status(400).json({ error: 'message too long (max 1000 characters)' });
-  }
-
   if (!name) name = 'Anonymous';
 
-  // Basic image validation (optional)
+  // ── Check invite token ──────────────────────────────────────────
+  let hasValidToken = false;
+  let perks = {
+    noSlowmode: false,
+    maxChars: 1000,
+    maxImageMB: 1.5,
+    wallHighlight: false,
+    canPublic: true,
+  };
+
+  if (token) {
+    try {
+      const tokenRes = await fetch(`${redisUrl}/get/invite:${encodeURIComponent(token)}`, {
+        headers: { Authorization: `Bearer ${redisToken}` }
+      });
+      const tokenData = await tokenRes.json();
+      const invite = parseInviteValue(tokenData.result);
+      if (invite) {
+        hasValidToken = true;
+        perks = { ...perks, ...invite.perks };
+      }
+    } catch (err) {
+      console.error('Token check error:', err);
+    }
+  }
+
+  if (message.length > perks.maxChars) {
+    return res.status(400).json({
+      error: 'message too long (max ' + perks.maxChars + ' characters)',
+    });
+  }
+
+  // image validation
   let hasImage = false;
+  const maxImageChars = perks.maxImageMB * 1024 * 1024 * 1.4; // base64 overhead-ish
   if (image && typeof image === 'string') {
-    // Expect data:image/...;base64,... or pure base64
-    const maxChars = 2.2 * 1024 * 1024; // ~1.5MB binary after base64 overhead
-    if (image.length > maxChars) {
-      return res.status(400).json({ error: 'image too large (max ~1.5 MB)' });
+    if (image.length > maxImageChars) {
+      return res.status(400).json({
+        error: 'image too large (max ~' + perks.maxImageMB + ' MB)',
+      });
     }
     if (image.startsWith('data:image/') || /^[A-Za-z0-9+/=\s]+$/.test(image.slice(0, 200))) {
       hasImage = true;
@@ -58,25 +112,8 @@ export default async function handler(req, res) {
     image = null;
   }
 
-  // ── Check invite token (bypasses rate limit) ─────────────────────
-  let hasValidToken = false;
-
-  if (token) {
-    try {
-      const tokenRes = await fetch(`${redisUrl}/get/invite:${encodeURIComponent(token)}`, {
-        headers: { Authorization: `Bearer ${redisToken}` }
-      });
-      const tokenData = await tokenRes.json();
-      if (tokenData.result) {
-        hasValidToken = true;
-      }
-    } catch (err) {
-      console.error('Token check error:', err);
-    }
-  }
-
-  // ── Global rate limit (30 seconds) — skipped if valid token ─────
-  if (!hasValidToken) {
+  // rate limit — skipped with noSlowmode invite
+  if (!hasValidToken || !perks.noSlowmode) {
     try {
       const rateRes = await fetch(`${redisUrl}/get/rate:message`, {
         headers: { Authorization: `Bearer ${redisToken}` }
@@ -87,7 +124,6 @@ export default async function handler(req, res) {
         return res.status(429).json({ error: 'slow down — wait 30 seconds between messages' });
       }
 
-      // set rate key with 30s expiry
       await fetch(`${redisUrl}/set/rate:message/1?EX=30`, {
         headers: { Authorization: `Bearer ${redisToken}` }
       });
@@ -96,22 +132,26 @@ export default async function handler(req, res) {
     }
   }
 
+  if (isPublic && perks.canPublic === false) {
+    isPublic = false;
+  }
+
   const timestamp = Date.now();
   const entry = {
     name,
     message,
     timestamp,
     token: hasValidToken ? token : null,
-    hasImage: !!hasImage
+    hasImage: !!hasImage,
+    public: isPublic,
+    invited: hasValidToken,
   };
 
-  // ── Store message in Redis list (no full image — too big) ───────
+  // private inbox list (always)
   try {
     await fetch(`${redisUrl}/lpush/messages/${encodeURIComponent(JSON.stringify(entry))}`, {
       headers: { Authorization: `Bearer ${redisToken}` }
     });
-
-    // Keep only last 50 messages
     await fetch(`${redisUrl}/ltrim/messages/0/49`, {
       headers: { Authorization: `Bearer ${redisToken}` }
     });
@@ -120,7 +160,28 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Failed to store message' });
   }
 
-  // ── Nudge the Node server ───────────────────────────────────────
+  // public wall list (opt-in)
+  if (isPublic) {
+    const wallEntry = {
+      name,
+      message,
+      timestamp,
+      invited: hasValidToken && !!perks.wallHighlight,
+      hasImage: !!hasImage,
+    };
+    try {
+      await fetch(`${redisUrl}/lpush/wall/${encodeURIComponent(JSON.stringify(wallEntry))}`, {
+        headers: { Authorization: `Bearer ${redisToken}` }
+      });
+      await fetch(`${redisUrl}/ltrim/wall/0/49`, {
+        headers: { Authorization: `Bearer ${redisToken}` }
+      });
+    } catch (err) {
+      console.error('Wall store error:', err);
+    }
+  }
+
+  // nudge bot
   if (nudgeSecret) {
     try {
       const nudgeBody = {
@@ -128,7 +189,8 @@ export default async function handler(req, res) {
         name,
         message,
         timestamp,
-        invited: hasValidToken
+        invited: hasValidToken,
+        public: isPublic,
       };
       if (hasImage && image) {
         nudgeBody.image = image;
@@ -146,5 +208,10 @@ export default async function handler(req, res) {
     }
   }
 
-  return res.status(200).json({ ok: true, invited: hasValidToken, hasImage: !!hasImage });
+  return res.status(200).json({
+    ok: true,
+    invited: hasValidToken,
+    hasImage: !!hasImage,
+    public: isPublic,
+  });
 }

@@ -1,3 +1,29 @@
+const DEFAULT_PERKS = {
+  noSlowmode: true,
+  maxChars: 2000,
+  maxImageMB: 2.5,
+  wallHighlight: true,
+  canPublic: true,
+};
+
+function parseInviteValue(raw) {
+  if (!raw) return null;
+  // legacy: value was just "1"
+  if (raw === '1' || raw === 1) {
+    return { active: true, perks: { ...DEFAULT_PERKS } };
+  }
+  try {
+    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    if (!parsed || parsed.active === false) return null;
+    return {
+      active: true,
+      perks: { ...DEFAULT_PERKS, ...(parsed.perks || {}) },
+    };
+  } catch {
+    return { active: true, perks: { ...DEFAULT_PERKS } };
+  }
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
@@ -15,7 +41,6 @@ export default async function handler(req, res) {
     return res.status(501).json({ error: 'Redis not configured' });
   }
 
-  // Parse body
   let body = req.body;
   if (typeof body === 'string') {
     try { body = JSON.parse(body); } catch { body = {}; }
@@ -31,14 +56,18 @@ export default async function handler(req, res) {
         headers: { Authorization: `Bearer ${redisToken}` }
       });
       const data = await r.json();
-      return res.status(200).json({ token, valid: !!data.result });
+      const invite = parseInviteValue(data.result);
+      return res.status(200).json({
+        token,
+        valid: !!invite,
+        perks: invite ? invite.perks : null,
+      });
     } catch (err) {
       console.error(err);
       return res.status(500).json({ error: 'Failed to check token' });
     }
   }
 
-  // Everything below requires the secret
   if (!secret) {
     return res.status(500).json({ error: 'ONLINE_SECRET not set' });
   }
@@ -56,26 +85,26 @@ export default async function handler(req, res) {
       const data = await r.json();
       const tokens = data.result || [];
 
-      // Check which ones still exist + get TTL
       const active = [];
       for (const t of tokens) {
         const check = await fetch(`${redisUrl}/get/invite:${encodeURIComponent(t)}`, {
           headers: { Authorization: `Bearer ${redisToken}` }
         });
         const checkData = await check.json();
+        const invite = parseInviteValue(checkData.result);
 
-        if (checkData.result) {
+        if (invite) {
           const ttlRes = await fetch(`${redisUrl}/ttl/invite:${encodeURIComponent(t)}`, {
             headers: { Authorization: `Bearer ${redisToken}` }
           });
           const ttlData = await ttlRes.json();
           active.push({
             token: t,
-            ttl: ttlData.result, // -1 = no expiry, -2 = doesn't exist, else seconds left
+            ttl: ttlData.result,
+            perks: invite.perks,
             link: `https://лемон.space/message?token=${encodeURIComponent(t)}`
           });
         } else {
-          // Clean up dead token from the set
           await fetch(`${redisUrl}/srem/invite:tokens/${encodeURIComponent(t)}`, {
             headers: { Authorization: `Bearer ${redisToken}` }
           });
@@ -92,12 +121,12 @@ export default async function handler(req, res) {
   // ── POST → create a new UUIDv7 token ────────────────────────────
   if (req.method === 'POST') {
     const expiresIn = body?.expiresIn ? Number(body.expiresIn) : null;
-
-    // Generate UUIDv7-ish (time-based)
+    const perks = { ...DEFAULT_PERKS, ...(body?.perks || {}) };
     const newToken = generateUUIDv7();
+    const payload = JSON.stringify({ active: true, perks });
 
     try {
-      let setUrl = `${redisUrl}/set/invite:${encodeURIComponent(newToken)}/1`;
+      let setUrl = `${redisUrl}/set/invite:${encodeURIComponent(newToken)}/${encodeURIComponent(payload)}`;
       if (expiresIn && expiresIn > 0) {
         setUrl += `?EX=${expiresIn}`;
       }
@@ -106,7 +135,6 @@ export default async function handler(req, res) {
         headers: { Authorization: `Bearer ${redisToken}` }
       });
 
-      // Track it in the set
       await fetch(`${redisUrl}/sadd/invite:tokens/${encodeURIComponent(newToken)}`, {
         headers: { Authorization: `Bearer ${redisToken}` }
       });
@@ -115,6 +143,7 @@ export default async function handler(req, res) {
         ok: true,
         token: newToken,
         expiresIn: expiresIn || null,
+        perks,
         link: `https://лемон.space/message?token=${encodeURIComponent(newToken)}`
       });
     } catch (err) {
@@ -148,7 +177,6 @@ export default async function handler(req, res) {
   return res.status(405).json({ error: 'Method not allowed' });
 }
 
-// Simple UUIDv7 generator (time-ordered)
 function generateUUIDv7() {
   const now = Date.now();
   const timeHex = now.toString(16).padStart(12, '0');
@@ -157,7 +185,6 @@ function generateUUIDv7() {
   let randHex = '';
   for (const b of rand) randHex += b.toString(16).padStart(2, '0');
 
-  // UUID format: xxxxxxxx-xxxx-7xxx-yxxx-xxxxxxxxxxxx
   return (
     timeHex.slice(0, 8) + '-' +
     timeHex.slice(8, 12) + '-7' +

@@ -1,0 +1,74 @@
+const BOT_HEALTH_URL = 'https://lemonsserver.wispbyte.app/health';
+const BOT_HOST_URL = 'https://lemonsserver.wispbyte.app/api/host';
+
+export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Cache-Control', 'no-store');
+
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
+
+  const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
+  const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+  let lastOnline = null;
+  if (redisUrl && redisToken) {
+    try {
+      const r = await fetch(`${redisUrl}/get/lastOnline`, {
+        headers: { Authorization: `Bearer ${redisToken}` },
+      });
+      const data = await r.json();
+      lastOnline = data.result ? Number(data.result) : null;
+    } catch {
+      // ignore
+    }
+  }
+
+  let bot = null;
+  let host = null;
+
+  try {
+    const r = await fetch(BOT_HEALTH_URL, { signal: AbortSignal.timeout(6000) });
+    if (r.ok) bot = await r.json();
+  } catch {
+    // offline
+  }
+
+  try {
+    const r = await fetch(BOT_HOST_URL, { signal: AbortSignal.timeout(6000) });
+    if (r.ok) host = await r.json();
+  } catch {
+    // offline
+  }
+
+  const ONLINE_MS = 5 * 60 * 1000;
+  const siteOnline = lastOnline != null && Date.now() - lastOnline < ONLINE_MS;
+
+  return res.status(200).json({
+    ok: true,
+    site: {
+      lastOnline,
+      online: siteOnline,
+    },
+    bot: bot
+      ? {
+          reachable: true,
+          ready: !!bot.ready,
+          hostOnline: !!bot.hostOnline,
+          uptimeMs: bot.uptimeMs ?? null,
+          messageProtocol: bot.messageProtocol ?? null,
+        }
+      : { reachable: false },
+    host: host
+      ? {
+          online: !!host.online,
+          description: host.description || '',
+          todayUptimePercent: host.todayUptimePercent ?? null,
+          currentStreakMs: host.currentStreakMs ?? null,
+        }
+      : null,
+    timestamp: Date.now(),
+  });
+}
