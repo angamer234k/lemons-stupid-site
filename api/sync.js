@@ -1,4 +1,4 @@
-/** Shared protocol version for site <-> bot message pipeline (images, etc). Bump both sides together. */
+/** Shared protocol version for site <-> bot message pipeline (images, etc). */
 export const MESSAGE_PROTOCOL = 2;
 
 const BOT_HEALTH_URL = 'https://lemonsserver.wispbyte.app/health';
@@ -20,7 +20,6 @@ export default async function handler(req, res) {
   const site = MESSAGE_PROTOCOL;
   let bot = null;
   let botReachable = false;
-  let botError = null;
 
   try {
     const r = await fetch(BOT_HEALTH_URL, {
@@ -31,26 +30,63 @@ export default async function handler(req, res) {
       const data = await r.json();
       botReachable = true;
       bot = data.messageProtocol ?? null;
-    } else {
-      botError = `bot health ${r.status}`;
     }
-  } catch (err) {
-    botError = err.message || 'bot unreachable';
+  } catch {
+    // bot unreachable
   }
 
-  const inSync = botReachable && bot !== null && bot === site;
+  // exact match
+  if (botReachable && bot !== null && bot === site) {
+    return res.status(200).json({
+      ok: true,
+      allow: true,
+      soft: false,
+      site,
+      bot,
+      botReachable: true,
+      warning: null,
+      error: null,
+    });
+  }
+
+  // site ahead of bot → still allow, warn (minor desync / bot not bumped yet)
+  if (botReachable && bot !== null && site > bot) {
+    return res.status(200).json({
+      ok: false,
+      allow: true,
+      soft: true,
+      site,
+      bot,
+      botReachable: true,
+      warning:
+        'site is a bit ahead of the bot (site v' +
+        site +
+        ' · bot v' +
+        bot +
+        '). messages still work — some features might lag.',
+      error: null,
+    });
+  }
+
+  // bot offline / missing protocol / bot ahead of site → hard block
+  let error;
+  if (!botReachable) {
+    error = 'bot offline or unreachable — try again later';
+  } else if (bot === null) {
+    error = 'bot is missing messageProtocol (outdated bot code)';
+  } else {
+    error =
+      'site v' + site + ' and bot v' + bot + ' are out of sync — lemon needs to update';
+  }
 
   return res.status(200).json({
-    ok: inSync,
+    ok: false,
+    allow: false,
+    soft: false,
     site,
     bot,
     botReachable,
-    error: inSync
-      ? null
-      : !botReachable
-        ? 'bot offline or unreachable — try again later'
-        : bot === null
-          ? 'bot is missing messageProtocol (outdated bot code)'
-          : `site v${site} and bot v${bot} are out of sync — lemon needs to update`,
+    warning: null,
+    error,
   });
 }

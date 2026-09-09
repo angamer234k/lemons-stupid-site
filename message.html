@@ -131,6 +131,25 @@
       display: block;
     }
 
+    .soft-warn {
+      display: none;
+      width: 100%;
+      background: #2c3744;
+      border: 2px solid #fbbf24;
+      color: #fde68a;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      line-height: 1.4;
+      text-align: center;
+      margin-bottom: 4px;
+    }
+
+    .soft-warn.show {
+      display: block;
+    }
+
     form {
       width: 100%;
       display: flex;
@@ -320,6 +339,8 @@
     </div>
 
     <div id="form-section">
+      <div class="soft-warn" id="soft-warn"></div>
+
       <form id="msg-form">
         <div>
           <label for="name">name (optional)</label>
@@ -370,8 +391,10 @@
   const syncLoading = document.getElementById('sync-loading');
   const syncError = document.getElementById('sync-error');
   const formSection = document.getElementById('form-section');
+  const softWarn = document.getElementById('soft-warn');
 
   const MAX_IMAGE_BYTES = 1.5 * 1024 * 1024; // 1.5 MB
+  const MIN_SYNC_MS = 700;
 
   // Grab token from URL (?token=xxx)
   const params = new URLSearchParams(window.location.search);
@@ -385,20 +408,32 @@
     syncLoading.style.display = 'block';
     syncError.style.display = 'none';
     formSection.classList.remove('ready');
+    softWarn.classList.remove('show');
+    softWarn.textContent = '';
 
     try {
       const res = await fetch('/api/sync', { cache: 'no-store' });
       const data = await res.json();
 
-      if (data.ok) {
+      const elapsed = Date.now() - started;
+      if (elapsed < MIN_SYNC_MS) {
+        await new Promise(r => setTimeout(r, MIN_SYNC_MS - elapsed));
+      }
+
+      // allow = exact match OR site slightly ahead of bot
+      if (data.allow) {
         syncOk = true;
         syncGate.style.display = 'none';
         formSection.classList.add('ready');
+        if (data.soft && data.warning) {
+          softWarn.textContent = data.warning;
+          softWarn.classList.add('show');
+        }
         checkToken();
         return;
       }
 
-      // desync / bot offline
+      // hard fail
       syncOk = false;
       syncLoading.style.display = 'none';
       const detail = data.error || 'site and bot are out of sync';
@@ -432,7 +467,6 @@
       .replace(/"/g, '&quot;');
   }
 
-  // Check token validity on load (only after sync ok)
   async function checkToken() {
     if (!inviteToken) return;
 
@@ -505,7 +539,7 @@
   function fileToBase64(file) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = () => resolve(reader.result); // data:image/...;base64,...
+      reader.onload = () => resolve(reader.result);
       reader.onerror = reject;
       reader.readAsDataURL(file);
     });
