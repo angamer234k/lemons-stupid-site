@@ -372,7 +372,6 @@
   const formSection = document.getElementById('form-section');
 
   const MAX_IMAGE_BYTES = 1.5 * 1024 * 1024; // 1.5 MB
-  const MIN_SYNC_MS = 900; // feel a bit of load time
 
   // Grab token from URL (?token=xxx)
   const params = new URLSearchParams(window.location.search);
@@ -391,11 +390,6 @@
       const res = await fetch('/api/sync', { cache: 'no-store' });
       const data = await res.json();
 
-      const elapsed = Date.now() - started;
-      if (elapsed < MIN_SYNC_MS) {
-        await new Promise(r => setTimeout(r, MIN_SYNC_MS - elapsed));
-      }
-
       if (data.ok) {
         syncOk = true;
         syncGate.style.display = 'none';
@@ -413,7 +407,7 @@
           ? ' (site v' + (data.site != null ? data.site : '?') + ' · bot v' + (data.bot != null ? data.bot : '?') + ')'
           : '';
       syncError.innerHTML =
-        'cant send messages right now 🍋' +
+        'cant send messages, read below!' +
         '<span class="detail">' + escapeHtml(detail) + escapeHtml(versions) + '</span>';
       syncError.style.display = 'block';
     } catch (err) {
@@ -424,7 +418,7 @@
       syncOk = false;
       syncLoading.style.display = 'none';
       syncError.innerHTML =
-        'cant send messages right now 🍋' +
+        'cant send messages, read below!' +
         '<span class="detail">failed to check if site and bot match — try refresh</span>';
       syncError.style.display = 'block';
     }
