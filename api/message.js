@@ -5,6 +5,7 @@ const DEFAULT_INVITE_PERKS = {
   wallHighlight: true,
   canPublic: true,
   autoApproveWall: true,
+  vipLounge: true,
 };
 
 function parseInviteValue(raw) {
@@ -17,6 +18,7 @@ function parseInviteValue(raw) {
     if (!parsed || parsed.active === false) return null;
     return {
       active: true,
+      label: parsed.label ? String(parsed.label).slice(0, 32) : null,
       perks: { ...DEFAULT_INVITE_PERKS, ...(parsed.perks || {}) },
     };
   } catch {
@@ -100,6 +102,7 @@ export default async function handler(req, res) {
   }
 
   let hasValidToken = false;
+  // baseline = no invite
   let perks = {
     noSlowmode: false,
     maxChars: 1000,
@@ -107,6 +110,7 @@ export default async function handler(req, res) {
     wallHighlight: false,
     canPublic: true,
     autoApproveWall: false,
+    vipLounge: false,
   };
 
   if (token) {
@@ -118,6 +122,8 @@ export default async function handler(req, res) {
       const invite = parseInviteValue(tokenData.result);
       if (invite) {
         hasValidToken = true;
+        // invite.perks already merged with defaults in parseInviteValue,
+        // then stored flags override — use them as source of truth
         perks = { ...perks, ...invite.perks };
       }
     } catch (err) {
@@ -148,9 +154,7 @@ export default async function handler(req, res) {
     image = null;
   }
 
-  // Per-identity rate limit (Redis) — not sessionStorage
-  // invite + noSlowmode → skip
-  // else rate by IP (and by token if present but without noSlowmode)
+  // rate limit unless invite + noSlowmode
   if (!hasValidToken || !perks.noSlowmode) {
     const rateKey = hasValidToken
       ? `rate:token:${token}`
@@ -209,7 +213,8 @@ export default async function handler(req, res) {
       invited: hasValidToken && !!perks.wallHighlight,
       hasImage: !!hasImage,
     };
-    const autoLive = hasValidToken && perks.autoApproveWall !== false;
+    // strict: only auto-live when flag is explicitly true
+    const autoLive = hasValidToken && perks.autoApproveWall === true;
     const listKey = autoLive ? 'wall' : 'wall:pending';
     wallStatus = autoLive ? 'live' : 'pending';
 
@@ -259,5 +264,6 @@ export default async function handler(req, res) {
     hasImage: !!hasImage,
     public: isPublic,
     wallStatus,
+    perks: hasValidToken ? perks : undefined,
   });
 }

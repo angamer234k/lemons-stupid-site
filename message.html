@@ -30,12 +30,14 @@
     }
     .subtitle { color: #fff; font-weight: bold; font-size: 1rem; text-align: center; opacity: .9; }
     .invite-badge {
-      font-weight: bold; font-size: .8rem; padding: 4px 12px; border-radius: 50px;
-      letter-spacing: .5px; display: none; text-align: center; line-height: 1.35;
+      font-weight: bold; font-size: .8rem; padding: 8px 14px; border-radius: 12px;
+      letter-spacing: .3px; display: none; text-align: center; line-height: 1.45; max-width: 100%;
     }
-    .invite-badge.valid { display: inline-block; background: #2c3744; border: 2px solid #4ade80; color: #4ade80; }
-    .invite-badge.invalid { display: inline-block; background: #2c3744; border: 2px solid #f87171; color: #f87171; }
-    .invite-badge.checking { display: inline-block; background: #2c3744; border: 2px solid #94a3b8; color: #94a3b8; }
+    .invite-badge.valid { display: block; background: #2c3744; border: 2px solid #4ade80; color: #4ade80; }
+    .invite-badge.invalid { display: block; background: #2c3744; border: 2px solid #f87171; color: #f87171; }
+    .invite-badge.checking { display: block; background: #2c3744; border: 2px solid #94a3b8; color: #94a3b8; }
+    .invite-badge .label { color: #fdff94; }
+    .invite-badge .flags { margin-top: 4px; color: #cbd5e1; font-weight: bold; font-size: .72rem; }
     #sync-gate { width: 100%; text-align: center; padding: 12px 8px; }
     #sync-gate .sync-loading { color: #cbd5e1; font-weight: bold; font-size: .95rem; }
     #sync-gate .sync-error { color: #f87171; font-weight: bold; font-size: .95rem; line-height: 1.45; }
@@ -60,6 +62,7 @@
       display: flex; align-items: flex-start; gap: 10px; background: #2c3744;
       border: 2px solid #4b6ca5; border-radius: 10px; padding: 10px 12px;
     }
+    .check-row.hidden { display: none; }
     .check-row input { width: auto; margin-top: 2px; }
     .check-row span { color: #fff; font-size: .85rem; font-weight: bold; line-height: 1.35; }
     .check-row small { display: block; color: #94a3b8; font-weight: normal; margin-top: 2px; }
@@ -84,11 +87,11 @@
       background: #2c3744; border: 2px solid #f87171; color: #f87171; font-weight: bold;
       font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
     }
-    button {
+    button[type="submit"] {
       margin-top: 6px; height: 44px; background: #2c3744; border: 2px solid #4b6ca5;
       border-radius: 50px; color: #fff; font-weight: bold; font-size: 1.05rem; cursor: pointer;
     }
-    button:hover:not(:disabled) { background: #3e4d5e; border-color: #6b8fc7; }
+    button[type="submit"]:hover:not(:disabled) { background: #3e4d5e; border-color: #6b8fc7; }
     button:disabled { opacity: .6; cursor: not-allowed; }
     .status { margin-top: 8px; font-weight: bold; font-size: .95rem; text-align: center; min-height: 1.4em; }
     .status.ok { color: #4ade80; }
@@ -125,9 +128,9 @@
         <textarea id="message" name="message" maxlength="1000" placeholder="say something..." required></textarea>
         <div class="char-count"><span id="count">0</span>/<span id="max-count">1000</span></div>
       </div>
-      <label class="check-row">
+      <label class="check-row" id="public-row">
         <input type="checkbox" id="public" />
-        <span>request public wall post<small>needs lemon approval unless you have an invite · still DMs either way</small></span>
+        <span id="public-label">request public wall post<small id="public-hint">needs lemon approval · still DMs either way</small></span>
       </label>
       <div class="image-row">
         <label for="image">image (optional)</label>
@@ -168,10 +171,13 @@
   const formSection = document.getElementById('form-section');
   const softWarn = document.getElementById('soft-warn');
   const publicEl = document.getElementById('public');
+  const publicRow = document.getElementById('public-row');
+  const publicHint = document.getElementById('public-hint');
 
   let maxChars = 1000;
   let maxImageBytes = 1.5 * 1024 * 1024;
   let hasInvite = false;
+  let invitePerks = null;
   const MIN_SYNC_MS = 700;
   const params = new URLSearchParams(window.location.search);
   const inviteToken = params.get('token') || '';
@@ -181,9 +187,24 @@
   function applyLimits() {
     messageEl.maxLength = maxChars;
     maxCountEl.textContent = String(maxChars);
-    imageHint.textContent = 'jpg / png / gif / webp · max ~' + (maxImageBytes / (1024 * 1024)) + ' MB';
+    var mb = maxImageBytes / (1024 * 1024);
+    imageHint.textContent = 'jpg / png / gif / webp · max ~' + (Math.round(mb * 10) / 10) + ' MB';
   }
   applyLimits();
+
+  function applyPublicUi(p) {
+    if (!p || p.canPublic === false) {
+      publicRow.classList.add('hidden');
+      publicEl.checked = false;
+      return;
+    }
+    publicRow.classList.remove('hidden');
+    if (p.autoApproveWall === true) {
+      publicHint.textContent = 'goes live on the wall immediately · still DMs lemon';
+    } else {
+      publicHint.textContent = 'needs lemon approval · still DMs either way';
+    }
+  }
 
   async function checkSync() {
     const started = Date.now();
@@ -235,24 +256,35 @@
     badge.textContent = 'checking invite...';
     badge.className = 'invite-badge checking';
     try {
-      const res = await fetch('/api/invite?token=' + encodeURIComponent(inviteToken));
+      const res = await fetch('/api/invite?token=' + encodeURIComponent(inviteToken), { cache: 'no-store' });
       const data = await res.json();
       if (data.valid) {
         hasInvite = true;
         const p = data.perks || {};
+        invitePerks = p;
         if (p.maxChars) maxChars = Number(p.maxChars) || maxChars;
         if (p.maxImageMB) maxImageBytes = Number(p.maxImageMB) * 1024 * 1024;
         applyLimits();
+        applyPublicUi(p);
+
         var bits = [];
-        if (p.noSlowmode) bits.push('no slowmode');
+        bits.push(p.noSlowmode ? 'no slowmode' : 'slowmode on');
         if (p.maxChars) bits.push(p.maxChars + ' chars');
         if (p.maxImageMB) bits.push(p.maxImageMB + 'MB images');
-        if (p.wallHighlight || p.autoApproveWall !== false) bits.push('wall auto-approve');
-        badge.textContent = 'invite active — ' + (bits.length ? bits.join(' · ') : 'boosted');
+        bits.push(p.autoApproveWall ? 'wall auto-approve' : 'wall needs approval');
+        if (p.wallHighlight) bits.push('wall highlight');
+        if (p.vipLounge) bits.push('vip lounge');
+        if (p.canPublic === false) bits.push('no public wall');
+
+        var title = data.label
+          ? 'invite · <span class="label">' + escapeHtml(data.label) + '</span>'
+          : 'invite active';
+        badge.innerHTML = title + '<div class="flags">' + escapeHtml(bits.join(' · ')) + '</div>';
         badge.className = 'invite-badge valid';
       } else {
         badge.textContent = 'invite expired / invalid';
         badge.className = 'invite-badge invalid';
+        applyPublicUi(null);
       }
     } catch {
       badge.textContent = 'could not check invite';
@@ -302,11 +334,12 @@
     try {
       let imageData = null;
       if (selectedFile) imageData = await fileToBase64(selectedFile);
+      const wantPublic = !!publicEl.checked && !(invitePerks && invitePerks.canPublic === false);
       const payload = {
         name: name,
         message: message,
         token: inviteToken,
-        public: !!publicEl.checked,
+        public: wantPublic,
       };
       if (imageData) {
         payload.image = imageData;
