@@ -88,7 +88,7 @@ let secret = localStorage.getItem(K) || '';
 const $ = (id) => document.getElementById(id);
 
 function esc(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 async function modGet() {
@@ -130,12 +130,13 @@ function renderList(el, items, mode) {
     return;
   }
   el.innerHTML = items.map(function (m) {
+    var key = m.key || m.id || '';
     var btns = mode === 'pending'
-      ? '<button class="ok" data-a="approve" data-id="' + esc(m.id) + '">approve</button>' +
-        '<button class="bad" data-a="reject" data-id="' + esc(m.id) + '">reject</button>'
-      : '<button class="bad" data-a="delete" data-id="' + esc(m.id) + '">delete</button>';
+      ? '<button class="ok" data-a="approve" data-id="' + esc(key) + '">approve</button>' +
+        '<button class="bad" data-a="reject" data-id="' + esc(key) + '">reject</button>'
+      : '<button class="bad" data-a="delete" data-id="' + esc(key) + '">delete</button>';
     return '<div class="msg"><div class="meta"><span class="name">' + esc(m.name) + '</span> · ' +
-      esc(m.id || '') + (m.invited ? ' · invite' : '') + '</div><div>' + esc(m.message) +
+      esc(key) + (m.invited ? ' · invite' : '') + '</div><div>' + esc(m.message) +
       '</div><div class="row" style="margin-top:6px">' + btns + '</div></div>';
   }).join('');
   el.querySelectorAll('button[data-a]').forEach(function (b) {

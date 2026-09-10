@@ -32,6 +32,22 @@ async function rewriteList(redisUrl, redisToken, key, items) {
   }
 }
 
+/** Match by real id, or idx:N for entries that never got an id. */
+function removeFromList(list, id) {
+  if (id != null && String(id).startsWith('idx:')) {
+    const n = Number(String(id).slice(4));
+    if (!Number.isFinite(n) || n < 0 || n >= list.length) return null;
+    const next = list.slice();
+    next.splice(n, 1);
+    return next;
+  }
+  const sid = String(id || '');
+  if (!sid) return null;
+  const next = list.filter((m) => String(m.id || '') !== sid);
+  if (next.length === list.length) return null;
+  return next;
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -70,10 +86,17 @@ export default async function handler(req, res) {
     try {
       const pending = await readList(redisUrl, redisToken, 'wall:pending', 50);
       const live = await readList(redisUrl, redisToken, 'wall', 50);
+      // surface stable keys for UI (idx:N when id missing)
+      const tag = (arr) =>
+        arr.map((m, i) => ({
+          ...m,
+          id: m.id || null,
+          key: m.id ? String(m.id) : `idx:${i}`,
+        }));
       return res.status(200).json({
         ok: true,
-        pending,
-        live,
+        pending: tag(pending),
+        live: tag(live),
         pendingCount: pending.length,
         liveCount: live.length,
       });
@@ -88,17 +111,30 @@ export default async function handler(req, res) {
   }
 
   const action = (body?.action || '').toString();
-  const id = (body?.id || '').toString();
+  const id = (body?.id || body?.key || '').toString();
 
   try {
     if (action === 'approve') {
       if (!id) return res.status(400).json({ error: 'id required' });
       const pending = await readList(redisUrl, redisToken, 'wall:pending', 50);
-      const idx = pending.findIndex((m) => m.id === id);
-      if (idx === -1) return res.status(404).json({ error: 'not found in pending' });
-      const item = pending[idx];
-      pending.splice(idx, 1);
-      await rewriteList(redisUrl, redisToken, 'wall:pending', pending);
+      let item = null;
+      let nextPending = null;
+      if (id.startsWith('idx:')) {
+        const n = Number(id.slice(4));
+        if (!Number.isFinite(n) || n < 0 || n >= pending.length) {
+          return res.status(404).json({ error: 'not found in pending' });
+        }
+        item = pending[n];
+        nextPending = pending.slice();
+        nextPending.splice(n, 1);
+      } else {
+        const idx = pending.findIndex((m) => String(m.id) === id);
+        if (idx === -1) return res.status(404).json({ error: 'not found in pending' });
+        item = pending[idx];
+        nextPending = pending.slice();
+        nextPending.splice(idx, 1);
+      }
+      await rewriteList(redisUrl, redisToken, 'wall:pending', nextPending);
 
       const live = await readList(redisUrl, redisToken, 'wall', 50);
       live.unshift(item);
@@ -110,10 +146,8 @@ export default async function handler(req, res) {
     if (action === 'reject') {
       if (!id) return res.status(400).json({ error: 'id required' });
       const pending = await readList(redisUrl, redisToken, 'wall:pending', 50);
-      const next = pending.filter((m) => m.id !== id);
-      if (next.length === pending.length) {
-        return res.status(404).json({ error: 'not found in pending' });
-      }
+      const next = removeFromList(pending, id);
+      if (!next) return res.status(404).json({ error: 'not found in pending' });
       await rewriteList(redisUrl, redisToken, 'wall:pending', next);
       return res.status(200).json({ ok: true, action: 'reject', id });
     }
@@ -121,18 +155,19 @@ export default async function handler(req, res) {
     if (action === 'delete') {
       if (!id) return res.status(400).json({ error: 'id required' });
       const live = await readList(redisUrl, redisToken, 'wall', 50);
-      const next = live.filter((m) => m.id !== id);
-      if (next.length === live.length) {
-        return res.status(404).json({ error: 'not found on wall' });
-      }
+      const next = removeFromList(live, id);
+      if (!next) return res.status(404).json({ error: 'not found on wall' });
       await rewriteList(redisUrl, redisToken, 'wall', next);
-      // also drop reply if any
-      await redisJson(redisUrl, redisToken, `/del/wall:reply:${encodeURIComponent(id)}`);
+      if (!String(id).startsWith('idx:')) {
+        await redisJson(redisUrl, redisToken, `/del/wall:reply:${encodeURIComponent(id)}`);
+      }
       return res.status(200).json({ ok: true, action: 'delete', id });
     }
 
     if (action === 'reply') {
-      if (!id) return res.status(400).json({ error: 'id required' });
+      if (!id || String(id).startsWith('idx:')) {
+        return res.status(400).json({ error: 'real id required for reply' });
+      }
       const text = (body?.text || '').toString().trim().slice(0, 1000);
       if (!text) return res.status(400).json({ error: 'text required' });
 
