@@ -1,5 +1,5 @@
 /** Shared protocol version for site <-> bot message pipeline (images, etc). */
-export const MESSAGE_PROTOCOL = 999;
+export const MESSAGE_PROTOCOL = 2;
 
 const BOT_HEALTH_URL = 'https://lemonsserver.wispbyte.app/health';
 
