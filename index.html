@@ -3,75 +3,153 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>lemon's profile</title>
-  <meta property="og:title" content="lemon's profile" />
-  <meta property="og:description" content="hiya! im lemon (@GJ4JHK on RBLX) — check out my hobbies and contact me!" />
+  <title>lemon</title>
+  <meta property="og:title" content="lemon" />
+  <meta property="og:description" content="hiya! im lemon — gaming, coding, repeat." />
   <meta property="og:image" content="avatar.png" />
-  <meta property="og:url" content="" />
   <meta name="twitter:card" content="summary" />
   <link href="https://fonts.googleapis.com/css2?family=Lemon&display=swap" rel="stylesheet" />
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      min-height: 100vh; background: #1e1e2a; display: flex; justify-content: center; align-items: center;
-      font-family: Arial, Helvetica, sans-serif; padding: 20px;
+      min-height: 100vh;
+      background: #1e1e2a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: Arial, Helvetica, sans-serif;
+      padding: 24px 16px;
     }
     .card-wrapper {
-      width: 85vw; max-width: 700px; padding: 3px; border-radius: 16px;
-      background: linear-gradient(180deg, #ffffff 0%, #888888 100%);
+      width: 100%;
+      max-width: 420px;
+      padding: 3px;
+      border-radius: 16px;
+      background: linear-gradient(180deg, #fff 0%, #888 100%);
       box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
     }
     .card {
-      width: 100%; background-color: #67809f; border-radius: 13px; padding: 32px 24px 40px;
-      display: flex; flex-direction: column; align-items: center; gap: 18px;
+      background: #67809f;
+      border-radius: 13px;
+      padding: 28px 22px 26px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
     }
     .lemon-heading {
-      font-family: 'Lemon', cursive, 'Comic Sans MS', sans-serif; font-weight: 400; font-size: 3.5rem;
+      font-family: 'Lemon', cursive, 'Comic Sans MS', sans-serif;
+      font-size: 2.8rem;
       color: #fdff94;
-      text-shadow: -2px -2px 0 #535353, 2px -2px 0 #535353, -2px 2px 0 #535353, 2px 2px 0 #535353;
-      text-align: center; letter-spacing: 2px; margin-top: 8px;
+      text-shadow:
+        -2px -2px 0 #535353,
+         2px -2px 0 #535353,
+        -2px  2px 0 #535353,
+         2px  2px 0 #535353;
+      letter-spacing: 1px;
+      line-height: 1.1;
     }
     .avatar {
-      width: 72px; height: 72px; border-radius: 50%; border: 3px solid #ffe77f; object-fit: cover;
-      background: #2c3744; flex-shrink: 0; box-shadow: 0 0 12px rgba(255, 231, 127, 0.35);
+      width: 84px;
+      height: 84px;
+      border-radius: 50%;
+      border: 3px solid #ffe77f;
+      object-fit: cover;
+      background: #2c3744;
+      box-shadow: 0 0 14px rgba(255, 231, 127, 0.35);
     }
-    .bio-text { color: #ffffff; font-weight: bold; font-size: 1.2rem; text-align: center; line-height: 1.4; }
-    .status-box {
-      display: flex; align-items: center; gap: 8px; font-size: 0.95rem; font-weight: bold; color: #ffffff;
-      background: #2c3744; border: 2px solid #4b6ca5; border-radius: 50px; padding: 6px 14px;
+    .bio {
+      color: #fff;
+      font-weight: bold;
+      font-size: 1.05rem;
+      text-align: center;
+      line-height: 1.45;
     }
-    .status-dot { width: 10px; height: 10px; border-radius: 50%; background: #666; flex-shrink: 0; }
-    .status-dot.online { background: #4ade80; box-shadow: 0 0 8px #4ade80; }
-    .status-dot.offline { background: #94a3b8; }
-    .clock-box {
-      margin-top: 2px; background: #2c3744; border: 2px solid #4b6ca5; border-radius: 12px;
-      padding: 10px 18px; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 180px;
+    .bio .muted {
+      display: block;
+      margin-top: 4px;
+      font-size: 0.85rem;
+      color: #cbd5e1;
+      font-weight: bold;
     }
-    .clock-label { font-size: 0.75rem; font-weight: bold; color: #ffe77f; letter-spacing: 1px; text-transform: uppercase; }
-    .clock-time {
-      font-family: 'Courier New', monospace; font-size: 1.55rem; font-weight: bold; color: #ffffff;
-      letter-spacing: 1px; font-variant-numeric: tabular-nums;
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      align-items: center;
     }
-    .clock-date { font-size: 0.8rem; color: #cbd5e1; font-weight: bold; margin-top: 2px; }
-    .section-title {
-      width: 100%; color: #ffffff; font-weight: bold; font-size: 1.05rem; text-align: center;
-      letter-spacing: 0.5px; margin-top: 14px;
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: #2c3744;
+      border: 2px solid #4b6ca5;
+      border-radius: 999px;
+      padding: 5px 12px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      color: #fff;
     }
-    .row { width: 100%; display: flex; justify-content: center; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #94a3b8;
+      flex-shrink: 0;
+    }
+    .dot.on {
+      background: #4ade80;
+      box-shadow: 0 0 8px #4ade80;
+    }
+    .mood {
+      display: none;
+      width: 100%;
+      text-align: center;
+      background: #2c3744;
+      border: 2px solid #4b6ca5;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-weight: bold;
+      color: #fff;
+      line-height: 1.35;
+      font-size: 0.9rem;
+    }
+    .mood.show { display: block; }
+    .mood .em { margin-right: 4px; }
+    .links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 4px;
+    }
     .chip {
-      height: 28px; background-color: #2c3744; border: 2px solid #4b6ca5; border-radius: 50px; color: #ffffff;
-      font-weight: bold; font-size: 15px; display: inline-flex; align-items: center; justify-content: center;
-      white-space: nowrap; padding: 0 14px; text-decoration: none;
+      height: 30px;
+      padding: 0 14px;
+      border-radius: 999px;
+      background: #2c3744;
+      border: 2px solid #4b6ca5;
+      color: #fff;
+      font-weight: bold;
+      font-size: 13px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
       transition: background 0.15s, border-color 0.15s, transform 0.15s;
     }
-    .chip:hover { background-color: #3e4d5e; border-color: #6b8fc7; transform: translateY(-1px); }
-    @media (max-width: 500px) {
-      .lemon-heading { font-size: 2.6rem; }
-      .chip { font-size: 13px; height: 26px; padding: 0 12px; }
-      .bio-text { font-size: 1rem; }
-      .section-title { font-size: 0.95rem; }
-      .card { padding: 24px 16px 32px; gap: 14px; }
-      .clock-time { font-size: 1.35rem; }
+    .chip:hover {
+      background: #3e4d5e;
+      border-color: #6b8fc7;
+      transform: translateY(-1px);
+    }
+    .chip.primary {
+      border-color: #fdff94;
+      color: #fdff94;
+    }
+    @media (max-width: 400px) {
+      .lemon-heading { font-size: 2.3rem; }
+      .card { padding: 22px 16px 22px; }
     }
   </style>
 </head>
@@ -79,87 +157,90 @@
 <div class="card-wrapper"><div class="card">
   <div class="lemon-heading">lemon</div>
   <img class="avatar" src="avatar.png" alt="avatar" />
-  <div class="bio-text">hiya! im lemon (@GJ4JHK on RBLX)</div>
-  <div class="status-box" id="status-box">
-    <div class="status-dot" id="status-dot"></div>
-    <span id="status-text">checking...</span>
+  <div class="bio">
+    hiya! im lemon
+    <span class="muted">@GJ4JHK on roblox · gaming · coding · repeat</span>
   </div>
-  <div class="clock-box">
-    <div class="clock-label">MSK 👀</div>
-    <div class="clock-time" id="msk-clock">--:--:--</div>
-    <div class="clock-date" id="msk-date">---</div>
+
+  <div class="meta">
+    <div class="pill" id="status-pill">
+      <span class="dot" id="status-dot"></span>
+      <span id="status-text">…</span>
+    </div>
+    <div class="pill" id="clock-pill" title="Moscow time">MSK <span id="msk-clock">--:--</span></div>
   </div>
-  <div class="section-title">my hobbies are:</div>
-  <div class="row">
-    <span class="chip">gaming</span>
-    <span class="chip">coding</span>
-    <span class="chip">repeat</span>
-  </div>
-  <div class="section-title">contact me on</div>
-  <div class="row">
-    <a href="https://discord.gg/sSymHq6FjQ" class="chip" target="_blank" rel="noopener">DISCORD</a>
-    <a href="https://github.com/angamer234k" class="chip" target="_blank" rel="noopener">GITHUB</a>
-    <a href="https://emailthing.me/@lemon0real" class="chip" target="_blank" rel="noopener">CUSTOM</a>
-    <a href="/message" class="chip">MESSAGE</a>
-  </div>
-  <div class="section-title">site stuff</div>
-  <div class="row">
-    <a href="/wall" class="chip">WALL</a>
-    <a href="/status" class="chip">STATUS</a>
+
+  <div class="mood" id="mood"></div>
+
+  <div class="links">
+    <a class="chip primary" href="/message">message</a>
+    <a class="chip" href="/wall">wall</a>
+    <a class="chip" href="/status">status</a>
+    <a class="chip" href="https://discord.gg/sSymHq6FjQ" target="_blank" rel="noopener">discord</a>
+    <a class="chip" href="https://github.com/angamer234k" target="_blank" rel="noopener">github</a>
+    <a class="chip" href="https://emailthing.me/@lemon0real" target="_blank" rel="noopener">email</a>
   </div>
 </div></div>
 <script>
-  function updateMskClock() {
-    const now = new Date();
-    const time = now.toLocaleTimeString('en-GB', {
-      timeZone: 'Europe/Moscow', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
-    });
-    const date = now.toLocaleDateString('en-GB', {
-      timeZone: 'Europe/Moscow', weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
-    });
-    document.getElementById('msk-clock').textContent = time;
-    document.getElementById('msk-date').textContent = date;
-  }
-  updateMskClock();
-  setInterval(updateMskClock, 1000);
+function ago(ts) {
+  const d = Date.now() - ts;
+  const m = Math.floor(d / 60000);
+  const h = Math.floor(d / 3600000);
+  const day = Math.floor(d / 86400000);
+  if (m < 1) return 'just now';
+  if (m < 60) return m + 'm ago';
+  if (h < 24) return h + 'h ago';
+  return day + 'd ago';
+}
 
-  const ONLINE_THRESHOLD_MS = 5 * 60 * 1000;
-  function formatTimeAgo(ts) {
-    const diff = Date.now() - ts;
-    const mins = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(diff / 86400000);
-    if (mins < 1) return 'just now';
-    if (mins < 60) return mins + 'm ago';
-    if (hours < 24) return hours + 'h ago';
-    return days + 'd ago';
-  }
-  async function updateStatus() {
-    const dot = document.getElementById('status-dot');
-    const text = document.getElementById('status-text');
-    try {
-      const res = await fetch('/api/last-online');
-      const data = await res.json();
-      if (!data.lastOnline) {
-        dot.className = 'status-dot offline';
-        text.textContent = 'never seen';
-        return;
-      }
-      const age = Date.now() - data.lastOnline;
-      if (age < ONLINE_THRESHOLD_MS) {
-        dot.className = 'status-dot online';
-        text.textContent = 'online';
-      } else {
-        dot.className = 'status-dot offline';
-        text.textContent = 'last seen ' + formatTimeAgo(data.lastOnline);
-      }
-    } catch (err) {
-      dot.className = 'status-dot offline';
-      text.textContent = 'status unknown';
+function tickClock() {
+  const t = new Date().toLocaleTimeString('en-GB', {
+    timeZone: 'Europe/Moscow',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+  document.getElementById('msk-clock').textContent = t;
+}
+tickClock();
+setInterval(tickClock, 15000);
+
+async function refreshStatus() {
+  const dot = document.getElementById('status-dot');
+  const text = document.getElementById('status-text');
+  const moodEl = document.getElementById('mood');
+  try {
+    const res = await fetch('/api/status', { cache: 'no-store' });
+    const data = await res.json();
+
+    if (data.site && data.site.online) {
+      dot.className = 'dot on';
+      text.textContent = 'online';
+    } else if (data.site && data.site.lastOnline) {
+      dot.className = 'dot';
+      text.textContent = 'last seen ' + ago(data.site.lastOnline);
+    } else {
+      dot.className = 'dot';
+      text.textContent = 'offline';
     }
+
+    const mood = data.mood;
+    if (mood && (mood.text || '').trim()) {
+      moodEl.innerHTML =
+        '<span class="em">' + (mood.emoji || '🍋') + '</span> ' +
+        String(mood.text).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      moodEl.classList.add('show');
+    } else {
+      moodEl.classList.remove('show');
+      moodEl.textContent = '';
+    }
+  } catch {
+    dot.className = 'dot';
+    text.textContent = 'status unknown';
   }
-  updateStatus();
-  setInterval(updateStatus, 30000);
+}
+refreshStatus();
+setInterval(refreshStatus, 30000);
 </script>
 </body>
 </html>
