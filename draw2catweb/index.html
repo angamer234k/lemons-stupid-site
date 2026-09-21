@@ -150,8 +150,48 @@
     border-radius: var(--radius-sm);
     overflow: hidden;
     background: var(--panel2);
+    touch-action: none;
+    user-select: none;
   }
-  #grid div { min-width: 0; min-height: 0; }
+  #grid div {
+    min-width: 0;
+    min-height: 0;
+    cursor: crosshair;
+  }
+  #grid div:hover {
+    outline: 1px solid rgba(255,255,255,0.35);
+    outline-offset: -1px;
+    z-index: 1;
+  }
+  .paint-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 14px;
+    align-items: center;
+    margin-top: 12px;
+  }
+  .paint-bar label {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    color: var(--ink);
+    font-size: 0.85rem;
+  }
+  .paint-bar input[type="color"] {
+    width: 36px;
+    height: 28px;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--panel2);
+    cursor: pointer;
+  }
+  .paint-hint {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin: 8px 0 0;
+  }
   .empty {
     color: var(--muted);
     margin: 0;
@@ -290,7 +330,7 @@
 <main>
   <header>
     <h1>Image → 20×20 hex</h1>
-    <p class="lead">Drop an image <em>or</em> start blank, get 400 colors left-to-right top-to-bottom, joined with <code>-</code> and encoded for your program.</p>
+    <p class="lead">Drop an image, start blank, or draw on the grid. 400 colors left-to-right top-to-bottom, joined with <code>-</code> and encoded for your program.</p>
   </header>
 
   <div class="layout">
@@ -308,9 +348,15 @@
     </section>
 
     <section class="panel">
-      <h2>20×20 preview</h2>
-      <p class="empty" id="emptyMsg">Preview shows up after you pick an image or start blank</p>
+      <h2>20×20 canvas</h2>
+      <p class="empty" id="emptyMsg">Load an image or hit “Start with blank” to draw</p>
       <div id="grid" hidden></div>
+      <div class="paint-bar" id="paintBar" hidden>
+        <label>Paint <input type="color" id="paintColor" value="#000000"></label>
+        <button type="button" id="fillAll" class="ghost">Fill all</button>
+        <button type="button" id="clearAll" class="ghost">Clear</button>
+      </div>
+      <p class="paint-hint" id="paintHint" hidden>Click / drag to paint · right-click to erase</p>
     </section>
   </div>
 
@@ -349,9 +395,6 @@
 
 <script>
 /* ENCODER START */
-// Your character table: blank at entry 1, then the characters of the first two
-// "Set o!67" blocks. Only the part up to the digits matters here, because hex
-// uses just 0-9 and a-f. Each character becomes "0" + the number at its entry.
 var TABLE = [' ']
   .concat(
     ['!','\"','#','$','%',"'",'(',')','+',',','-','.','/','{','|','}','@','~','\u2192','\u2019','\u2014','&',':',';','?','='],
@@ -361,7 +404,6 @@ var TABLE = [' ']
     '1234567890'.split('')
   );
 
-// Your number list: 1, 2, ... 9, 11, ... 99, 111, ... (whole numbers with no zero digit)
 var NUMS = (function () {
   var list = [], n = 1;
   while (list.length < TABLE.length) {
@@ -378,7 +420,7 @@ function encode(text) {
   var out = '';
   for (var i = 0; i < text.length; i++) {
     var c = CODE[text[i]];
-    if (c !== undefined) out += c; // characters not in the table are dropped
+    if (c !== undefined) out += c;
   }
   return out;
 }
@@ -402,28 +444,40 @@ function encode(text) {
   var testOut = document.getElementById('testOut');
   var canvas = document.getElementById('work');
   var ctx = canvas.getContext('2d', { willReadFrequently: true });
+  var blankBtn = document.getElementById('blank');
+  var paintBar = document.getElementById('paintBar');
+  var paintHint = document.getElementById('paintHint');
+  var paintColor = document.getElementById('paintColor');
+  var fillAllBtn = document.getElementById('fillAll');
+  var clearAllBtn = document.getElementById('clearAll');
 
   var source = null;
   var colors = [];
-  var blankBtn = document.getElementById('blank');
+  var cells = [];
+  var painting = false;
+  var eraseMode = false;
 
   testOut.textContent = encode('0123456789abcdef');
+
+  function hex(n) { return n.toString(16).padStart(2, '0'); }
+
+  function colorFromPicker() {
+    return paintColor.value.replace('#', '').toLowerCase();
+  }
+
+  function setStatus(msg, isError) {
+    statusEl.textContent = msg;
+    statusEl.className = isError ? 'error' : '';
+  }
 
   function startBlank() {
     source = null;
     thumb.style.display = 'none';
     dropText.style.display = '';
-    setStatus('Blank 20×20 (all white)', false);
+    setStatus('Blank 20×20 — draw on the grid', false);
     colors = [];
     for (var i = 0; i < N * N; i++) colors.push('ffffff');
     render();
-  }
-
-  function hex(n) { return n.toString(16).padStart(2, '0'); }
-
-  function setStatus(msg, isError) {
-    statusEl.textContent = msg;
-    statusEl.className = isError ? 'error' : '';
   }
 
   function srcSize(s) {
@@ -459,7 +513,7 @@ function encode(text) {
       if (!size.w || !size.h) throw new Error('empty');
       source = s;
       showThumb(s, size);
-      setStatus(file.name + ' · ' + size.w + ' × ' + size.h, false);
+      setStatus(file.name + ' · ' + size.w + ' × ' + size.h + ' — you can still paint on the grid', false);
       process();
     }).catch(function () {
       var kind = file.type || (file.name.split('.').pop() || 'unknown');
@@ -524,22 +578,123 @@ function encode(text) {
     render();
   }
 
-  function render() {
-    grid.hidden = false;
-    emptyMsg.hidden = true;
-    grid.innerHTML = '';
-    colors.forEach(function (c, i) {
-      var d = document.createElement('div');
-      d.style.background = '#' + c;
-      d.title = 'Row ' + (Math.floor(i / N) + 1) + ', column ' + ((i % N) + 1) + ': ' + c;
-      grid.appendChild(d);
-    });
-
+  function updateOutput() {
     var plain = colors.map(function (c) { return (hashBox.checked ? '#' : '') + c; }).join('-');
     out.value = modeSel.value === 'encoded' ? encode(plain) : plain;
     count.textContent = colors.length + ' colors · ' + out.value.length + ' chars';
     copyBtn.disabled = false;
   }
+
+  function paintCell(idx, color) {
+    if (idx < 0 || idx >= colors.length) return;
+    if (colors[idx] === color) return;
+    colors[idx] = color;
+    if (cells[idx]) {
+      cells[idx].style.background = '#' + color;
+      cells[idx].title = 'Row ' + (Math.floor(idx / N) + 1) + ', column ' + ((idx % N) + 1) + ': ' + color;
+    }
+    updateOutput();
+  }
+
+  function cellIndexFromEvent(e) {
+    var el = e.target;
+    if (el && el.dataset && el.dataset.idx !== undefined) {
+      return parseInt(el.dataset.idx, 10);
+    }
+    return -1;
+  }
+
+  function render() {
+    grid.hidden = false;
+    emptyMsg.hidden = true;
+    paintBar.hidden = false;
+    paintHint.hidden = false;
+    grid.innerHTML = '';
+    cells = [];
+    colors.forEach(function (c, i) {
+      var d = document.createElement('div');
+      d.style.background = '#' + c;
+      d.dataset.idx = String(i);
+      d.title = 'Row ' + (Math.floor(i / N) + 1) + ', column ' + ((i % N) + 1) + ': ' + c;
+      grid.appendChild(d);
+      cells.push(d);
+    });
+    updateOutput();
+  }
+
+  function onPointerDown(e) {
+    if (colors.length === 0) return;
+    e.preventDefault();
+    painting = true;
+    eraseMode = e.button === 2 || e.ctrlKey || e.metaKey;
+    var idx = cellIndexFromEvent(e);
+    if (idx >= 0) paintCell(idx, eraseMode ? 'ffffff' : colorFromPicker());
+  }
+
+  function onPointerMove(e) {
+    if (!painting || colors.length === 0) return;
+    e.preventDefault();
+    var idx = cellIndexFromEvent(e);
+    if (idx >= 0) paintCell(idx, eraseMode ? 'ffffff' : colorFromPicker());
+  }
+
+  function onPointerUp() {
+    painting = false;
+    eraseMode = false;
+  }
+
+  grid.addEventListener('mousedown', onPointerDown);
+  grid.addEventListener('mousemove', onPointerMove);
+  window.addEventListener('mouseup', onPointerUp);
+  grid.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+
+  grid.addEventListener('touchstart', function (e) {
+    if (colors.length === 0) return;
+    e.preventDefault();
+    painting = true;
+    eraseMode = false;
+    var t = e.touches[0];
+    var el = document.elementFromPoint(t.clientX, t.clientY);
+    if (el && el.dataset && el.dataset.idx !== undefined) {
+      paintCell(parseInt(el.dataset.idx, 10), colorFromPicker());
+    }
+  }, { passive: false });
+  grid.addEventListener('touchmove', function (e) {
+    if (!painting) return;
+    e.preventDefault();
+    var t = e.touches[0];
+    var el = document.elementFromPoint(t.clientX, t.clientY);
+    if (el && el.dataset && el.dataset.idx !== undefined) {
+      paintCell(parseInt(el.dataset.idx, 10), colorFromPicker());
+    }
+  }, { passive: false });
+  grid.addEventListener('touchend', onPointerUp);
+  grid.addEventListener('touchcancel', onPointerUp);
+
+  fillAllBtn.addEventListener('click', function () {
+    if (!colors.length) return;
+    var c = colorFromPicker();
+    for (var i = 0; i < colors.length; i++) {
+      colors[i] = c;
+      if (cells[i]) {
+        cells[i].style.background = '#' + c;
+        cells[i].title = 'Row ' + (Math.floor(i / N) + 1) + ', column ' + ((i % N) + 1) + ': ' + c;
+      }
+    }
+    updateOutput();
+  });
+
+  clearAllBtn.addEventListener('click', function () {
+    if (!colors.length) return;
+    for (var i = 0; i < colors.length; i++) {
+      colors[i] = 'ffffff';
+      if (cells[i]) {
+        cells[i].style.background = '#ffffff';
+        cells[i].title = 'Row ' + (Math.floor(i / N) + 1) + ', column ' + ((i % N) + 1) + ': ffffff';
+      }
+    }
+    updateOutput();
+  });
 
   drop.addEventListener('click', function () { fileInput.click(); });
   drop.addEventListener('keydown', function (e) {
@@ -558,8 +713,8 @@ function encode(text) {
   drop.addEventListener('drop', function (e) { loadFile(e.dataTransfer.files[0]); });
 
   fitSel.addEventListener('change', process);
-  modeSel.addEventListener('change', function () { if (colors.length) render(); });
-  hashBox.addEventListener('change', function () { if (colors.length) render(); });
+  modeSel.addEventListener('change', function () { if (colors.length) updateOutput(); });
+  hashBox.addEventListener('change', function () { if (colors.length) updateOutput(); });
 
   copyBtn.addEventListener('click', function () {
     var done = function () {
