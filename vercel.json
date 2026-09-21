@@ -1,11 +1,10 @@
 {
   "cleanUrls": true,
   "trailingSlash": false,
-  "redirects": [
+  "rewrites": [
     {
       "source": "/challenge",
-      "destination": "/api/challenge",
-      "permanent": true
+      "destination": "/api/challenge"
     }
   ]
 }
