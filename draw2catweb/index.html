@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Image → 20×20 hex</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #171a20;
+    --panel2: #1c2028;
+    --ink: #e8eaed;
+    --muted: #8b939e;
+    --line: #2a2f38;
+    --accent: #5b8def;
+    --accent-hover: #7aa4f5;
+    --accent-ink: #0b0d12;
+    --error: #f07178;
+    --ok: #7fd962;
+    --radius: 14px;
+    --radius-sm: 10px;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #f4f5f7;
+      --panel: #ffffff;
+      --panel2: #f8f9fb;
+      --ink: #1a1d23;
+      --muted: #6b7280;
+      --line: #e2e5ea;
+      --accent: #3b6fd9;
+      --accent-hover: #2f5fc4;
+      --accent-ink: #ffffff;
+      --error: #c0392b;
+      --ok: #2d9b4a;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--ink);
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  main {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 40px 20px 64px;
+  }
+  header {
+    margin-bottom: 28px;
+  }
+  h1 {
+    font-size: 1.65rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: 0 0 6px;
+  }
+  p.lead {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.95rem;
+    max-width: 52ch;
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+  }
+  @media (max-width: 740px) {
+    .layout { grid-template-columns: 1fr; }
+  }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 18px;
+  }
+  .panel h2 {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    margin: 0 0 14px;
+  }
+  #drop {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-height: 260px;
+    border: 2px dashed var(--line);
+    border-radius: var(--radius-sm);
+    color: var(--muted);
+    cursor: pointer;
+    padding: 16px;
+    overflow: hidden;
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
+    background: var(--panel2);
+  }
+  #drop:hover, #drop.over {
+    border-color: var(--accent);
+    color: var(--ink);
+    background: color-mix(in srgb, var(--accent) 6%, var(--panel2));
+  }
+  #drop:focus-visible, button:focus-visible, select:focus-visible, textarea:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  #dropText {
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
+  #dropText strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+  #thumb {
+    max-width: 100%;
+    height: auto;
+    display: none;
+    border-radius: 8px;
+  }
+  #status {
+    margin: 12px 0 0;
+    font-size: 0.82rem;
+    color: var(--muted);
+    min-height: 1.3em;
+  }
+  #status.error { color: var(--error); }
+  #grid {
+    display: grid;
+    grid-template-columns: repeat(20, 1fr);
+    aspect-ratio: 1 / 1;
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background: var(--panel2);
+  }
+  #grid div { min-width: 0; min-height: 0; }
+  .empty {
+    color: var(--muted);
+    margin: 0;
+    font-size: 0.9rem;
+    text-align: center;
+    padding: 48px 12px;
+  }
+  .options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px 20px;
+    margin: 22px 0 16px;
+    align-items: flex-end;
+  }
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    font-size: 0.8rem;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  label.check {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    color: var(--ink);
+    padding-bottom: 7px;
+    cursor: pointer;
+  }
+  label.check input {
+    width: 15px;
+    height: 15px;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+  select {
+    font: inherit;
+    color: var(--ink);
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 7px 10px;
+    min-width: 160px;
+    cursor: pointer;
+  }
+  select:hover { border-color: color-mix(in srgb, var(--accent) 40%, var(--line)); }
+  .out-panel { margin-top: 4px; }
+  .row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    gap: 12px;
+  }
+  .row h2 { margin: 0; }
+  .row span {
+    color: var(--muted);
+    font-size: 0.82rem;
+    font-variant-numeric: tabular-nums;
+  }
+  textarea {
+    width: 100%;
+    height: 170px;
+    resize: vertical;
+    font: 0.8rem/1.55 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    color: var(--ink);
+    background: var(--panel2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    word-break: break-all;
+  }
+  textarea:focus {
+    border-color: var(--accent);
+    outline: none;
+  }
+  .actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+  }
+  button {
+    font: inherit;
+    font-weight: 600;
+    font-size: 0.9rem;
+    background: var(--accent);
+    color: var(--accent-ink);
+    border: 0;
+    border-radius: 9px;
+    padding: 9px 18px;
+    cursor: pointer;
+    transition: background 0.12s, transform 0.1s;
+  }
+  button:hover:not(:disabled) {
+    background: var(--accent-hover);
+  }
+  button:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+  button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  button.ghost {
+    background: transparent;
+    color: var(--ink);
+    border: 1px solid var(--line);
+  }
+  button.ghost:hover:not(:disabled) {
+    background: var(--panel2);
+    border-color: color-mix(in srgb, var(--accent) 35%, var(--line));
+  }
+  .test {
+    margin: 18px 0 0;
+    font-size: 0.82rem;
+    color: var(--muted);
+    background: var(--panel2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+  }
+  .test strong { color: var(--ink); }
+  .test code {
+    display: block;
+    margin-top: 6px;
+    word-break: break-all;
+    color: var(--ink);
+    font: 0.78rem/1.5 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    opacity: 0.9;
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Image → 20×20 hex</h1>
+    <p class="lead">Drop an image <em>or</em> start blank, get 400 colors left-to-right top-to-bottom, joined with <code>-</code> and encoded for your program.</p>
+  </header>
+
+  <div class="layout">
+    <section class="panel">
+      <h2>Image</h2>
+      <div id="drop" tabindex="0" role="button" aria-label="Choose an image">
+        <span id="dropText"><strong>Click</strong> or drop an image here</span>
+        <canvas id="thumb"></canvas>
+      </div>
+      <input id="file" type="file" accept="image/*,.png,.jpg,.jpeg,.gif,.webp,.bmp,.svg" hidden>
+      <p id="status" role="status"></p>
+      <div class="actions" style="margin-top:12px">
+        <button type="button" id="blank" class="ghost">Start with blank</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>20×20 preview</h2>
+      <p class="empty" id="emptyMsg">Preview shows up after you pick an image or start blank</p>
+      <div id="grid" hidden></div>
+    </section>
+  </div>
+
+  <div class="options">
+    <label>Framing
+      <select id="fit">
+        <option value="crop">Crop to square (center)</option>
+        <option value="stretch">Stretch to square</option>
+      </select>
+    </label>
+    <label>Output
+      <select id="mode">
+        <option value="encoded">Encoded (for your program)</option>
+        <option value="plain">Plain text (not encoded)</option>
+      </select>
+    </label>
+    <label class="check"><input type="checkbox" id="hash"> Add # before each color</label>
+  </div>
+
+  <section class="panel out-panel">
+    <div class="row">
+      <h2>Output</h2>
+      <span id="count">0 colors</span>
+    </div>
+    <textarea id="out" readonly aria-label="Output" placeholder="Encoded colors land here…"></textarea>
+    <div class="actions">
+      <button id="copy" disabled>Copy output</button>
+    </div>
+    <p class="test">Encoder check — Function E on <strong>0123456789abcdef</strong> should give:
+      <code id="testOut"></code>
+    </p>
+  </section>
+</main>
+
+<canvas id="work" hidden></canvas>
+
+<script>
+/* ENCODER START */
+// Your character table: blank at entry 1, then the characters of the first two
+// "Set o!67" blocks. Only the part up to the digits matters here, because hex
+// uses just 0-9 and a-f. Each character becomes "0" + the number at its entry.
+var TABLE = [' ']
+  .concat(
+    ['!','\"','#','$','%',"'",'(',')','+',',','-','.','/','{','|','}','@','~','\u2192','\u2019','\u2014','&',':',';','?','='],
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''),
+    ['[','\\',']','^','_','`','<','>','*'],
+    'abcdefghijklmnopqrstuvwxyz'.split(''),
+    '1234567890'.split('')
+  );
+
+// Your number list: 1, 2, ... 9, 11, ... 99, 111, ... (whole numbers with no zero digit)
+var NUMS = (function () {
+  var list = [], n = 1;
+  while (list.length < TABLE.length) {
+    if (String(n).indexOf('0') === -1) list.push(String(n));
+    n++;
+  }
+  return list;
+})();
+
+var CODE = {};
+TABLE.forEach(function (ch, i) { CODE[ch] = '0' + NUMS[i]; });
+
+function encode(text) {
+  var out = '';
+  for (var i = 0; i < text.length; i++) {
+    var c = CODE[text[i]];
+    if (c !== undefined) out += c; // characters not in the table are dropped
+  }
+  return out;
+}
+/* ENCODER END */
+
+(function () {
+  var N = 20;
+  var drop = document.getElementById('drop');
+  var dropText = document.getElementById('dropText');
+  var thumb = document.getElementById('thumb');
+  var statusEl = document.getElementById('status');
+  var fileInput = document.getElementById('file');
+  var grid = document.getElementById('grid');
+  var emptyMsg = document.getElementById('emptyMsg');
+  var out = document.getElementById('out');
+  var count = document.getElementById('count');
+  var copyBtn = document.getElementById('copy');
+  var fitSel = document.getElementById('fit');
+  var modeSel = document.getElementById('mode');
+  var hashBox = document.getElementById('hash');
+  var testOut = document.getElementById('testOut');
+  var canvas = document.getElementById('work');
+  var ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+  var source = null;
+  var colors = [];
+  var blankBtn = document.getElementById('blank');
+
+  testOut.textContent = encode('0123456789abcdef');
+
+  function startBlank() {
+    source = null;
+    thumb.style.display = 'none';
+    dropText.style.display = '';
+    setStatus('Blank 20×20 (all white)', false);
+    colors = [];
+    for (var i = 0; i < N * N; i++) colors.push('ffffff');
+    render();
+  }
+
+  function hex(n) { return n.toString(16).padStart(2, '0'); }
+
+  function setStatus(msg, isError) {
+    statusEl.textContent = msg;
+    statusEl.className = isError ? 'error' : '';
+  }
+
+  function srcSize(s) {
+    return { w: s.naturalWidth || s.width, h: s.naturalHeight || s.height };
+  }
+
+  function decode(file) {
+    if (window.createImageBitmap) {
+      return createImageBitmap(file).catch(function () { return viaDataUrl(file); });
+    }
+    return viaDataUrl(file);
+  }
+
+  function viaDataUrl(file) {
+    return new Promise(function (resolve, reject) {
+      var reader = new FileReader();
+      reader.onerror = function () { reject(new Error('read')); };
+      reader.onload = function () {
+        var img = new Image();
+        img.onload = function () { resolve(img); };
+        img.onerror = function () { reject(new Error('decode')); };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function loadFile(file) {
+    if (!file) return;
+    setStatus('Reading ' + file.name + '…', false);
+    decode(file).then(function (s) {
+      var size = srcSize(s);
+      if (!size.w || !size.h) throw new Error('empty');
+      source = s;
+      showThumb(s, size);
+      setStatus(file.name + ' · ' + size.w + ' × ' + size.h, false);
+      process();
+    }).catch(function () {
+      var kind = file.type || (file.name.split('.').pop() || 'unknown');
+      setStatus('Couldn’t read this image (' + kind + '). Browsers can’t open HEIC/HEIF — export as PNG or JPG and try again.', true);
+    });
+  }
+
+  function showThumb(s, size) {
+    var max = 300;
+    var scale = Math.min(1, max / Math.max(size.w, size.h));
+    thumb.width = Math.max(1, Math.round(size.w * scale));
+    thumb.height = Math.max(1, Math.round(size.h * scale));
+    thumb.getContext('2d').drawImage(s, 0, 0, thumb.width, thumb.height);
+    thumb.style.display = 'block';
+    dropText.style.display = 'none';
+  }
+
+  function process() {
+    if (!source) return;
+    var size = srcSize(source);
+    var w = size.w, h = size.h;
+
+    var sx = 0, sy = 0, sw = w, sh = h;
+    if (fitSel.value === 'crop') {
+      var side = Math.min(w, h);
+      sx = (w - side) / 2;
+      sy = (h - side) / 2;
+      sw = sh = side;
+    }
+
+    var block = Math.max(1, Math.min(16, Math.floor(Math.min(sw, sh) / N)));
+    var px = N * block;
+    canvas.width = px;
+    canvas.height = px;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, px, px);
+    ctx.drawImage(source, sx, sy, sw, sh, 0, 0, px, px);
+
+    var data;
+    try {
+      data = ctx.getImageData(0, 0, px, px).data;
+    } catch (e) {
+      setStatus('Browser blocked reading pixels. Open the page directly from the site and try again.', true);
+      return;
+    }
+
+    colors = [];
+    for (var cy = 0; cy < N; cy++) {
+      for (var cx = 0; cx < N; cx++) {
+        var r = 0, g = 0, b = 0;
+        for (var y = 0; y < block; y++) {
+          for (var x = 0; x < block; x++) {
+            var i = ((cy * block + y) * px + (cx * block + x)) * 4;
+            r += data[i]; g += data[i + 1]; b += data[i + 2];
+          }
+        }
+        var n = block * block;
+        colors.push(hex(Math.round(r / n)) + hex(Math.round(g / n)) + hex(Math.round(b / n)));
+      }
+    }
+    render();
+  }
+
+  function render() {
+    grid.hidden = false;
+    emptyMsg.hidden = true;
+    grid.innerHTML = '';
+    colors.forEach(function (c, i) {
+      var d = document.createElement('div');
+      d.style.background = '#' + c;
+      d.title = 'Row ' + (Math.floor(i / N) + 1) + ', column ' + ((i % N) + 1) + ': ' + c;
+      grid.appendChild(d);
+    });
+
+    var plain = colors.map(function (c) { return (hashBox.checked ? '#' : '') + c; }).join('-');
+    out.value = modeSel.value === 'encoded' ? encode(plain) : plain;
+    count.textContent = colors.length + ' colors · ' + out.value.length + ' chars';
+    copyBtn.disabled = false;
+  }
+
+  drop.addEventListener('click', function () { fileInput.click(); });
+  drop.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); }
+  });
+  fileInput.addEventListener('change', function () {
+    loadFile(fileInput.files[0]);
+    fileInput.value = '';
+  });
+  ['dragenter', 'dragover'].forEach(function (ev) {
+    drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('over'); });
+  });
+  ['dragleave', 'drop'].forEach(function (ev) {
+    drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove('over'); });
+  });
+  drop.addEventListener('drop', function (e) { loadFile(e.dataTransfer.files[0]); });
+
+  fitSel.addEventListener('change', process);
+  modeSel.addEventListener('change', function () { if (colors.length) render(); });
+  hashBox.addEventListener('change', function () { if (colors.length) render(); });
+
+  copyBtn.addEventListener('click', function () {
+    var done = function () {
+      copyBtn.textContent = 'Copied ✓';
+      setTimeout(function () { copyBtn.textContent = 'Copy output'; }, 1600);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(out.value).then(done, function () { out.select(); document.execCommand('copy'); done(); });
+    } else {
+      out.select();
+      document.execCommand('copy');
+      done();
+    }
+  });
+
+  blankBtn.addEventListener('click', startBlank);
+})();
+</script>
+</body>
+</html>
