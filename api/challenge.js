@@ -2,21 +2,36 @@
 import zlib from 'zlib';
 
 const CHALLENGES = [
-  'touch grass',
-  'drink water',
-  'pet a cat',
-  'say hi to lemon',
-  'blink twice',
-  'count to 3',
-  'not a robot?',
-  'prove you exist',
-  'find the lemon',
-  'be so real',
-  'no cap',
-  'skill issue?',
-  'ratio free zone',
-  'go outside',
-  'breathe once',
+  'talk backwards for the next 10 messages',
+  'only talk in emojis for 10 minutes',
+  'act like a cat for 15 minutes',
+  'reply only with questions for 10 messages',
+  'speak in third person for 10 minutes',
+  'no vowels allowed for the next 8 messages',
+  'end every message with nya for 10 mins',
+  'roleplay as a pirate for 15 minutes',
+  'only use one-word replies for 10 messages',
+  'type like a robot for the next 10 messages',
+  'compliment everyone for 10 minutes',
+  'talk only in rhymes for 8 messages',
+  'act extremely formal for 15 minutes',
+  'no capital letters for the next 10 messages',
+  'start every sentence with honestly for 10 msgs',
+  'pretend you are a lemon for 10 minutes',
+  'answer everything with a meme format for 10 msgs',
+  'whisper mode: all lowercase soft talk for 10 mins',
+  'overly dramatic reactions only for 10 messages',
+  'explain everything like they are 5 for 10 mins',
+  'only speak in movie quotes for 8 messages',
+  'act as a sports commentator for 10 minutes',
+  'no slang allowed speak proper for 15 minutes',
+  'replace every hello with greetings traveler',
+  'meow at least once every message for 10 mins',
+  'talk like an old wizard for 10 messages',
+  'use at least 3 emojis every message for 10 mins',
+  'deny being human for the next 10 messages',
+  'narrate your life in chat for 10 minutes',
+  'only reply with yes or no for 8 messages',
 ];
 
 const PALETTES = [
@@ -73,6 +88,7 @@ const FONT = {
   '-': [0x00, 0x00, 0x00, 0x1f, 0x00, 0x00, 0x00],
   '.': [0x00, 0x00, 0x00, 0x00, 0x00, 0x0c, 0x0c],
   ':': [0x00, 0x0c, 0x0c, 0x00, 0x0c, 0x0c, 0x00],
+  ',': [0x00, 0x00, 0x00, 0x00, 0x0c, 0x04, 0x08],
 };
 
 function pick(arr) {
@@ -133,8 +149,12 @@ function drawChar(rgba, w, ch, x, y, scale, r, g, b) {
   }
 }
 
+function charStep(scale) {
+  return 5 * scale + scale;
+}
+
 function textWidth(str, scale) {
-  return str.length * (5 * scale + scale);
+  return str.length * charStep(scale);
 }
 
 function drawText(rgba, w, str, cx, y, scale, r, g, b) {
@@ -142,7 +162,50 @@ function drawText(rgba, w, str, cx, y, scale, r, g, b) {
   let x = Math.floor(cx - textWidth(s, scale) / 2);
   for (const ch of s) {
     drawChar(rgba, w, ch, x, y, scale, r, g, b);
-    x += 5 * scale + scale;
+    x += charStep(scale);
+  }
+}
+
+function wrapText(str, scale, maxWidth) {
+  const words = String(str).toUpperCase().split(/\s+/).filter(Boolean);
+  const lines = [];
+  let line = '';
+  const step = charStep(scale);
+  for (const word of words) {
+    const next = line ? line + ' ' + word : word;
+    if (next.length * step <= maxWidth) {
+      line = next;
+    } else {
+      if (line) lines.push(line);
+      // hard-break very long words
+      if (word.length * step > maxWidth) {
+        let chunk = '';
+        for (const ch of word) {
+          if ((chunk.length + 1) * step > maxWidth) {
+            lines.push(chunk);
+            chunk = ch;
+          } else {
+            chunk += ch;
+          }
+        }
+        line = chunk;
+      } else {
+        line = word;
+      }
+    }
+  }
+  if (line) lines.push(line);
+  return lines.slice(0, 4); // max 4 lines
+}
+
+function drawWrappedText(rgba, w, str, cx, y, scale, r, g, b, maxWidth) {
+  const lines = wrapText(str, scale, maxWidth);
+  const lineH = 7 * scale + scale * 2;
+  const totalH = lines.length * lineH;
+  let yy = y - Math.floor(totalH / 2) + scale;
+  for (const line of lines) {
+    drawText(rgba, w, line, cx, yy, scale, r, g, b);
+    yy += lineH;
   }
 }
 
@@ -174,7 +237,7 @@ function makePng(width, height, rgba) {
 
 function renderChallenge() {
   const W = 800;
-  const H = 320;
+  const H = 360;
   const { bg, fg, accent } = pick(PALETTES);
   const challenge = pick(CHALLENGES);
   const code = randomCode(5);
@@ -210,9 +273,9 @@ function renderChallenge() {
     }
   }
 
-  drawText(rgba, W, 'CHALLENGE', W / 2, 48, 3, accent[0], accent[1], accent[2]);
-  drawText(rgba, W, challenge, W / 2, 120, 5, fg[0], fg[1], fg[2]);
-  drawText(rgba, W, code, W / 2, 230, 4, accent[0], accent[1], accent[2]);
+  drawText(rgba, W, 'CHALLENGE', W / 2, 36, 3, accent[0], accent[1], accent[2]);
+  drawWrappedText(rgba, W, challenge, W / 2, 160, 3, fg[0], fg[1], fg[2], W - 80);
+  drawText(rgba, W, code, W / 2, 300, 3, accent[0], accent[1], accent[2]);
 
   return makePng(W, H, rgba);
 }
