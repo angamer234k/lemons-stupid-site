@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>lemon status</title>
   <meta property="og:title" content="lemon status" />
-  <meta property="og:description" content="is lemon / the bot / the host up?" />
+  <meta property="og:description" content="bot · host · wall · is lemon up?" />
   <meta name="twitter:card" content="summary" />
   <link href="https://fonts.googleapis.com/css2?family=Lemon&display=swap" rel="stylesheet" />
   <style>
@@ -42,6 +42,7 @@
       font-weight: bold; font-size: 14px; text-decoration: none;
       display: inline-flex; align-items: center;
     }
+    .chip:hover { border-color: #6b8fc7; }
     .row {
       background: #2c3744; border: 2px solid #4b6ca5; border-radius: 12px;
       padding: 12px 14px;
@@ -56,21 +57,50 @@
     .off { color: #f87171; }
     .meh { color: #fbbf24; }
     .foot { text-align: center; color: #cbd5e1; font-size: .8rem; font-weight: bold; }
+    .grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    }
+    @media (max-width: 420px) { .grid { grid-template-columns: 1fr; } }
+    .mini {
+      background: #2c3744; border: 2px solid #4b6ca5; border-radius: 12px;
+      padding: 12px; text-align: center;
+    }
+    .mini .k { font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; color: #ffe77f; font-weight: bold; }
+    .mini .v { font-size: 1.35rem; font-weight: bold; margin-top: 4px; }
   </style>
 </head>
 <body>
 <div class="card-wrapper"><div class="card">
   <div class="lemon-heading">status</div>
-  <div class="sub">site · bot · host</div>
+  <div class="sub">site · bot · host · wall</div>
   <div class="mood-box" id="mood-box">
     <div class="mood-emoji" id="mood-emoji">🍋</div>
     <div id="mood-text"></div>
   </div>
   <div class="nav">
     <a class="chip" href="/">profile</a>
+    <a class="chip" href="/uptime">uptime</a>
     <a class="chip" href="/message">message</a>
     <a class="chip" href="/wall">wall</a>
-    <a class="chip" href="/mod">mod</a>
+  </div>
+
+  <div class="grid">
+    <div class="mini">
+      <div class="k">site</div>
+      <div class="v meh" id="site-pill">…</div>
+    </div>
+    <div class="mini">
+      <div class="k">discord bot</div>
+      <div class="v meh" id="bot-pill">…</div>
+    </div>
+    <div class="mini">
+      <div class="k">roblox host</div>
+      <div class="v meh" id="host-pill">…</div>
+    </div>
+    <div class="mini">
+      <div class="k">wall msgs</div>
+      <div class="v" id="wall-count">…</div>
+    </div>
   </div>
 
   <div class="row">
@@ -80,19 +110,27 @@
   </div>
 
   <div class="row">
-    <h3>Bot</h3>
+    <h3>Discord bot</h3>
     <div class="line"><span>reachable</span><span id="bot-reach" class="meh">…</span></div>
     <div class="line"><span>ready</span><span id="bot-ready">—</span></div>
     <div class="line muted"><span>uptime</span><span id="bot-up">—</span></div>
     <div class="line muted"><span>protocol</span><span id="bot-proto">—</span></div>
+    <div class="line muted"><span>detail</span><span><a class="chip" href="/uptime" style="height:22px;font-size:12px;padding:0 10px">open uptime</a></span></div>
   </div>
 
   <div class="row">
     <h3>Host (roblox / machine)</h3>
     <div class="line"><span>online</span><span id="host-on" class="meh">…</span></div>
     <div class="line muted"><span>today uptime</span><span id="host-today">—</span></div>
+    <div class="line muted"><span>checks today</span><span id="host-checks">—</span></div>
     <div class="line muted"><span>streak</span><span id="host-streak">—</span></div>
     <div class="muted" id="host-desc" style="margin-top:6px"></div>
+  </div>
+
+  <div class="row">
+    <h3>Wall</h3>
+    <div class="line"><span>messages</span><span id="wall-msgs">—</span></div>
+    <div class="line muted"><span>browse</span><span><a class="chip" href="/wall" style="height:22px;font-size:12px;padding:0 10px">open wall</a></span></div>
   </div>
 
   <div class="foot" id="updated">checking…</div>
@@ -131,7 +169,7 @@ async function load() {
 
     const mood = data.mood;
     const moodBox = document.getElementById('mood-box');
-    if (mood && (mood.text || mood.emoji)) {
+    if (mood && (mood.text || '').trim()) {
       document.getElementById('mood-emoji').textContent = mood.emoji || '🍋';
       document.getElementById('mood-text').textContent = mood.text || '';
       moodBox.classList.add('show');
@@ -139,8 +177,12 @@ async function load() {
       moodBox.classList.remove('show');
     }
 
-    setState(document.getElementById('site-status'), data.site && data.site.online, 'online', 'offline');
+    const siteOn = !!(data.site && data.site.online);
+    setState(document.getElementById('site-status'), siteOn, 'online', 'offline');
     document.getElementById('site-last').textContent = ago(data.site && data.site.lastOnline);
+    const sitePill = document.getElementById('site-pill');
+    sitePill.textContent = siteOn ? 'online' : 'offline';
+    sitePill.className = 'v ' + (siteOn ? 'on' : 'off');
 
     const bot = data.bot || {};
     setState(document.getElementById('bot-reach'), !!bot.reachable, 'yes', 'no');
@@ -148,17 +190,46 @@ async function load() {
     document.getElementById('bot-ready').className = bot.reachable && bot.ready ? 'on' : (bot.reachable ? 'off' : '');
     document.getElementById('bot-up').textContent = bot.reachable ? dur(bot.uptimeMs) : '—';
     document.getElementById('bot-proto').textContent = bot.messageProtocol != null ? ('v' + bot.messageProtocol) : '—';
+    const botPill = document.getElementById('bot-pill');
+    if (bot.reachable && bot.ready) {
+      botPill.textContent = 'up';
+      botPill.className = 'v on';
+    } else if (bot.reachable) {
+      botPill.textContent = 'not ready';
+      botPill.className = 'v meh';
+    } else {
+      botPill.textContent = 'down';
+      botPill.className = 'v off';
+    }
 
     const host = data.host;
+    const hostPill = document.getElementById('host-pill');
     if (host) {
       setState(document.getElementById('host-on'), !!host.online, 'online', 'offline');
       document.getElementById('host-today').textContent =
         host.todayUptimePercent != null ? (host.todayUptimePercent + '%') : '—';
+      document.getElementById('host-checks').textContent =
+        host.todayChecks != null ? String(host.todayChecks) : '—';
       document.getElementById('host-streak').textContent = dur(host.currentStreakMs);
       document.getElementById('host-desc').textContent = host.description || '';
+      hostPill.textContent = host.online ? 'online' : 'offline';
+      hostPill.className = 'v ' + (host.online ? 'on' : 'off');
     } else {
       document.getElementById('host-on').textContent = 'unknown';
       document.getElementById('host-on').className = 'meh';
+      hostPill.textContent = '?';
+      hostPill.className = 'v meh';
+    }
+
+    const wc = data.wall && data.wall.messageCount;
+    const wallEl = document.getElementById('wall-count');
+    const wallMsgs = document.getElementById('wall-msgs');
+    if (wc != null) {
+      wallEl.textContent = String(wc);
+      wallMsgs.textContent = wc + (wc === 1 ? ' message' : ' messages');
+    } else {
+      wallEl.textContent = '—';
+      wallMsgs.textContent = '—';
     }
 
     document.getElementById('updated').textContent = 'updated ' + new Date().toLocaleTimeString();

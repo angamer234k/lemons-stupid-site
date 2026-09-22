@@ -14,15 +14,21 @@ export default async function handler(req, res) {
   const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
 
   let lastOnline = null;
+  let wallCount = null;
+
   if (redisUrl && redisToken) {
+    const headers = { Authorization: `Bearer ${redisToken}` };
     try {
-      const r = await fetch(`${redisUrl}/get/lastOnline`, {
-        headers: { Authorization: `Bearer ${redisToken}` },
-      });
-      const data = await r.json();
-      lastOnline = data.result ? Number(data.result) : null;
+      const [onlineRes, wallRes] = await Promise.all([
+        fetch(`${redisUrl}/get/lastOnline`, { headers }),
+        fetch(`${redisUrl}/llen/wall`, { headers }),
+      ]);
+      const onlineData = await onlineRes.json();
+      lastOnline = onlineData.result ? Number(onlineData.result) : null;
+      const wallData = await wallRes.json();
+      wallCount = wallData.result != null ? Number(wallData.result) : null;
     } catch {
-      // ignore
+      // ignore redis errors
     }
   }
 
@@ -73,9 +79,14 @@ export default async function handler(req, res) {
           online: !!host.online,
           description: host.description || '',
           todayUptimePercent: host.todayUptimePercent ?? null,
+          todayChecks: host.todayChecks ?? null,
           currentStreakMs: host.currentStreakMs ?? null,
+          checkIntervalMs: host.checkIntervalMs ?? null,
         }
       : null,
+    wall: {
+      messageCount: wallCount,
+    },
     timestamp: Date.now(),
   });
 }

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bot uptime · lemon</title>
+  <meta property="og:title" content="lemon bot uptime" />
+  <meta property="og:description" content="discord bot uptime — is the lemon bot alive?" />
+  <meta name="twitter:card" content="summary" />
+  <link href="https://fonts.googleapis.com/css2?family=Lemon&display=swap" rel="stylesheet" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      min-height: 100vh; background: #1e1e2a; display: flex; justify-content: center; align-items: center;
+      font-family: Arial, Helvetica, sans-serif; padding: 20px; color: #fff;
+    }
+    .card-wrapper {
+      width: 100%; max-width: 440px; padding: 3px; border-radius: 16px;
+      background: linear-gradient(180deg, #fff 0%, #888 100%);
+      box-shadow: 0 12px 40px rgba(0,0,0,.5);
+    }
+    .card {
+      background: #67809f; border-radius: 13px; padding: 32px 22px 28px;
+      display: flex; flex-direction: column; gap: 16px; align-items: center;
+    }
+    .lemon-heading {
+      font-family: 'Lemon', cursive, 'Comic Sans MS', sans-serif;
+      font-size: 2rem; color: #fdff94; text-align: center;
+      text-shadow: -2px -2px 0 #535353, 2px -2px 0 #535353, -2px 2px 0 #535353, 2px 2px 0 #535353;
+    }
+    .sub { font-weight: bold; opacity: .9; font-size: .95rem; }
+    .big-status {
+      width: 100%; text-align: center; background: #2c3744; border: 2px solid #4b6ca5;
+      border-radius: 14px; padding: 22px 16px;
+    }
+    .big-status.up { border-color: #4ade80; }
+    .big-status.down { border-color: #f87171; }
+    .dot {
+      display: inline-block; width: 12px; height: 12px; border-radius: 50%;
+      background: #94a3b8; margin-right: 8px; vertical-align: middle;
+    }
+    .dot.on { background: #4ade80; box-shadow: 0 0 10px #4ade80; }
+    .dot.off { background: #f87171; box-shadow: 0 0 10px #f87171; }
+    .label {
+      font-size: .75rem; letter-spacing: .08em; text-transform: uppercase;
+      color: #ffe77f; font-weight: bold; margin-bottom: 8px;
+    }
+    .uptime-num {
+      font-family: 'Lemon', cursive, monospace;
+      font-size: 2.4rem; color: #fdff94; line-height: 1.15;
+      text-shadow: -1px -1px 0 #535353, 1px -1px 0 #535353, -1px 1px 0 #535353, 1px 1px 0 #535353;
+    }
+    .state-text { font-weight: bold; font-size: 1.15rem; margin-top: 6px; }
+    .on { color: #4ade80; }
+    .off { color: #f87171; }
+    .meh { color: #fbbf24; }
+    .meta {
+      width: 100%; background: #2c3744; border: 2px solid #4b6ca5; border-radius: 12px;
+      padding: 12px 14px;
+    }
+    .line {
+      display: flex; justify-content: space-between; gap: 10px; font-weight: bold;
+      margin: 5px 0; flex-wrap: wrap; font-size: .92rem;
+    }
+    .muted { color: #94a3b8; }
+    .nav { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+    .chip {
+      height: 28px; padding: 0 14px; border-radius: 50px;
+      background: #2c3744; border: 2px solid #4b6ca5; color: #fff;
+      font-weight: bold; font-size: 13px; text-decoration: none;
+      display: inline-flex; align-items: center;
+    }
+    .chip:hover { border-color: #6b8fc7; }
+    .foot { text-align: center; color: #cbd5e1; font-size: .8rem; font-weight: bold; }
+  </style>
+</head>
+<body>
+<div class="card-wrapper"><div class="card">
+  <div class="lemon-heading">bot uptime</div>
+  <div class="sub">discord bot · live</div>
+
+  <div class="big-status" id="box">
+    <div class="label">current uptime</div>
+    <div class="uptime-num" id="uptime">…</div>
+    <div class="state-text meh" id="state"><span class="dot" id="dot"></span>checking…</div>
+  </div>
+
+  <div class="meta">
+    <div class="line"><span class="muted">reachable</span><span id="reach">—</span></div>
+    <div class="line"><span class="muted">ready</span><span id="ready">—</span></div>
+    <div class="line"><span class="muted">protocol</span><span id="proto">—</span></div>
+    <div class="line"><span class="muted">started</span><span id="started">—</span></div>
+  </div>
+
+  <div class="nav">
+    <a class="chip" href="/">profile</a>
+    <a class="chip" href="/status">status</a>
+    <a class="chip" href="/wall">wall</a>
+    <a class="chip" href="https://discord.gg/sSymHq6FjQ" target="_blank" rel="noopener">discord</a>
+  </div>
+
+  <div class="foot" id="updated">checking…</div>
+</div></div>
+<script>
+function dur(ms) {
+  if (ms == null || ms < 0) return '—';
+  const s = Math.floor(ms / 1000);
+  const m = Math.floor(s / 60);
+  const h = Math.floor(m / 60);
+  const d = Math.floor(h / 24);
+  const parts = [];
+  if (d > 0) parts.push(d + 'd');
+  if (h % 24 > 0 || d > 0) parts.push((h % 24) + 'h');
+  if (m % 60 > 0 || h > 0) parts.push((m % 60) + 'm');
+  if (d === 0 && h === 0) parts.push((s % 60) + 's');
+  return parts.join(' ') || '0s';
+}
+
+let baseUptime = null;
+let fetchedAt = null;
+
+function tickLocal() {
+  if (baseUptime == null || fetchedAt == null) return;
+  const live = baseUptime + (Date.now() - fetchedAt);
+  document.getElementById('uptime').textContent = dur(live);
+}
+
+async function load() {
+  const box = document.getElementById('box');
+  const state = document.getElementById('state');
+  const dot = document.getElementById('dot');
+  try {
+    const res = await fetch('/api/status', { cache: 'no-store' });
+    const data = await res.json();
+    const bot = data.bot || {};
+
+    if (bot.reachable) {
+      baseUptime = bot.uptimeMs ?? 0;
+      fetchedAt = Date.now();
+      box.className = 'big-status up';
+      dot.className = 'dot on';
+      state.className = 'state-text on';
+      state.innerHTML = '<span class="dot on" id="dot"></span>' + (bot.ready ? 'online · ready' : 'online · not ready');
+      document.getElementById('uptime').textContent = dur(bot.uptimeMs);
+      document.getElementById('reach').textContent = 'yes';
+      document.getElementById('reach').className = 'on';
+      document.getElementById('ready').textContent = bot.ready ? 'yes' : 'no';
+      document.getElementById('ready').className = bot.ready ? 'on' : 'off';
+      document.getElementById('proto').textContent = bot.messageProtocol != null ? 'v' + bot.messageProtocol : '—';
+      if (bot.uptimeMs != null) {
+        document.getElementById('started').textContent = new Date(Date.now() - bot.uptimeMs).toLocaleString();
+      } else {
+        document.getElementById('started').textContent = '—';
+      }
+    } else {
+      baseUptime = null;
+      fetchedAt = null;
+      box.className = 'big-status down';
+      state.className = 'state-text off';
+      state.innerHTML = '<span class="dot off" id="dot"></span>offline';
+      document.getElementById('uptime').textContent = '—';
+      document.getElementById('reach').textContent = 'no';
+      document.getElementById('reach').className = 'off';
+      document.getElementById('ready').textContent = '—';
+      document.getElementById('ready').className = '';
+      document.getElementById('proto').textContent = '—';
+      document.getElementById('started').textContent = '—';
+    }
+
+    document.getElementById('updated').textContent = 'updated ' + new Date().toLocaleTimeString();
+  } catch {
+    baseUptime = null;
+    document.getElementById('updated').textContent = 'failed to load';
+    document.getElementById('state').textContent = 'error';
+  }
+}
+
+load();
+setInterval(load, 15000);
+setInterval(tickLocal, 1000);
+</script>
+</body>
+</html>
