@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>roblox uptime · lemon</title>
+  <meta property="og:title" content="roblox host uptime" />
+  <meta property="og:description" content="roblox host uptime graph" />
+  <meta property="og:image" content="/api/png/roblox" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link href="https://fonts.googleapis.com/css2?family=Lemon&display=swap" rel="stylesheet" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      min-height: 100vh; background: #1e1e2a; display: flex; justify-content: center; align-items: flex-start;
+      font-family: Arial, Helvetica, sans-serif; padding: 20px; color: #fff;
+    }
+    .card-wrapper {
+      width: 95vw; max-width: 720px; padding: 3px; border-radius: 16px;
+      background: linear-gradient(180deg, #fff 0%, #888 100%);
+      box-shadow: 0 12px 40px rgba(0,0,0,.5);
+    }
+    .card {
+      background: #67809f; border-radius: 13px; padding: 24px 18px 28px;
+      display: flex; flex-direction: column; gap: 14px;
+    }
+    .lemon-heading {
+      font-family: 'Lemon', cursive, 'Comic Sans MS', sans-serif;
+      font-size: 1.9rem; color: #fdff94; text-align: center;
+      text-shadow: -2px -2px 0 #535353, 2px -2px 0 #535353, -2px 2px 0 #535353, 2px 2px 0 #535353;
+    }
+    .sub { text-align: center; font-weight: bold; opacity: .9; font-size: .9rem; }
+    .nav { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+    .chip {
+      height: 28px; padding: 0 12px; border-radius: 50px;
+      background: #2c3744; border: 2px solid #4b6ca5; color: #fff;
+      font-weight: bold; font-size: 13px; text-decoration: none;
+      display: inline-flex; align-items: center; cursor: pointer;
+    }
+    .chip.active { border-color: #fdff94; color: #fdff94; }
+    .chip:hover { border-color: #6b8fc7; }
+    .grid {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
+    }
+    @media (min-width: 560px) { .grid { grid-template-columns: repeat(4, 1fr); } }
+    .mini {
+      background: #2c3744; border: 2px solid #4b6ca5; border-radius: 12px;
+      padding: 10px; text-align: center;
+    }
+    .mini .k { font-size: .65rem; text-transform: uppercase; letter-spacing: .06em; color: #ffe77f; font-weight: bold; }
+    .mini .v { font-size: 1.15rem; font-weight: bold; margin-top: 4px; }
+    .on { color: #4ade80; }
+    .off { color: #f87171; }
+    .meh { color: #fbbf24; }
+    .graph-box {
+      background: #2c3744; border: 2px solid #4b6ca5; border-radius: 12px;
+      padding: 12px; overflow: hidden;
+    }
+    canvas { width: 100%; height: auto; display: block; border-radius: 8px; background: #1a222d; }
+    .legend {
+      display: flex; gap: 14px; justify-content: center; font-size: .8rem; font-weight: bold; margin-top: 8px;
+    }
+    .sw { display: inline-block; width: 12px; height: 12px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
+    .foot { text-align: center; color: #cbd5e1; font-size: .8rem; font-weight: bold; }
+    .desc { text-align: center; font-size: .85rem; color: #e2e8f0; font-weight: bold; }
+  </style>
+</head>
+<body>
+<div class="card-wrapper"><div class="card">
+  <div class="lemon-heading">roblox uptime</div>
+  <div class="sub">host presence graph</div>
+  <div class="desc" id="desc"></div>
+
+  <div class="nav">
+    <button type="button" class="chip active" data-period="12h">12h</button>
+    <button type="button" class="chip" data-period="24h">24h</button>
+    <button type="button" class="chip" data-period="3d">3d</button>
+    <a class="chip" href="/status">status</a>
+    <a class="chip" href="/api/png/roblox" target="_blank">png</a>
+    <a class="chip" href="/">home</a>
+  </div>
+
+  <div class="grid">
+    <div class="mini"><div class="k">status</div><div class="v meh" id="st">…</div></div>
+    <div class="mini"><div class="k">period up</div><div class="v" id="pct">…</div></div>
+    <div class="mini"><div class="k">checks</div><div class="v" id="checks">…</div></div>
+    <div class="mini"><div class="k">streak</div><div class="v" id="streak">…</div></div>
+  </div>
+
+  <div class="graph-box">
+    <canvas id="graph" width="680" height="220"></canvas>
+    <div class="legend">
+      <span><span class="sw" style="background:#4ade80"></span>online</span>
+      <span><span class="sw" style="background:#f87171"></span>offline</span>
+    </div>
+  </div>
+
+  <div class="foot" id="updated">loading…</div>
+</div></div>
+<script>
+let period = '24h';
+
+function dur(ms) {
+  if (ms == null) return '—';
+  const s = Math.floor(ms / 1000);
+  const m = Math.floor(s / 60);
+  const h = Math.floor(m / 60);
+  const d = Math.floor(h / 24);
+  if (d > 0) return d + 'd ' + (h % 24) + 'h';
+  if (h > 0) return h + 'h ' + (m % 60) + 'm';
+  return m + 'm';
+}
+
+function drawGraph(samples) {
+  const canvas = document.getElementById('graph');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width;
+  const H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#1a222d';
+  ctx.fillRect(0, 0, W, H);
+
+  if (!samples || samples.length < 2) {
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = 'bold 16px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('no sample data yet — restart bot after deploy', W / 2, H / 2);
+    return;
+  }
+
+  const pad = { l: 12, r: 12, t: 16, b: 28 };
+  const gw = W - pad.l - pad.r;
+  const gh = H - pad.t - pad.b;
+  const n = samples.length;
+  const barW = Math.max(1, gw / n);
+
+  // baseline
+  ctx.strokeStyle = '#334155';
+  ctx.beginPath();
+  ctx.moveTo(pad.l, pad.t + gh);
+  ctx.lineTo(pad.l + gw, pad.t + gh);
+  ctx.stroke();
+
+  for (let i = 0; i < n; i++) {
+    const on = !!samples[i].on;
+    const x = pad.l + i * barW;
+    const h = gh * 0.85;
+    const y = on ? pad.t + (gh - h) : pad.t + gh - h * 0.25;
+    const bh = on ? h : h * 0.25;
+    ctx.fillStyle = on ? '#4ade80' : '#f87171';
+    ctx.fillRect(x, y, Math.max(1, barW - 0.5), bh);
+  }
+
+  // time labels
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '11px Arial';
+  ctx.textAlign = 'left';
+  const first = samples[0].t;
+  const last = samples[n - 1].t;
+  const fmt = (ts) => new Date(ts).toLocaleString('en-GB', {
+    timeZone: 'Europe/Moscow', hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short', hour12: false,
+  });
+  ctx.fillText(fmt(first), pad.l, H - 8);
+  ctx.textAlign = 'right';
+  ctx.fillText(fmt(last), W - pad.r, H - 8);
+}
+
+async function load() {
+  try {
+    // prefer direct bot host API (has samples after restart)
+    let data = null;
+    try {
+      const r = await fetch('https://lemonsserver.wispbyte.app/api/host?period=' + period, { cache: 'no-store' });
+      if (r.ok) data = await r.json();
+    } catch {}
+
+    if (!data || !data.ok) {
+      const r = await fetch('/api/status', { cache: 'no-store' });
+      const s = await r.json();
+      data = s.host ? {
+        ok: true,
+        online: s.host.online,
+        description: s.host.description,
+        periodUptimePercent: s.host.todayUptimePercent,
+        periodChecks: s.host.todayChecks,
+        periodOnlineChecks: null,
+        currentStreakMs: s.host.currentStreakMs,
+        samples: s.host.samples || [],
+      } : null;
+    }
+
+    if (!data) throw new Error('no data');
+
+    document.getElementById('desc').textContent = data.description || '';
+    const st = document.getElementById('st');
+    st.textContent = data.online ? 'online' : 'offline';
+    st.className = 'v ' + (data.online ? 'on' : 'off');
+
+    const pct = data.periodUptimePercent != null ? data.periodUptimePercent : data.todayUptimePercent;
+    document.getElementById('pct').textContent = pct != null ? pct + '%' : '—';
+
+    const checks = data.periodChecks != null ? data.periodChecks : data.todayChecks;
+    const onC = data.periodOnlineChecks;
+    document.getElementById('checks').textContent =
+      onC != null && checks != null ? onC + '/' + checks : (checks != null ? String(checks) : '—');
+
+    document.getElementById('streak').textContent = dur(data.currentStreakMs);
+    drawGraph(data.samples || []);
+    document.getElementById('updated').textContent =
+      'period ' + (data.period || period) + ' · updated ' + new Date().toLocaleTimeString();
+  } catch (e) {
+    document.getElementById('updated').textContent = 'failed to load';
+    drawGraph([]);
+  }
+}
+
+document.querySelectorAll('[data-period]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    period = btn.getAttribute('data-period');
+    document.querySelectorAll('[data-period]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    load();
+  });
+});
+
+load();
+setInterval(load, 30000);
+</script>
+</body>
+</html>
