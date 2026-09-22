@@ -1,6 +1,5 @@
 /**
- * /api/png/:type — text | lemon | solid | uptime | status
- * One dynamic serverless function for all generators.
+ * /api/png/:type — text | lemon | solid | uptime | status | roblox
  */
 import {
   renderTextPng,
@@ -8,6 +7,7 @@ import {
   renderSolidPng,
   renderUptimePng,
   renderStatusPng,
+  renderRobloxPng,
   sendPng,
 } from '../../lib/png.js';
 
@@ -31,11 +31,12 @@ export default async function handler(req, res) {
     else if (type === 'solid') png = renderSolidPng(q);
     else if (type === 'uptime') png = await renderUptimePng();
     else if (type === 'status') png = await renderStatusPng();
+    else if (type === 'roblox') png = await renderRobloxPng(q);
     else {
       res.setHeader('Access-Control-Allow-Origin', '*');
       return res.status(404).json({
         error: 'Unknown generator',
-        available: ['text', 'lemon', 'solid', 'uptime', 'status'],
+        available: ['text', 'lemon', 'solid', 'uptime', 'status', 'roblox'],
         index: '/api/png',
       });
     }
