@@ -1,6 +1,5 @@
 /**
  * /api/png — index of PNG generators
- * (single serverless fn so we stay under hobby limit)
  */
 export default function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -15,36 +14,36 @@ export default function handler(req, res) {
     ok: true,
     generators: [
       {
+        path: '/api/png/uptime',
+        description: 'Live discord bot uptime card (PNG, discord-embed friendly)',
+        example: '/api/png/uptime',
+      },
+      {
+        path: '/api/png/status',
+        description: 'Live status card: site · bot · roblox host · wall msgs',
+        example: '/api/png/status',
+      },
+      {
         path: '/api/png/text',
         description: 'Render text as a PNG (bitmap font)',
         params: {
-          t: 'text to render (required)',
-          bg: 'background hex, e.g. 1e1e2a (default: site dark)',
-          fg: 'foreground hex, e.g. fdff94 (default: lemon yellow)',
-          size: 'font scale 1-8 (default: 3)',
-          w: 'width 64-1200 (default: auto)',
-          h: 'height 32-800 (default: auto)',
+          t: 'text to render',
+          bg: 'background hex',
+          fg: 'foreground hex',
+          size: 'font scale 1-8',
+          w: 'width',
+          h: 'height',
         },
         example: '/api/png/text?t=hello%20lemon&fg=fdff94',
       },
       {
         path: '/api/png/lemon',
-        description: 'Random lemon / citrus vibes PNG',
-        params: {
-          seed: 'optional number for reproducible lemon',
-          size: '64 | 128 | 256 (default: 128)',
-        },
+        description: 'Random lemon art PNG',
         example: '/api/png/lemon?size=128',
       },
       {
         path: '/api/png/solid',
         description: 'Solid color placeholder PNG',
-        params: {
-          c: 'hex color without # (default: 67809f)',
-          w: 'width 1-1200 (default: 200)',
-          h: 'height 1-1200 (default: 200)',
-          t: 'optional label text',
-        },
         example: '/api/png/solid?c=fdff94&w=300&h=150&t=placeholder',
       },
     ],

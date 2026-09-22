@@ -1,15 +1,17 @@
 /**
- * /api/png/:type — text | lemon | solid
+ * /api/png/:type — text | lemon | solid | uptime | status
  * One dynamic serverless function for all generators.
  */
 import {
   renderTextPng,
   renderLemonPng,
   renderSolidPng,
+  renderUptimePng,
+  renderStatusPng,
   sendPng,
 } from '../../lib/png.js';
 
-export default function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method === 'OPTIONS') {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
@@ -22,18 +24,26 @@ export default function handler(req, res) {
   const type = String(req.query.type || '').toLowerCase();
   const q = req.query || {};
 
-  let png;
-  if (type === 'text') png = renderTextPng(q);
-  else if (type === 'lemon') png = renderLemonPng(q);
-  else if (type === 'solid') png = renderSolidPng(q);
-  else {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    return res.status(404).json({
-      error: 'Unknown generator',
-      available: ['text', 'lemon', 'solid'],
-      index: '/api/png',
-    });
-  }
+  try {
+    let png;
+    if (type === 'text') png = renderTextPng(q);
+    else if (type === 'lemon') png = renderLemonPng(q);
+    else if (type === 'solid') png = renderSolidPng(q);
+    else if (type === 'uptime') png = await renderUptimePng();
+    else if (type === 'status') png = await renderStatusPng();
+    else {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      return res.status(404).json({
+        error: 'Unknown generator',
+        available: ['text', 'lemon', 'solid', 'uptime', 'status'],
+        index: '/api/png',
+      });
+    }
 
-  return sendPng(res, png, req);
+    return sendPng(res, png, req);
+  } catch (err) {
+    console.error(err);
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    return res.status(500).json({ error: 'Failed to render PNG' });
+  }
 }
