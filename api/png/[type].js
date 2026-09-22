@@ -7,9 +7,9 @@ import {
   renderSolidPng,
   renderUptimePng,
   renderStatusPng,
-  renderRobloxPng,
   sendPng,
 } from '../../lib/png.js';
+import { renderRobloxPng } from '../../lib/robloxPng.js';
 
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') {
