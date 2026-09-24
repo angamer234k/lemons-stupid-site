@@ -27,6 +27,11 @@
       border-radius: 16px;
       background: linear-gradient(180deg, #fff 0%, #888 100%);
       box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+      animation: fadeUp 0.5s ease-out;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
     }
     .card {
       background: #67809f;
@@ -48,6 +53,12 @@
          2px  2px 0 #535353;
       letter-spacing: 1px;
       line-height: 1.1;
+      transition: transform 0.2s ease, filter 0.2s ease;
+      cursor: default;
+    }
+    .lemon-heading:hover {
+      transform: scale(1.04);
+      filter: drop-shadow(0 0 8px rgba(253, 255, 148, 0.45));
     }
     .avatar {
       width: 84px;
@@ -57,6 +68,11 @@
       object-fit: cover;
       background: #2c3744;
       box-shadow: 0 0 14px rgba(255, 231, 127, 0.35);
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    .avatar:hover {
+      transform: scale(1.06) rotate(-3deg);
+      box-shadow: 0 0 20px rgba(255, 231, 127, 0.55);
     }
     .bio {
       color: #fff;
@@ -101,6 +117,11 @@
     .dot.on {
       background: #4ade80;
       box-shadow: 0 0 8px #4ade80;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 6px #4ade80; }
+      50% { box-shadow: 0 0 12px #4ade80; }
     }
     .mood {
       display: none;
@@ -117,6 +138,47 @@
     }
     .mood.show { display: block; }
     .mood .em { margin-right: 4px; }
+
+    /* wall preview */
+    .wall-preview {
+      display: none;
+      width: 100%;
+      background: #2c3744;
+      border: 2px solid #4b6ca5;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 0.82rem;
+      color: #e2e8f0;
+      line-height: 1.4;
+    }
+    .wall-preview.show { display: block; }
+    .wall-preview .label {
+      font-size: 0.7rem;
+      font-weight: bold;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 6px;
+    }
+    .wall-preview .msg {
+      margin-bottom: 6px;
+    }
+    .wall-preview .msg:last-child { margin-bottom: 0; }
+    .wall-preview .who {
+      color: #fdff94;
+      font-weight: bold;
+    }
+    .wall-preview .txt {
+      color: #cbd5e1;
+    }
+    .wall-preview a {
+      color: #93c5fd;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 0.75rem;
+    }
+    .wall-preview a:hover { text-decoration: underline; }
+
     .links {
       display: flex;
       flex-wrap: wrap;
@@ -141,11 +203,16 @@
     .chip:hover {
       background: #3e4d5e;
       border-color: #6b8fc7;
-      transform: translateY(-1px);
+      transform: translateY(-2px);
     }
     .chip.primary {
       border-color: #fdff94;
       color: #fdff94;
+    }
+    .chip.primary:hover {
+      background: #3e4d5e;
+      border-color: #fdff94;
+      box-shadow: 0 0 10px rgba(253, 255, 148, 0.25);
     }
     @media (max-width: 400px) {
       .lemon-heading { font-size: 2.3rem; }
@@ -171,6 +238,12 @@
   </div>
 
   <div class="mood" id="mood"></div>
+
+  <div class="wall-preview" id="wall-preview">
+    <div class="label">latest on the wall</div>
+    <div id="wall-msgs"></div>
+    <div style="margin-top:8px"><a href="/wall">see all →</a></div>
+  </div>
 
   <div class="links">
     <a class="chip primary" href="/message">message</a>
@@ -206,6 +279,14 @@ function tickClock() {
 tickClock();
 setInterval(tickClock, 15000);
 
+function esc(s) {
+  return String(s || '')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
 async function refreshStatus() {
   const dot = document.getElementById('status-dot');
   const text = document.getElementById('status-text');
@@ -228,8 +309,7 @@ async function refreshStatus() {
     const mood = data.mood;
     if (mood && (mood.text || '').trim()) {
       moodEl.innerHTML =
-        '<span class="em">' + (mood.emoji || '🍋') + '</span> ' +
-        String(mood.text).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        '<span class="em">' + (mood.emoji || '🍋') + '</span> ' + esc(mood.text);
       moodEl.classList.add('show');
     } else {
       moodEl.classList.remove('show');
@@ -240,7 +320,28 @@ async function refreshStatus() {
     text.textContent = 'status unknown';
   }
 }
+
+async function loadWallPreview() {
+  const box = document.getElementById('wall-preview');
+  const msgs = document.getElementById('wall-msgs');
+  try {
+    const res = await fetch('/api/wall?limit=2', { cache: 'no-store' });
+    const data = await res.json();
+    if (!data.ok || !data.messages || !data.messages.length) return;
+
+    msgs.innerHTML = data.messages.slice(0, 2).map(m => {
+      const name = esc(m.name || 'Anonymous');
+      const text = esc((m.message || '').slice(0, 80)) + ((m.message || '').length > 80 ? '…' : '');
+      return `<div class="msg"><span class="who">${name}</span> <span class="txt">${text}</span></div>`;
+    }).join('');
+    box.classList.add('show');
+  } catch {
+    // silent fail – preview is optional
+  }
+}
+
 refreshStatus();
+loadWallPreview();
 setInterval(refreshStatus, 30000);
 </script>
 </body>
