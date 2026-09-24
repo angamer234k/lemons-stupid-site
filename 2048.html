@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<title>2048 · lemon</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&family=Inter:wght@600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;height:100dvh;overflow:hidden;background:#0a0a0b;font-family:Inter,system-ui,sans-serif;user-select:none;touch-action:none}
+body{display:flex;flex-direction:column;background-image:radial-gradient(ellipse 80% 40% at 50% -10%,rgba(253,224,71,.1),transparent)}
+header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;padding-top:max(12px,env(safe-area-inset-top))}
+.back{color:#a1a1aa;text-decoration:none;font-weight:600;font-size:.85rem;padding:8px 12px;border-radius:999px;border:1px solid #27272a;background:#111113}
+.title{font-family:'Space Grotesk',sans-serif;font-weight:700;color:#fde047}
+.scores{font-size:.8rem;font-weight:600;color:#a1a1aa}.scores span{color:#fde047}
+.stage{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px;gap:16px}
+.board{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;background:#18181b;padding:10px;border-radius:16px;border:1px solid #27272a;width:min(92vw,360px);aspect-ratio:1}
+.cell{background:#111113;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.4rem;color:#fde047;font-family:'Space Grotesk',sans-serif}
+.cell.n2{background:#27272a;color:#e4e4e7}.cell.n4{background:#3f3f46;color:#fafafa}
+.cell.n8{background:#a16207;color:#fff}.cell.n16{background:#ca8a04;color:#fff}
+.cell.n32{background:#eab308;color:#0a0a0b}.cell.n64,.cell.n128,.cell.n256,.cell.n512,.cell.n1024,.cell.n2048{background:#fde047;color:#0a0a0b}
+.hint{color:#52525b;font-size:.75rem;text-align:center;padding-bottom:max(12px,env(safe-area-inset-bottom))}
+.btn{min-height:44px;padding:0 20px;border:none;border-radius:999px;background:#18181b;border:1px solid #27272a;color:#fde047;font-weight:600;font-family:inherit}
+</style></head><body>
+<header><a class="back" href="/games.html">← games</a><div class="title">2048</div><div class="scores">score <span id="sc">0</span> · best <span id="be">0</span></div></header>
+<div class="stage"><div class="board" id="b"></div><button class="btn" id="new">new game</button></div>
+<div class="hint">swipe or arrow keys</div>
+<script>
+(function(){
+const KEY='lemon-2048-best';let best=+localStorage.getItem(KEY)||0;document.getElementById('be').textContent=best;
+let grid,score=0;const N=4;
+function empty(){const g=[];for(let i=0;i<N;i++){g[i]=[];for(let j=0;j<N;j++)g[i][j]=0}return g}
+function add(){const free=[];for(let i=0;i<N;i++)for(let j=0;j<N;j++)if(!grid[i][j])free.push([i,j]);
+if(!free.length)return;const[i,j]=free[Math.floor(Math.random()*free.length)];grid[i][j]=Math.random()<0.9?2:4}
+function render(){const b=document.getElementById('b');b.innerHTML='';
+for(let i=0;i<N;i++)for(let j=0;j<N;j++){const v=grid[i][j];const d=document.createElement('div');d.className='cell'+(v?' n'+v:'');d.textContent=v||'';b.appendChild(d)}
+document.getElementById('sc').textContent=score}
+function slide(row){const a=row.filter(v=>v);for(let i=0;i<a.length-1;i++){if(a[i]===a[i+1]){a[i]*=2;score+=a[i];a.splice(i+1,1)}}
+while(a.length<N)a.push(0);return a}
+function move(dir){const old=JSON.stringify(grid);
+if(dir==='left')for(let i=0;i<N;i++)grid[i]=slide(grid[i]);
+if(dir==='right')for(let i=0;i<N;i++)grid[i]=slide(grid[i].slice().reverse()).reverse();
+if(dir==='up'){for(let j=0;j<N;j++){let col=[];for(let i=0;i<N;i++)col.push(grid[i][j]);col=slide(col);for(let i=0;i<N;i++)grid[i][j]=col[i]}}
+if(dir==='down'){for(let j=0;j<N;j++){let col=[];for(let i=0;i<N;i++)col.push(grid[i][j]);col=slide(col.reverse()).reverse();for(let i=0;i<N;i++)grid[i][j]=col[i]}}
+if(JSON.stringify(grid)!==old){add();if(score>best){best=score;localStorage.setItem(KEY,best);document.getElementById('be').textContent=best}}
+render()}
+function init(){grid=empty();score=0;add();add();render()}
+document.getElementById('new').onclick=init;
+window.addEventListener('keydown',e=>{const m={ArrowLeft:'left',ArrowRight:'right',ArrowUp:'up',ArrowDown:'down'};if(m[e.key]){e.preventDefault();move(m[e.key])}});
+let sx,sy;document.querySelector('.stage').addEventListener('pointerdown',e=>{sx=e.clientX;sy=e.clientY});
+document.querySelector('.stage').addEventListener('pointerup',e=>{const dx=e.clientX-sx,dy=e.clientY-sy;if(Math.abs(dx)<30&&Math.abs(dy)<30)return;
+if(Math.abs(dx)>Math.abs(dy))move(dx>0?'right':'left');else move(dy>0?'down':'up')});
+init()})();
+</script></body></html>
