@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
+<title>breakout · lemon</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&family=Inter:wght@600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;height:100dvh;overflow:hidden;background:#0a0a0b;font-family:Inter,system-ui,sans-serif;touch-action:none;user-select:none}
+body{display:flex;flex-direction:column;background-image:radial-gradient(ellipse 80% 40% at 50% -10%,rgba(253,224,71,.1),transparent)}
+header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;padding-top:max(12px,env(safe-area-inset-top))}
+.back{color:#a1a1aa;text-decoration:none;font-weight:600;font-size:.85rem;padding:8px 12px;border-radius:999px;border:1px solid #27272a;background:#111113}
+.title{font-family:'Space Grotesk',sans-serif;font-weight:700;color:#fde047}
+.scores{font-size:.8rem;font-weight:600;color:#a1a1aa}.scores span{color:#fde047}
+.stage{flex:1;min-height:0;position:relative;display:flex;align-items:center;justify-content:center;padding:8px}
+canvas{display:block;border-radius:16px;border:1px solid #27272a;background:#111113;max-width:100%;max-height:100%;touch-action:none}
+.overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;z-index:5;padding:16px}
+.overlay.show{display:flex}
+.panel{background:rgba(17,17,19,.95);border:1px solid #27272a;border-radius:20px;padding:28px;text-align:center;max-width:300px}
+.panel h2{font-family:'Space Grotesk',sans-serif;color:#fde047;font-size:1.5rem;margin-bottom:8px}
+.panel p{color:#a1a1aa;margin-bottom:18px;font-size:.9rem}
+.btn{min-height:48px;min-width:130px;border:none;border-radius:999px;background:#fde047;color:#0a0a0b;font-weight:700;font-size:1rem}
+.hint{text-align:center;padding:8px 16px 16px;padding-bottom:max(16px,env(safe-area-inset-bottom));color:#52525b;font-size:.75rem}
+</style></head><body>
+<header><a class="back" href="/games.html">← games</a><div class="title">breakout</div><div class="scores">score <span id="sc">0</span></div></header>
+<div class="stage" id="st"><canvas id="c"></canvas>
+<div class="overlay show" id="ov"><div class="panel"><h2 id="pt">breakout</h2><p id="pd">drag to move the paddle</p><button class="btn" id="go">play</button></div></div></div>
+<div class="hint">drag / mouse to move paddle</div>
+<script>
+(function(){
+const c=document.getElementById('c'),x=c.getContext('2d'),st=document.getElementById('st');
+const ov=document.getElementById('ov'),pt=document.getElementById('pt'),pd=document.getElementById('pd'),go=document.getElementById('go'),sc=document.getElementById('sc');
+let W,H,pad,ball,bricks,score,run,alive,rows=5,cols=8,dpr;
+function resize(){const r=st.getBoundingClientRect();W=Math.min(480,r.width-16);H=Math.min(640,r.height-16);
+dpr=Math.min(devicePixelRatio||1,2);c.width=W*dpr;c.height=H*dpr;c.style.width=W+'px';c.style.height=H+'px';x.setTransform(dpr,0,0,dpr,0,0)}
+function build(){bricks=[];const bw=(W-20)/cols,bh=18;for(let r=0;r<rows;r++)for(let col=0;col<cols;col++)bricks.push({x:10+col*bw,y:40+r*(bh+6),w:bw-4,h:bh,on:true})}
+function reset(){pad={w:W*0.22,h:12,x:W/2};ball={x:W/2,y:H-60,vx:3.2,vy:-4.5,r:8};score=0;sc.textContent=0;build();alive=true;run=true;ov.classList.remove('show')}
+function die(win){alive=false;run=false;pt.textContent=win?'you win':'game over';pd.textContent='score '+score;go.textContent='again';ov.classList.add('show')}
+function tick(){if(!run){draw();requestAnimationFrame(tick);return}
+ball.x+=ball.vx;ball.y+=ball.vy;
+if(ball.x<ball.r||ball.x>W-ball.r)ball.vx*=-1;
+if(ball.y<ball.r)ball.vy*=-1;
+if(ball.y>H){die(false);requestAnimationFrame(tick);return}
+const pl=pad.x-pad.w/2,pr=pad.x+pad.w/2;
+if(ball.y+ball.r>H-28&&ball.y-ball.r<H-16&&ball.x>pl&&ball.x<pr){ball.vy=-Math.abs(ball.vy);ball.vx+=(ball.x-pad.x)*0.08}
+for(const b of bricks){if(!b.on)continue;
+if(ball.x>b.x&&ball.x<b.x+b.w&&ball.y>b.y&&ball.y<b.y+b.h){b.on=false;ball.vy*=-1;score+=10;sc.textContent=score}}
+if(bricks.every(b=>!b.on))die(true);
+draw();requestAnimationFrame(tick)}
+function draw(){x.clearRect(0,0,W,H);x.fillStyle='#18181b';x.fillRect(0,0,W,H);
+for(const b of bricks){if(!b.on)continue;x.fillStyle='#fde047';x.fillRect(b.x,b.y,b.w,b.h)}
+x.fillStyle='#e4e4e7';x.fillRect(pad.x-pad.w/2,H-28,pad.w,pad.h);
+x.fillStyle='#fde047';x.beginPath();x.arc(ball.x,ball.y,ball.r,0,Math.PI*2);x.fill()}
+function move(clientX){const rect=c.getBoundingClientRect();pad.x=Math.max(pad.w/2,Math.min(W-pad.w/2,(clientX-rect.left)*(W/rect.width)))}
+st.addEventListener('pointermove',e=>{if(run)move(e.clientX)});
+st.addEventListener('pointerdown',e=>{if(e.target.closest('.btn'))return;if(run)move(e.clientX)});
+go.onclick=()=>reset();resize();window.addEventListener('resize',resize);requestAnimationFrame(tick)})();
+</script></body></html>

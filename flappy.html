@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
+<title>flappy · lemon</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&family=Inter:wght@600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;height:100dvh;overflow:hidden;background:#0a0a0b;font-family:Inter,system-ui,sans-serif;touch-action:none;user-select:none}
+body{display:flex;flex-direction:column;background-image:radial-gradient(ellipse 80% 40% at 50% -10%,rgba(253,224,71,.1),transparent)}
+header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;padding-top:max(12px,env(safe-area-inset-top));flex-shrink:0}
+.back{color:#a1a1aa;text-decoration:none;font-weight:600;font-size:.85rem;padding:8px 12px;border-radius:999px;border:1px solid #27272a;background:#111113}
+.title{font-family:'Space Grotesk',sans-serif;font-weight:700;color:#fde047}
+.scores{font-size:.8rem;font-weight:600;color:#a1a1aa}.scores span{color:#fde047}
+.stage{flex:1;min-height:0;position:relative;display:flex;align-items:center;justify-content:center;padding:8px}
+canvas{display:block;border-radius:16px;border:1px solid #27272a;background:#111113;max-width:100%;max-height:100%;touch-action:none}
+.overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;z-index:5;padding:16px}
+.overlay.show{display:flex}
+.panel{background:rgba(17,17,19,.95);border:1px solid #27272a;border-radius:20px;padding:28px;text-align:center;max-width:300px}
+.panel h2{font-family:'Space Grotesk',sans-serif;color:#fde047;font-size:1.5rem;margin-bottom:8px}
+.panel p{color:#a1a1aa;margin-bottom:18px;font-size:.9rem}
+.btn{min-height:48px;min-width:130px;border:none;border-radius:999px;background:#fde047;color:#0a0a0b;font-weight:700;font-size:1rem;font-family:inherit}
+.hint{text-align:center;padding:8px 16px 16px;padding-bottom:max(16px,env(safe-area-inset-bottom));color:#52525b;font-size:.75rem;font-weight:500}
+</style></head><body>
+<header><a class="back" href="/games.html">← games</a><div class="title">flappy</div><div class="scores">score <span id="sc">0</span> · best <span id="be">0</span></div></header>
+<div class="stage" id="st"><canvas id="c"></canvas>
+<div class="overlay" id="ov"><div class="panel"><h2 id="pt">flappy</h2><p id="pd">tap anywhere to flap</p><button class="btn" id="go">play</button></div></div></div>
+<div class="hint">tap / click / space to flap</div>
+<script>
+(function(){
+const c=document.getElementById('c'),x=c.getContext('2d'),st=document.getElementById('st');
+const ov=document.getElementById('ov'),pt=document.getElementById('pt'),pd=document.getElementById('pd'),go=document.getElementById('go');
+const sc=document.getElementById('sc'),be=document.getElementById('be');
+const KEY='lemon-flappy-best';let best=+localStorage.getItem(KEY)||0;be.textContent=best;
+let W,H,bird,vel,pipes,score,alive,run,gap,frame,dpr;
+function resize(){const r=st.getBoundingClientRect();W=Math.min(420,r.width-16);H=Math.min(640,r.height-16);
+dpr=Math.min(devicePixelRatio||1,2);c.width=W*dpr;c.height=H*dpr;c.style.width=W+'px';c.style.height=H+'px';x.setTransform(dpr,0,0,dpr,0,0);gap=H*0.22}
+function reset(){bird={y:H/2,r:14};vel=0;pipes=[];score=0;sc.textContent=0;frame=0;alive=true;run=true;ov.classList.remove('show');spawn()}
+function spawn(){const top=40+Math.random()*(H-gap-100);pipes.push({x:W+10,top,bot:top+gap,w:52,passed:false})}
+function flap(){if(!run)return;vel=-7.2}
+function die(){alive=false;run=false;if(score>best){best=score;localStorage.setItem(KEY,best);be.textContent=best}
+pt.textContent='game over';pd.textContent='score '+score;go.textContent='again';ov.classList.add('show')}
+function tick(){if(!run){draw();requestAnimationFrame(tick);return}
+frame++;vel+=0.38;bird.y+=vel;
+if(bird.y<bird.r||bird.y>H-bird.r)die();
+if(frame%90===0)spawn();
+for(const p of pipes){p.x-=3.2;
+if(!p.passed&&p.x+p.w<W*0.28){p.passed=true;score++;sc.textContent=score}
+if(W*0.28+bird.r>p.x&&W*0.28-bird.r<p.x+p.w){if(bird.y-bird.r<p.top||bird.y+bird.r>p.bot)die()}
+}
+pipes=pipes.filter(p=>p.x+p.w>-10);draw();requestAnimationFrame(tick)}
+function draw(){x.clearRect(0,0,W,H);
+x.fillStyle='#18181b';x.fillRect(0,0,W,H);
+for(const p of pipes){x.fillStyle='#fde047';x.fillRect(p.x,0,p.w,p.top);x.fillRect(p.x,p.bot,p.w,H-p.bot);
+x.fillStyle='#0a0a0b';x.fillRect(p.x+3,3,p.w-6,p.top-6);x.fillRect(p.x+3,p.bot+3,p.w-6,H-p.bot-6)}
+x.fillStyle='#fde047';x.beginPath();x.arc(W*0.28,bird.y,bird.r,0,Math.PI*2);x.fill();
+x.fillStyle='#0a0a0b';x.beginPath();x.arc(W*0.28+4,bird.y-3,3,0,Math.PI*2);x.fill()}
+function start(){reset()}
+go.onclick=start;st.addEventListener('pointerdown',e=>{if(e.target.closest('.btn')||e.target.closest('.back'))return;if(!run){start();return}flap()});
+window.addEventListener('keydown',e=>{if(e.code==='Space'||e.key===' '){e.preventDefault();if(!run)start();else flap()}});
+ov.classList.add('show');resize();window.addEventListener('resize',resize);requestAnimationFrame(tick)})();
+</script></body></html>
