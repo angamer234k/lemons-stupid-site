@@ -24,165 +24,53 @@
         radial-gradient(ellipse 80% 50% at 50% -20%, rgba(253, 224, 71, 0.12), transparent),
         radial-gradient(ellipse 60% 40% at 100% 100%, rgba(253, 224, 71, 0.05), transparent);
     }
-    .shell {
-      width: 100%;
-      max-width: 400px;
-      animation: in 0.45s ease-out;
-    }
-    @keyframes in {
-      from { opacity: 0; transform: translateY(16px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+    .shell { width: 100%; max-width: 400px; animation: in 0.45s ease-out; }
+    @keyframes in { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
     .card {
-      background: #111113;
-      border: 1px solid #27272a;
-      border-radius: 20px;
-      padding: 32px 28px 28px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 18px;
+      background: #111113; border: 1px solid #27272a; border-radius: 20px;
+      padding: 32px 28px 28px; display: flex; flex-direction: column; align-items: center; gap: 18px;
       box-shadow: 0 0 0 1px rgba(253,224,71,0.06), 0 24px 48px -12px rgba(0,0,0,0.6);
     }
     .name {
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 2.4rem;
-      font-weight: 700;
-      color: #fde047;
-      letter-spacing: -0.03em;
-      text-shadow: 0 0 40px rgba(253, 224, 71, 0.35);
+      font-family: 'Space Grotesk', sans-serif; font-size: 2.4rem; font-weight: 700;
+      color: #fde047; letter-spacing: -0.03em; text-shadow: 0 0 40px rgba(253, 224, 71, 0.35);
     }
     .avatar {
-      width: 88px;
-      height: 88px;
-      border-radius: 50%;
-      border: 2px solid #fde047;
-      object-fit: cover;
-      box-shadow: 0 0 24px rgba(253, 224, 71, 0.25);
-      transition: transform 0.25s ease, box-shadow 0.25s;
+      width: 88px; height: 88px; border-radius: 50%; border: 2px solid #fde047; object-fit: cover;
+      box-shadow: 0 0 24px rgba(253, 224, 71, 0.25); transition: transform 0.25s ease, box-shadow 0.25s;
     }
-    .avatar:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 32px rgba(253, 224, 71, 0.4);
-    }
-    .bio {
-      text-align: center;
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: #e4e4e7;
-      line-height: 1.5;
-    }
-    .bio span {
-      display: block;
-      margin-top: 4px;
-      font-size: 0.8rem;
-      font-weight: 400;
-      color: #71717a;
-    }
-    .meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      justify-content: center;
-    }
+    .avatar:hover { transform: scale(1.05); box-shadow: 0 0 32px rgba(253, 224, 71, 0.4); }
+    .bio { text-align: center; font-size: 0.95rem; font-weight: 600; color: #e4e4e7; line-height: 1.5; }
+    .bio span { display: block; margin-top: 4px; font-size: 0.8rem; font-weight: 400; color: #71717a; }
+    .meta { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
     .pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: #18181b;
-      border: 1px solid #27272a;
-      border-radius: 999px;
-      padding: 5px 12px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: #a1a1aa;
+      display: inline-flex; align-items: center; gap: 6px; background: #18181b; border: 1px solid #27272a;
+      border-radius: 999px; padding: 5px 12px; font-size: 0.75rem; font-weight: 600; color: #a1a1aa;
     }
-    .dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: #52525b;
-    }
-    .dot.on {
-      background: #4ade80;
-      box-shadow: 0 0 8px #4ade80;
-      animation: pulse 2s ease-in-out infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.6; }
-    }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: #52525b; }
+    .dot.on { background: #4ade80; box-shadow: 0 0 8px #4ade80; animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
     .mood, .wall-preview {
-      display: none;
-      width: 100%;
-      background: #18181b;
-      border: 1px solid #27272a;
-      border-radius: 12px;
-      padding: 12px 14px;
-      font-size: 0.85rem;
-      color: #d4d4d8;
-      line-height: 1.45;
+      display: none; width: 100%; background: #18181b; border: 1px solid #27272a; border-radius: 12px;
+      padding: 12px 14px; font-size: 0.85rem; color: #d4d4d8; line-height: 1.45;
     }
     .mood.show, .wall-preview.show { display: block; }
-    .wall-preview .label {
-      font-size: 0.65rem;
-      font-weight: 600;
-      color: #52525b;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      margin-bottom: 8px;
-    }
+    .wall-preview .label { font-size: 0.65rem; font-weight: 600; color: #52525b; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
     .wall-preview .msg { margin-bottom: 6px; }
     .wall-preview .msg:last-child { margin-bottom: 0; }
     .wall-preview .who { color: #fde047; font-weight: 600; }
     .wall-preview .txt { color: #a1a1aa; }
-    .wall-preview a {
-      display: inline-block;
-      margin-top: 8px;
-      color: #fde047;
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-decoration: none;
-    }
+    .wall-preview a { display: inline-block; margin-top: 8px; color: #fde047; font-size: 0.75rem; font-weight: 600; text-decoration: none; }
     .wall-preview a:hover { text-decoration: underline; }
-    .links {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      justify-content: center;
-      width: 100%;
-    }
+    .links { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; width: 100%; }
     .chip {
-      height: 34px;
-      padding: 0 16px;
-      border-radius: 999px;
-      background: #18181b;
-      border: 1px solid #27272a;
-      color: #e4e4e7;
-      font-weight: 600;
-      font-size: 0.8rem;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
+      height: 34px; padding: 0 16px; border-radius: 999px; background: #18181b; border: 1px solid #27272a;
+      color: #e4e4e7; font-weight: 600; font-size: 0.8rem; text-decoration: none; display: inline-flex; align-items: center;
       transition: all 0.15s ease;
     }
-    .chip:hover {
-      border-color: #fde047;
-      color: #fde047;
-      background: rgba(253, 224, 71, 0.06);
-      transform: translateY(-1px);
-    }
-    .chip.primary {
-      background: #fde047;
-      border-color: #fde047;
-      color: #0a0a0b;
-    }
-    .chip.primary:hover {
-      background: #fef08a;
-      border-color: #fef08a;
-      color: #0a0a0b;
-      box-shadow: 0 0 20px rgba(253, 224, 71, 0.35);
-    }
+    .chip:hover { border-color: #fde047; color: #fde047; background: rgba(253, 224, 71, 0.06); transform: translateY(-1px); }
+    .chip.primary { background: #fde047; border-color: #fde047; color: #0a0a0b; }
+    .chip.primary:hover { background: #fef08a; border-color: #fef08a; color: #0a0a0b; box-shadow: 0 0 20px rgba(253, 224, 71, 0.35); }
   </style>
 </head>
 <body>
@@ -209,7 +97,7 @@
       <a class="chip" href="/wall">wall</a>
       <a class="chip" href="/status">status</a>
       <a class="chip" href="/uptime">uptime</a>
-      <a class="chip" href="/game.html">game</a>
+      <a class="chip" href="/games.html">games</a>
       <a class="chip" href="https://discord.gg/sSymHq6FjQ" target="_blank" rel="noopener">discord</a>
       <a class="chip" href="https://github.com/angamer234k" target="_blank" rel="noopener">github</a>
       <a class="chip" href="https://emailthing.me/@lemon0real" target="_blank" rel="noopener">email</a>
@@ -220,7 +108,7 @@
 function ago(ts){const d=Date.now()-ts,m=Math.floor(d/6e4),h=Math.floor(d/36e5),day=Math.floor(d/864e5);if(m<1)return'just now';if(m<60)return m+'m ago';if(h<24)return h+'h ago';return day+'d ago'}
 function tickClock(){document.getElementById('msk-clock').textContent=new Date().toLocaleTimeString('en-GB',{timeZone:'Europe/Moscow',hour:'2-digit',minute:'2-digit',hour12:false})}
 tickClock();setInterval(tickClock,15e3);
-function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function esc(s){return String(s||'').replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>').replace(/"/g,'"')}
 async function refreshStatus(){const dot=document.getElementById('status-dot'),text=document.getElementById('status-text'),moodEl=document.getElementById('mood');try{const res=await fetch('/api/status',{cache:'no-store'});const data=await res.json();if(data.site&&data.site.online){dot.className='dot on';text.textContent='online'}else if(data.site&&data.site.lastOnline){dot.className='dot';text.textContent='last seen '+ago(data.site.lastOnline)}else{dot.className='dot';text.textContent='offline'}const mood=data.mood;if(mood&&(mood.text||'').trim()){moodEl.innerHTML=(mood.emoji||'🍋')+' '+esc(mood.text);moodEl.classList.add('show')}else{moodEl.classList.remove('show');moodEl.textContent=''}}catch{dot.className='dot';text.textContent='status unknown'}}
 async function loadWallPreview(){const box=document.getElementById('wall-preview'),msgs=document.getElementById('wall-msgs');try{const res=await fetch('/api/wall?limit=2',{cache:'no-store'});const data=await res.json();if(!data.ok||!data.messages||!data.messages.length)return;msgs.innerHTML=data.messages.slice(0,2).map(m=>{const name=esc(m.name||'Anonymous');const text=esc((m.message||'').slice(0,80))+((m.message||'').length>80?'…':'');return`<div class="msg"><span class="who">${name}</span> <span class="txt">${text}</span></div>`}).join('');box.classList.add('show')}catch{}}
 refreshStatus();loadWallPreview();setInterval(refreshStatus,3e4);
