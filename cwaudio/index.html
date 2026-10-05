@@ -1,0 +1,1405 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CatWeb Sound Converter</title>
+<style>
+:root{
+  --bg:#0c0c0d; --panel:#141416; --panel2:#1b1b1e; --panel3:#222226; --line:#2a2a2e; --line2:#36363b;
+  --text:#ececee; --muted:#8e8e95; --dim:#5f5f66;
+  --red:#ef4444; --redbg:#2a1414; --redline:#5a2222;
+  --purple:#a78bfa; --purple2:#7c3aed;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+header{max-width:1280px;margin:0 auto;padding:24px 24px 6px;display:flex;align-items:center;gap:14px}
+.logo{width:40px;height:40px;border-radius:10px;background:var(--panel2);border:1px solid var(--line);display:grid;place-items:center}
+.logo svg.i{width:22px;height:22px}
+header h1{margin:0;font-size:20px;letter-spacing:.2px}
+header p{margin:2px 0 0;color:var(--muted);font-size:13px}
+main{max-width:1280px;margin:0 auto;padding:14px 24px 40px;display:grid;grid-template-columns:390px 1fr;gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px}
+.card h2{margin:0 0 12px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px}
+.card h2 .n{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:6px;background:var(--panel3);border:1px solid var(--line2);font-size:11px;color:var(--muted)}
+.card h2 .right{margin-left:auto;color:var(--dim);font-weight:400;font-size:12px}
+label{display:block;color:var(--muted);font-size:12px;margin:10px 0 4px}
+input[type=text],input[type=number],select{width:100%;background:var(--panel2);border:1px solid var(--line2);color:var(--text);border-radius:8px;padding:7px 9px;font:inherit}
+input:focus,select:focus{outline:1px solid #d4d4d8;outline-offset:-1px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.hint{color:var(--dim);font-size:12px;margin-top:8px;display:flex;gap:6px;align-items:flex-start}
+.hint svg.i{width:14px;height:14px;margin-top:2px}
+.chk{display:flex;align-items:center;gap:8px;color:var(--text);font-size:13px;margin-top:10px;cursor:pointer}
+input[type=checkbox]{accent-color:#e4e4e7;width:15px;height:15px}
+button{display:inline-flex;align-items:center;gap:7px;background:var(--panel2);color:var(--text);border:1px solid var(--line2);border-radius:8px;padding:8px 13px;font:inherit;font-size:13px;cursor:pointer}
+button:hover{background:var(--panel3)}
+button.primary{background:#ececee;border-color:#ececee;color:#0c0c0d;font-weight:600}
+button.primary:hover{background:#fff}
+button.sound{border-color:#4c3a8a;color:#d9ccff}
+button.sound:hover{background:#221a3a}
+button:disabled{opacity:.4;cursor:not-allowed}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+#drop{border:1.5px dashed var(--line2);border-radius:10px;padding:20px;text-align:center;color:var(--muted);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px}
+#drop svg.i{width:22px;height:22px;color:var(--text)}
+#drop.over{border-color:#d4d4d8;color:var(--text);background:var(--panel2)}
+#drop small{color:var(--dim)}
+#fileinfo{margin-top:8px;font-size:12px;color:var(--muted);display:flex;gap:6px;align-items:center}
+.presets{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.preset{background:var(--panel2);border:1px solid var(--line2);border-radius:8px;padding:8px 6px;text-align:center;cursor:pointer;font-size:12px;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:4px}
+.preset svg.i{color:var(--text)}
+.preset b{color:var(--text);font-weight:600;font-size:12px}
+.preset.on{border-color:#d4d4d8;background:var(--panel3)}
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.stat{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.stat b{display:block;font-size:15px}
+.stat span{color:var(--muted);font-size:11px}
+.view{position:relative;margin-top:12px}
+canvas{width:100%;height:260px;display:block;background:#0a0812;border:1px solid #241d38;border-radius:10px}
+.msg{margin-top:12px;font-size:13px;padding:9px 11px;border-radius:8px;display:none;gap:8px;align-items:flex-start}
+.msg.show{display:flex}
+.msg svg.i{margin-top:2px}
+.msg.err{background:var(--redbg);color:#fecaca;border:1px solid var(--redline)}
+.msg.err svg.i{color:var(--red)}
+.msg.ok{background:var(--panel2);color:var(--text);border:1px solid var(--line2)}
+.progress{height:4px;background:var(--panel2);border-radius:4px;overflow:hidden;margin-top:12px;display:none}
+.progress.show{display:block}
+.progress div{height:100%;width:0;background:#ececee}
+.export{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:14px;margin-top:10px}
+.export h3{margin:0 0 4px;font-size:13px;display:flex;align-items:center;gap:8px}
+.export .tag{font-size:11px;font-weight:600;padding:1px 7px;border-radius:5px;background:var(--panel3);border:1px solid var(--line2);color:var(--muted)}
+.export .sub{color:var(--muted);font-size:12px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}
+.seg label{margin:0;display:flex;gap:8px;align-items:center;padding:9px 10px;border:1px solid var(--line2);border-radius:8px;background:var(--panel);color:var(--muted);cursor:pointer;font-size:12px}
+.seg label svg.i{color:var(--text)}
+.seg input{display:none}
+.seg label:has(input:checked){border-color:#d4d4d8;color:var(--text);background:var(--panel3)}
+.warnline{color:#fca5a5;font-size:12px;margin-top:10px;display:none;gap:6px;align-items:flex-start}
+.warnline.show{display:flex}
+.warnline svg.i{color:var(--red);width:14px;height:14px;margin-top:2px}
+details{margin-top:8px}
+summary{cursor:pointer;color:var(--text);font-size:13px;display:flex;gap:6px;align-items:center;list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::before{content:'';width:6px;height:6px;border-right:1.5px solid var(--muted);border-bottom:1.5px solid var(--muted);transform:rotate(-45deg);margin-right:4px;transition:transform .15s}
+details[open] summary::before{transform:rotate(45deg)}
+details p,details li{color:var(--muted);font-size:13px}
+code{background:#0c0c0d;border:1px solid var(--line);border-radius:4px;padding:0 4px;font-size:12px;color:#d4d4d8}
+pre{background:#0c0c0d;border:1px solid var(--line);border-radius:8px;padding:10px;font-size:12px;color:#d4d4d8;overflow:auto;margin:8px 0 0}
+
+/* ---------- mobile / tablet ---------- */
+@media (max-width:980px){
+  main{grid-template-columns:1fr;padding:12px 16px 32px}
+  header{padding:16px 16px 4px}
+}
+@media (max-width:640px){
+  body{font-size:15px}
+  header{padding:14px 14px 2px;gap:12px}
+  header h1{font-size:17px}
+  header p{font-size:12px;line-height:1.35}
+  .logo{width:36px;height:36px;border-radius:9px}
+  .logo svg.i{width:20px;height:20px}
+  main{padding:10px 12px 28px;gap:12px}
+  .card{padding:14px;margin-bottom:12px;border-radius:10px}
+  .card h2{font-size:13px;margin-bottom:10px}
+  .card h2 .right{font-size:11px}
+  label{font-size:12px;margin:8px 0 3px}
+  input[type=text],input[type=number],select{padding:10px 11px;font-size:15px;border-radius:9px}
+  .row{grid-template-columns:1fr 1fr;gap:8px}
+  .row3{grid-template-columns:1fr 1fr;gap:8px}
+  .row3 > div:last-child{grid-column:1 / -1}
+  .presets{grid-template-columns:1fr 1fr;gap:8px}
+  .preset{padding:12px 8px;font-size:12px;border-radius:9px;gap:5px}
+  .preset b{font-size:13px}
+  .preset svg.i{width:18px;height:18px}
+  .btns{gap:8px;margin-top:10px}
+  button{padding:11px 14px;font-size:14px;border-radius:9px;min-height:42px}
+  #drop{padding:22px 14px;gap:8px;border-radius:10px}
+  #drop svg.i{width:26px;height:26px}
+  #drop small{font-size:12px;line-height:1.3}
+  #fileinfo{font-size:13px}
+  .stats{grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px}
+  .stat{padding:8px;border-radius:8px}
+  .stat b{font-size:14px}
+  .stat span{font-size:11px}
+  canvas{height:200px;border-radius:8px}
+  .seg{grid-template-columns:1fr;gap:6px}
+  .seg label{padding:12px;font-size:13px;min-height:48px}
+  .export{padding:12px;border-radius:9px}
+  .export h3{font-size:13px}
+  .hint{font-size:12px}
+  .chk{font-size:14px;min-height:36px}
+  input[type=checkbox]{width:18px;height:18px}
+  pre{font-size:11px;padding:8px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  details summary{font-size:14px;padding:4px 0;min-height:36px}
+  .msg{font-size:13px;padding:10px}
+  .progress{margin-top:10px}
+}
+@media (max-width:400px){
+  header h1{font-size:16px}
+  .presets{gap:6px}
+  .preset{padding:10px 6px;font-size:11px}
+  .preset b{font-size:12px}
+  .row,.row3{grid-template-columns:1fr;gap:6px}
+  .row3 > div:last-child{grid-column:auto}
+  canvas{height:180px}
+  button{padding:10px 12px;font-size:13px}
+  .btns{gap:6px}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo"><svg class="i" data-i="wave"></svg></div>
+  <div>
+    <h1>CatWeb Sound Converter</h1>
+    <p>Turns audio files into number data that CatWeb plays back with up to 50 looped Roblox sounds. Nothing gets uploaded.</p>
+  </div>
+</header>
+
+<main>
+<section>
+  <div class="card">
+    <h2><span class="n">1</span>Audio file</h2>
+    <div id="drop"><svg class="i" data-i="upload"></svg>Drop an audio file or click to choose<small>mp3 · wav · ogg · m4a · flac. YouTube and Spotify links can't be loaded.</small></div>
+    <input id="file" type="file" accept="audio/*,.mp3,.wav,.ogg,.m4a,.flac" hidden>
+    <div id="fileinfo"><svg class="i" data-i="music"></svg><span>No file loaded.</span></div>
+    <label>Song name (letters only; used in <code>Sound</code> and as the script alias)</label>
+    <input id="song" type="text" placeholder="e.g. mysong" maxlength="24">
+    <div class="row3">
+      <div><label>Start (s)</label><input id="start" type="number" value="0" step="0.1" min="0"></div>
+      <div><label>Length (s, 0 = all)</label><input id="length" type="number" value="0" step="0.1" min="0"></div>
+      <div><label>&nbsp;</label><label class="chk" style="margin:6px 0 0"><input id="normalize" type="checkbox" checked>Normalize</label></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">2</span>Quality</h2>
+    <div class="presets" id="presets">
+      <div class="preset" data-p="voice"><svg class="i" data-i="mic"></svg><b>Voice</b>best quality</div>
+      <div class="preset on" data-p="music"><svg class="i" data-i="music"></svg><b>Music</b>best quality</div>
+      <div class="preset" data-p="long"><svg class="i" data-i="clock"></svg><b>Long</b>high quality · smaller</div>
+      <div class="preset" data-p="small"><svg class="i" data-i="feather"></svg><b>Small</b>good quality · tiniest</div>
+    </div>
+    <div class="row3">
+      <div><label>Voices (max 50)</label><input id="voices" type="number" min="1" max="50" value="50"></div>
+      <div><label>Noise voices (0 or 4)</label><input id="noise" type="number" min="0" max="4" step="4" value="4"></div>
+      <div><label>Frames / sec</label><input id="fps" type="number" min="10" max="60" value="60"></div>
+    </div>
+    <label>Size (the converter always stays under this)</label>
+    <select id="size"><option value="0" selected>Best: no size limit</option><option value="25">Tiny: ~25 KB per minute</option><option value="50">Small: ~50 KB per minute</option><option value="90">Normal: ~90 KB per minute</option><option value="160">Large: ~160 KB per minute</option></select>
+    <details>
+      <summary>Clarity</summary>
+      <div class="row">
+        <div><label>Ear weighting (0–1)</label><input id="ear" type="number" value="1" step="0.1" min="0" max="1"></div>
+        <div><label>Brightness (dB / octave)</label><input id="bright" type="number" value="0" step="0.5" min="0" max="6"></div>
+      </div>
+      <label class="chk"><input id="hlock" type="checkbox">Lock harmonics (less warble on voices and instruments)</label>
+      <label class="chk"><input id="strict" type="checkbox">Remove chirps (only steady tones become sines)</label>
+    </details>
+    <details>
+      <summary>Noise</summary>
+      <p class="hint" style="margin-top:4px"><svg class="i" data-i="info"></svg>Noise voices play the hiss sound (111356594569778) for everything that isn't a steady tone: s, sh, t, breath, cymbals. The equalizer limits each one to a band (mid or high). If CatWeb's Equalizer properties turn out not to work, untick the box and import A again.</p>
+      <div class="row">
+        <div><label>Noise gain</label><input id="noiseGain" type="number" value="0.5" step="0.1" min="0"></div>
+        <div><label>Hiss loudness (RMS)</label><input id="noiseRms" type="number" value="0.5" step="0.05" min="0.02" max="1"></div>
+      </div>
+      <div class="row">
+        <div><label>Hiss during vowels (0–1)</label><input id="vowelHiss" type="number" value="0.7" step="0.1" min="0" max="1"></div>
+        <div></div>
+      </div>
+      <label class="chk"><input id="eq" type="checkbox" checked>CatWeb equalizer works (Equalizer Low/Mid/High Gain)</label>
+    </details>
+    <details>
+      <summary>Analysis</summary>
+      <div class="row">
+        <div><label>Bass window</label>
+          <select id="winMs"><option value="46">46 ms (speech)</option><option value="93" selected>93 ms (music)</option><option value="186">186 ms (sharp bass pitch)</option></select></div>
+        <div><label>Dynamic range (dB)</label><input id="dyn" type="number" value="59" min="10" max="59"></div>
+      </div>
+      <div class="row">
+        <div><label>Lowest freq (Hz, ≥ 28)</label><input id="fmin" type="number" value="30"></div>
+        <div><label>Highest freq (Hz)</label><input id="fmax" type="number" value="12000"></div>
+      </div>
+      <div class="row">
+        <div><label>Track glue (semitones)</label><input id="jump" type="number" value="1" step="0.1" min="0.1"></div>
+        <div><label>Output gain</label><input id="outGain" type="number" value="1" step="0.1" min="0.05"></div>
+      </div>
+    </details>
+    <div class="btns"><button class="primary" id="convert" disabled><svg class="i" data-i="zap"></svg>Convert</button></div>
+    <div class="progress" id="prog"><div></div></div>
+    <div class="msg" id="msg"></div>
+  </div>
+</section>
+
+<section>
+  <div class="card">
+    <h2><svg class="i" data-i="wave"></svg>Sound view<span class="right">sine 131611270840862 · 1750 Hz</span></h2>
+    <div class="stats" id="stats"><div class="stat"><b>–</b><span>convert a file to see stats</span></div></div>
+    <div class="view"><canvas id="viz" width="1600" height="520"></canvas></div>
+    <div class="btns">
+      <button id="playOrig" disabled><svg class="i" data-i="headphones"></svg>Original</button>
+      <button id="playPrev" class="sound" disabled><svg class="i" data-i="play"></svg>CatWeb preview</button>
+      <button id="stopAudio"><svg class="i" data-i="square"></svg>Stop</button>
+      <button id="dlWav" disabled><svg class="i" data-i="download"></svg>Preview .wav</button>
+    </div>
+    <p class="hint"><svg class="i" data-i="info"></svg>The preview runs the same steps as the CatWeb voices (same numbers, same math, 60 updates/sec), so it sounds very close to what plays in game.</p>
+  </div>
+
+  <div class="card">
+    <h2><svg class="i" data-i="package"></svg>Export</h2>
+
+    <div class="export">
+      <h3><span class="tag">A</span>Player + this song</h3>
+      <div class="sub">Import once per page. It contains the <code>Sound</code> and <code>Voice</code> functions and this song.</div>
+      <div class="seg">
+        <label><input type="radio" name="kind" value="page" checked><svg class="i" data-i="layout"></svg><span>Page with UI<br><small style="color:var(--dim)">play · pause · stop buttons</small></span></label>
+        <label><input type="radio" name="kind" value="func"><svg class="i" data-i="code"></svg><span>Function + song only<br><small style="color:var(--dim)">no UI, imports as elements</small></span></label>
+      </div>
+      <label class="chk"><input id="debug" type="checkbox">Debug messages (self-test on load + a warning at each playback step)</label>
+      <div class="btns"><button id="copyA" disabled><svg class="i" data-i="copy"></svg>Copy</button><button id="dlA" disabled><svg class="i" data-i="download"></svg>Download .json</button></div>
+      <div class="sub" id="infoA" style="margin-top:8px"></div>
+    </div>
+
+    <div class="export">
+      <h3><span class="tag">B</span>Song file only</h3>
+      <div class="sub">Just this song as one script element. Import it into a page that already has the player; nothing else gets replaced.</div>
+      <div class="btns"><button id="copyB" disabled><svg class="i" data-i="copy"></svg>Copy</button><button id="dlB" disabled><svg class="i" data-i="download"></svg>Download .json</button></div>
+      <div class="sub" id="infoB" style="margin-top:8px"></div>
+    </div>
+    <div class="warnline" id="exportWarn"><svg class="i" data-i="alert"></svg><span></span></div>
+    <p class="hint"><svg class="i" data-i="info"></svg>"Status 429" errors while importing mean CatWeb is rate-limiting you. Wait a minute and import again.</p>
+  </div>
+
+  <div class="card">
+    <h2><svg class="i" data-i="code"></svg>Using the Sound function</h2>
+    <p class="hint" style="margin-top:0;color:var(--muted)">Call it from any script on the page with <b>Run function</b>. The first field is <code>PLAY</code>, <code>PAUSE</code> or <code>STOP</code>, and the second is the song name.</p>
+<pre>Run function (Sound) ("PLAY", "mysong")    start, or resume after PAUSE
+Run function (Sound) ("PAUSE", "mysong")   pause, PLAY continues from here
+Run function (Sound) ("STOP", "mysong")    stop and rewind
+Run function (Sound) ("PLAY", "other")     switch to another imported song</pre>
+    <details>
+      <summary>How it works</summary>
+      <p>Each song file loads its numbers into a shared song table when the page loads. The player starts its <code>Voice</code> function 50 times in the background, and each copy controls one looped copy of the 1750 Hz sine. A song stores <b>keyframes</b> per voice: only the moments where pitch or volume changes direction. About 60 times a second, every voice slides its <b>Speed</b> and <b>Volume</b> smoothly between its keyframes.</p>
+      <p>Variables used: <code>{2}</code>–<code>{21}</code> playback state, <code>{898}</code>–<code>{900}</code> song loading. Avoid using these numbers in your own scripts.</p>
+    </details>
+    <details>
+      <summary>Troubleshooting</summary>
+      <ul>
+        <li><b>"song not found" warning:</b> the name in <code>Sound</code> doesn't match the song file's name, or the song file wasn't imported.</li>
+        <li><b>Laggy or stuttering:</b> use fewer voices or the Coarse detail setting.</li>
+        <li><b>Only one voice plays, or it sounds wrong:</b> tell me. It means CatWeb shares local variables between background function calls.</li>
+      </ul>
+    </details>
+  </div>
+</section>
+</main>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+
+// ---------- icons (lucide-style, inline) ----------
+const ICONS = {
+  wave:'<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>',
+  upload:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>',
+  download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+  music:'<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
+  mic:'<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/>',
+  clock:'<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  feather:'<path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><line x1="16" y1="8" x2="2" y2="22"/><line x1="17.5" y1="15" x2="9" y2="15"/>',
+  play:'<polygon points="6 3 20 12 6 21 6 3"/>',
+  square:'<rect x="5" y="5" width="14" height="14" rx="1"/>',
+  headphones:'<path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>',
+  copy:'<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+  check:'<polyline points="20 6 9 17 4 12"/>',
+  alert:'<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+  info:'<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>',
+  zap:'<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>',
+  package:'<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>',
+  layout:'<rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/>',
+  code:'<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>',
+};
+const icon = n => `<svg class="i" viewBox="0 0 24 24">${ICONS[n]}</svg>`;
+document.querySelectorAll('svg[data-i]').forEach(s => { s.setAttribute('viewBox','0 0 24 24'); s.innerHTML = ICONS[s.dataset.i]; });
+
+// ---------- constants ----------
+const SINE_ID = '131611270840862', SINE_HZ = 1750;   // 10 s seamless loop
+const DATA_VER = 6;   // song format version (the player refuses other versions)
+const P0 = 600;   // pitch number of the sine's own pitch: 0–999 = 1750 Hz × 2^((p−600)/100) = 27 Hz … 28 kHz
+const NOISE_ID = '111356594569778', NOISE_BW = 22050; // 3 s seamless hiss loop (assumed full-band noise)
+// noise voices: [equalizer band, low edge Hz, cutoff Hz]. Speed sets the cutoff (playing slower moves the hiss down),
+// the equalizer removes everything outside the band. Without the equalizer every voice is plain lowpassed noise.
+const NOISE_EQ = [['mid',400,1500],['mid',400,4000],['high',4000,8000],['high',4000,16000]];
+const NOISE_LP = [['all',2000,3500],['all',2000,6000],['all',2000,10000],['all',2000,16000]];
+const VOICES = 50, CHUNK = 1000, TICK_HZ = 60, END_F = 99999;   // "never" frame (short: long digit runs can get tagged); songs stay below it
+const STEPS = [1,2,3,4,6,9,14,22,40,150];   // frame gaps a keyframe can jump (first digit of a token)
+
+const PRESETS = {
+  voice:{voices:50,noise:4,fps:60,size:'0',winMs:46,fmin:40,fmax:8000,dyn:50,jump:1.2,ear:0.8,bright:0},
+  music:{voices:50,noise:4,fps:60,size:'0',winMs:93,fmin:30,fmax:12000,dyn:59,jump:1,ear:1,bright:0},   // the user's tuned best settings
+  long:{voices:36,noise:4,fps:30,size:'90',winMs:93,fmin:30,fmax:10000,dyn:52,jump:1,ear:0.85,bright:0},
+  small:{voices:24,noise:4,fps:20,size:'50',winMs:46,fmin:40,fmax:8000,dyn:48,jump:1.2,ear:0.75,bright:0},
+};
+
+let actx = null, src = null, audio = null, result = null;
+const ctx = () => actx || (actx = new (window.AudioContext||window.webkitAudioContext)());
+
+// ---------- settings ----------
+const num = id => parseFloat($(id).value);
+function settings(){
+  const voices = Math.max(1, Math.min(VOICES, Math.round(num('voices'))||VOICES));
+  const Z = (Math.round(num('noise'))||0) >= 2 && voices > 4 ? 4 : 0;
+  return {
+    sineHz:SINE_HZ, song:songName(), start:num('start')||0, length:num('length')||0, normalize:$('normalize').checked,
+    V:voices, Z, S:voices-Z, fps:Math.max(10,Math.min(60,Math.round(num('fps'))||60)), budget:Number($('size').value),
+    winMs:num('winMs'), dyn:num('dyn'), fmin:Math.max(28, num('fmin')), fmax:num('fmax'), jump:num('jump'),
+    ear:num('ear'), bright:num('bright'), noiseGain:num('noiseGain'), noiseRms:num('noiseRms'), vowelHiss:Math.max(0,Math.min(1,num('vowelHiss'))), eq:$('eq').checked, strict:$('strict').checked, chirpMs:75, hiMs:250, hlock:$('hlock').checked,
+    outGain:num('outGain'), kind:document.querySelector('input[name=kind]:checked').value,
+  };
+}
+function songName(){
+  let n = $('song').value.toLowerCase().replace(/[^a-z]/g,'');   // letters only: CatWeb tags names with numbers in them
+  if(!n) return 'song';
+  return n.slice(0,24);
+}
+document.querySelectorAll('.preset').forEach(el => el.onclick = () => {
+  document.querySelectorAll('.preset').forEach(p => p.classList.toggle('on', p===el));
+  const p = PRESETS[el.dataset.p]; for(const k in p) $(k).value = p[k];
+});
+['voices','noise','fps','size','winMs','dyn','fmin','fmax','jump','ear','bright'].forEach(id => $(id).addEventListener('input', () => document.querySelectorAll('.preset').forEach(p=>p.classList.remove('on'))));
+$('song').addEventListener('input', refreshOutputs);
+document.querySelectorAll('input[name=kind]').forEach(r => r.onchange = refreshOutputs);
+$('debug').onchange = refreshOutputs;
+
+function showMsg(html, kind){ const m=$('msg'); m.className='msg show '+kind; m.innerHTML = icon(kind==='err'?'alert':'check') + '<div>'+html+'</div>'; }
+function hideMsg(){ $('msg').className='msg'; }
+function setProg(f){ const p=$('prog'); p.classList.toggle('show', f!=null); p.firstElementChild.style.width=((f||0)*100)+'%'; }
+
+// ---------- file loading ----------
+const drop = $('drop');
+drop.onclick = () => $('file').click();
+drop.ondragover = e => { e.preventDefault(); drop.classList.add('over'); };
+drop.ondragleave = () => drop.classList.remove('over');
+drop.ondrop = e => { e.preventDefault(); drop.classList.remove('over'); if(e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]); };
+$('file').onchange = e => { if(e.target.files[0]) loadFile(e.target.files[0]); };
+
+async function loadFile(file){
+  hideMsg(); $('fileinfo').lastElementChild.textContent = 'Decoding '+file.name+'…';
+  try{
+    const buf = await ctx().decodeAudioData(await file.arrayBuffer());
+    const n = buf.length, mono = new Float32Array(n);
+    for(let c=0;c<buf.numberOfChannels;c++){ const d=buf.getChannelData(c); for(let i=0;i<n;i++) mono[i]+=d[i]/buf.numberOfChannels; }
+    audio = {buf, mono, sr:buf.sampleRate, name:file.name};
+    $('fileinfo').lastElementChild.textContent = `${file.name} · ${buf.duration.toFixed(2)} s · ${buf.sampleRate} Hz`;
+    if(!$('song').value) $('song').value = file.name.replace(/\.[^.]+$/,'').toLowerCase().replace(/\([^)]*\)/g,'').replace(/[^a-z]/g,'').slice(0,24);
+    $('convert').disabled = false; $('playOrig').disabled = false;
+    updateSizeLabels();
+  }catch(err){
+    audio = null; $('fileinfo').lastElementChild.textContent = 'Could not decode this file.';
+    showMsg('Decode failed: '+err.message, 'err');
+  }
+}
+
+// show what each Size choice means for the loaded clip (song file ≈ data + ~22% block overhead)
+const SIZE_NAMES = {0:'Best', 25:'Tiny', 50:'Small', 90:'Normal', 160:'Large'};
+function updateSizeLabels(){
+  if(!audio) return;
+  const s = settings(), dur = s.length>0 ? Math.min(s.length, audio.buf.duration - s.start) : audio.buf.duration - s.start;
+  for(const o of $('size').options){
+    if(o.value==='0'){ o.textContent = 'Best: no size limit (best quality, biggest file)'; continue; }
+    const kb = Number(o.value)*dur/60*1.22, big = kb > 300;
+    o.textContent = `${SIZE_NAMES[o.value]}: ~${o.value} KB/min (≈ ${kb<1024?Math.round(kb)+' KB':(kb/1024).toFixed(1)+' MB'} for this clip${big?', too big to import':''})`;
+  }
+}
+['start','length'].forEach(id => $(id).addEventListener('input', updateSizeLabels));
+
+// ---------- DSP helpers ----------
+function makeFFT(n){
+  const bits = Math.log2(n), rev = new Uint32Array(n);
+  for(let i=0;i<n;i++){ let r=0; for(let b=0;b<bits;b++) r=(r<<1)|((i>>b)&1); rev[i]=r; }
+  const cs = new Float64Array(n/2), sn = new Float64Array(n/2);
+  for(let i=0;i<n/2;i++){ cs[i]=Math.cos(2*Math.PI*i/n); sn[i]=-Math.sin(2*Math.PI*i/n); }
+  return (re,im)=>{
+    for(let i=0;i<n;i++){ const j=rev[i]; if(j>i){ let t=re[i];re[i]=re[j];re[j]=t; t=im[i];im[i]=im[j];im[j]=t; } }
+    for(let size=2;size<=n;size<<=1){
+      const half=size>>1, step=n/size;
+      for(let i=0;i<n;i+=size) for(let j=0,k=0;j<half;j++,k+=step){
+        const a=i+j, b=a+half, tr=re[b]*cs[k]-im[b]*sn[k], ti=re[b]*sn[k]+im[b]*cs[k];
+        re[b]=re[a]-tr; im[b]=im[a]-ti; re[a]+=tr; im[a]+=ti;
+      }
+    }
+  };
+}
+const nextPow2 = x => { let p=256; while(p<x) p<<=1; return p; };
+const tick = () => new Promise(r=>setTimeout(r,0));
+
+function makeAnalyzer(N){
+  const win = new Float64Array(N); let sumW=0, sumW2=0;
+  for(let i=0;i<N;i++){ const t=2*Math.PI*i/(N-1); win[i]=0.42-0.5*Math.cos(t)+0.08*Math.cos(2*t); sumW+=win[i]; sumW2+=win[i]*win[i]; }
+  return {N, win, sumW, sumW2, fft:makeFFT(N), re:new Float64Array(N), im:new Float64Array(N), mag2:new Float64Array(N/2+1), db:new Float64Array(N/2+1)};
+}
+function spectrum(an, x, center){
+  const {N, win, re, im, mag2, db} = an, s0 = center - N/2;
+  for(let i=0;i<N;i++){ const j=s0+i; re[i] = (j>=0&&j<x.length) ? x[j]*win[i] : 0; im[i]=0; }
+  an.fft(re,im);
+  for(let k=0;k<=N/2;k++){ mag2[k]=re[k]*re[k]+im[k]*im[k]; db[k]=10*Math.log10(mag2[k]+1e-30); }
+}
+function findPeaks(an, sr, fLo, fHi, out){
+  const {N, mag2, db, sumW} = an;
+  const k0 = Math.max(2, Math.floor(fLo*N/sr)-1), k1 = Math.min(N/2-2, Math.ceil(fHi*N/sr)+1);
+  for(let k=k0;k<=k1;k++){
+    if(mag2[k]>mag2[k-1] && mag2[k]>=mag2[k+1]){
+      const a=db[k-1], b=db[k], g=db[k+1], den=a-2*b+g, p = den<0 ? 0.5*(a-g)/den : 0;
+      const f = (k+p)*sr/N;
+      if(f<fLo || f>=fHi) continue;
+      out.push({f, A:2*Math.pow(10,(b-0.25*(a-g)*p)/20)/sumW});
+    }
+  }
+}
+// power between consecutive edges (Hz) of the last spectrum, in the same units as a sine's amp²/2
+function bandPowers(an, sr, edges){
+  const out = new Float64Array(edges.length-1);
+  for(let j=0;j<out.length;j++){ let sum=0; const k1 = Math.min(an.N/2, Math.round(edges[j+1]*an.N/sr)); for(let k=Math.round(edges[j]*an.N/sr);k<k1;k++) sum+=an.mag2[k]; out[j] = 2*sum/(an.N*an.sumW2); }
+  return out;
+}
+// A-weighting relative to 1 kHz (how loud a frequency sounds to us)
+function aWeight(f){
+  const f2=f*f, ra = 148693636*f2*f2/((f2+424.36)*Math.sqrt((f2+11599.29)*(f2+544496.41))*(f2+148693636));
+  return ra/0.7943;
+}
+// snap peaks to exact harmonics of a detected fundamental
+function harmonicLock(pk){
+  const low = pk.filter(p=>p.f<5000); if(low.length<3) return 0;
+  let total=0; for(const p of low) total+=p.A;
+  const top = low.slice().sort((a,b)=>b.A-a.A).slice(0,6), cands=[];
+  for(const p of top) for(let n=1;n<=6;n++){ const c=p.f/n; if(c>=60&&c<=900) cands.push(c); }
+  const near = (p,c) => { const h=Math.round(p.f/c); return h>=1&&h<=80&&Math.abs(p.f-h*c)/p.f<0.015 ? h : 0; };
+  let best=0; const sc = cands.map(c=>{ let s=0; for(const p of low) if(near(p,c)) s+=p.A; if(s>best) best=s; return s; });
+  if(best < 0.55*total) return 0;
+  let c0=0; cands.forEach((c,i)=>{ if(sc[i]>=0.9*best && c>c0) c0=c; });
+  let nu=0, de=0;
+  for(const p of low){ const h=near(p,c); if(h){ nu+=p.A*p.f*h; de+=p.A*h*h; } }
+  const c = nu/de;
+  for(const p of pk){ const h=near(p,c); if(h) p.f = h*c; }
+  return c;
+}
+
+// ---------- analysis ----------
+async function convert(){
+  hideMsg();
+  const s = settings();
+  if(!audio){ showMsg('Load an audio file first.','err'); return; }
+  if(s.fmax <= s.fmin){ showMsg('Highest frequency must be above the lowest.','err'); return; }
+  $('convert').disabled = true;
+  try{
+    const sr = audio.sr;
+    const i0 = Math.min(audio.mono.length, Math.max(0, Math.round(s.start*sr)));
+    const i1 = s.length>0 ? Math.min(audio.mono.length, i0+Math.round(s.length*sr)) : audio.mono.length;
+    if(i1-i0 < sr*0.05) throw new Error('The selected range is too short.');
+    const x = audio.mono.slice(i0,i1);
+    if(s.normalize){ let pk=0; for(const v of x) pk=Math.max(pk,Math.abs(v)); if(pk>0) for(let i=0;i<x.length;i++) x[i]/=pk; }
+    const out = await analyze(x, sr, s);
+    const parsed = parseData(out.data);
+    setProg(0.97); await tick();
+    result = {data:out.data, parsed, s, scale:out.scale, pruned:out.pruned, preview:renderPreview(parsed, s)};
+    vizCache = null; setProg(null);
+    drawViz(); showStats(); refreshOutputs();
+    $('playPrev').disabled = $('dlWav').disabled = false;
+    if(out.warn) showMsg(out.warn,'err'); else showMsg('Converted. Listen to the CatWeb preview, then export.','ok');
+  }catch(err){ console.error(err); setProg(null); showMsg('Error: '+err.message,'err'); }
+  finally{ $('convert').disabled = false; }
+}
+$('convert').onclick = convert;
+
+async function analyze(x, sr, s){
+  const {S, Z, V, fps} = s;
+  const LA = makeAnalyzer(nextPow2(sr*s.winMs/1000)), SA = makeAnalyzer(Math.max(256, LA.N>>2));
+  const BA = makeAnalyzer(nextPow2(sr*0.04));   // ~40 ms: long enough to measure bass, short enough to see gaps
+  const SPLIT = Math.min(1000, s.fmax);
+  // partials above 1 kHz: ~85 ms window for their pitch (a shorter one makes them wobble and chirp), loudness from SA (up to +10 dB)
+  const HN = nextPow2(sr*0.085), HA = HN===LA.N ? LA : makeAnalyzer(HN), HMAX = 10;
+  const HE = []; for(let f=SPLIT; f<sr/2; f*=Math.pow(2,1/3)) HE.push(f); HE.push(sr/2);   // third-octave bands
+  // short-window band power per frame: sines may never be louder than this (stops ringing into pauses)
+  const GE = [0, 400, 1000, 2000, 4000, 8000, sr/2], GB = GE.map(f=>Math.round(f*SA.N/sr)), NG = GE.length-1;
+  const F = Math.max(2, Math.floor(x.length/sr*fps)), gateP = new Float64Array(F*NG);
+  const keep = Math.min(3*S+10, 400);
+
+  // noise voices: measure the sound's power between every band edge they use (sines get subtracted later)
+  const NZ = (s.eq ? NOISE_EQ : NOISE_LP).map(([band,lo,hi]) => [band, lo, Math.min(hi, 0.95*sr/2)]);
+  const nEdges = [...new Set(NZ.flatMap(([,lo,hi])=>[lo,hi]))].sort((a,b)=>a-b);
+  const nBins = nEdges.map(f=>Math.min(SA.N/2, Math.round(f*SA.N/sr)));
+  const frameBand = new Array(F);
+
+  // pass 1: multi-resolution peaks + band power for the noise voices
+  const framePeaks = new Array(F);
+  let globalMax = 0;
+  for(let f=0; f<F; f++){
+    const c = Math.round((f+0.5)/fps*sr), pk = [];
+    spectrum(LA, x, c); findPeaks(LA, sr, s.fmin, SPLIT, pk);
+    spectrum(BA, x, c); { let sum=0; for(let k=1;k<Math.round(GE[1]*BA.N/sr);k++) sum+=BA.mag2[k]; gateP[f*NG] = 2*sum/(BA.N*BA.sumW2); }
+    {
+      // upper partials: pitch from a long window (steady, no chirps), loudness per band from the short window (sharp timing)
+      if(HA !== LA) spectrum(HA, x, c);
+      const hp = []; if(s.fmax>SPLIT) findPeaks(HA, sr, Math.max(SPLIT,s.fmin), s.fmax, hp);
+      const Pl = bandPowers(HA, sr, HE);
+      spectrum(SA, x, c); const Ps = bandPowers(SA, sr, HE);
+      for(const p of hp){ let j=0; while(j<HE.length-2 && p.f>=HE[j+1]) j++; p.A *= Math.sqrt(Math.min(HMAX, Ps[j]/(Pl[j]+1e-30))); pk.push(p); }
+    }
+    for(let j=1;j<NG;j++){ let sum=0; for(let k=Math.max(1,GB[j]);k<Math.min(SA.N/2,GB[j+1]);k++) sum+=SA.mag2[k]; gateP[f*NG+j] = 2*sum/(SA.N*SA.sumW2); }
+    if(s.hlock) harmonicLock(pk);
+    pk.sort((u,v)=>v.A-u.A);
+    if(pk.length>keep) pk.length = keep;
+    if(pk.length && pk[0].A>globalMax) globalMax = pk[0].A;
+    if(Z>0){
+      const P = new Float64Array(nEdges.length-1);
+      for(let j=0;j<P.length;j++){ let sum=0; for(let k=nBins[j]+1;k<=nBins[j+1];k++) sum+=SA.mag2[k]; P[j]=2*sum/(SA.N*SA.sumW2); }
+      frameBand[f] = P;
+    }
+    framePeaks[f] = pk;
+    if((f&63)===0){ setProg(0.7*f/F); await tick(); }
+  }
+  if(globalMax<=0) throw new Error('The selected audio is silent.');
+
+  // pass 2: pick what the ear hears most, keep each voice on one pitch line
+  const vol = new Float64Array(F*V), pit = new Int32Array(F*V);
+  const thr = globalMax*Math.pow(10,-s.dyn/20), jumpOct = s.jump/12;
+  const prevF = new Float64Array(S), active = new Uint8Array(S), idleFor = new Int32Array(S).fill(1e6);
+  const GRACE = Math.max(1, Math.round(fps*0.05));   // a voice that just went quiet can pick its partial back up
+  const alive = k => active[k] || idleFor[k] <= GRACE;
+  for(let f=0; f<F; f++){
+    // drop partials the ear can't hear: too far below the loudest, or covered by a louder neighbour (masking)
+    const cand = [], fmax = framePeaks[f].length ? framePeaks[f][0].A : 0, floorA = Math.max(thr, fmax*Math.pow(10,-s.dyn*0.8/20));
+    for(const p of framePeaks[f]){
+      if(p.A < floorA) continue;
+      const L = 20*Math.log10(p.A); let masked = false;
+      for(const q of cand){
+        const oct = Math.log2(p.f/q.f), slope = oct>0 ? 18 : 36;   // masking spreads further upward than downward
+        if(L < 20*Math.log10(q.A) - 14 - slope*Math.abs(oct)){ masked = true; break; }
+      }
+      if(!masked) cand.push(p);
+    }
+    for(const p of cand){
+      p.score = p.A*Math.pow(aWeight(p.f), s.ear);
+      for(let k=0;k<S;k++) if(alive(k) && Math.abs(Math.log2(p.f/prevF[k]))<jumpOct){ p.score*=1.41; break; }
+    }
+    cand.sort((u,v)=>v.score-u.score);
+    if(cand.length>S) cand.length = S;
+    const assigned = new Int32Array(S).fill(-1), used = new Uint8Array(cand.length), pairs = [];
+    for(let i=0;i<cand.length;i++) for(let k=0;k<S;k++) if(alive(k)){
+      const d = Math.abs(Math.log2(cand[i].f/prevF[k])); if(d<jumpOct) pairs.push([d,i,k]);
+    }
+    pairs.sort((u,v)=>u[0]-v[0]);
+    for(const [,i,k] of pairs) if(!used[i] && assigned[k]<0){ used[i]=1; assigned[k]=i; }
+    // new partials only start on voices that were silent last frame (no pitch swoops)
+    const free = []; for(let k=0;k<S;k++) if(assigned[k]<0 && !active[k]) free.push(k);
+    free.sort((a,b)=>idleFor[b]-idleFor[a]);
+    let fi = 0;
+    for(let i=0;i<cand.length;i++) if(!used[i] && fi<free.length){ assigned[free[fi++]] = i; used[i]=1; }
+    for(let k=0;k<S;k++){
+      const o = f*V+k, i = assigned[k];
+      if(i>=0){
+        const p = cand[i], idx = Math.round(100*Math.log2(p.f/s.sineHz))+P0;
+        if(idx<0||idx>999){ active[k]=0; idleFor[k]++; continue; }
+        const tilt = p.f>1000 ? Math.pow(10, s.bright*Math.log2(p.f/1000)/20) : 1;
+        vol[o] = p.A*tilt*s.outGain; pit[o] = idx;
+        prevF[k] = p.f; active[k] = 1; idleFor[k] = 0;
+      } else { active[k]=0; idleFor[k]++; }
+    }
+  }
+  // the long bass window smears notes into the gaps around them; pull sines down to the short-window loudness
+  for(let f=0; f<F; f++){
+    const model = new Float64Array(NG), amp = new Float64Array(S), band = new Int8Array(S);
+    for(let k=0;k<S;k++){ const o=f*V+k; if(!vol[o]) continue;
+      const hz = s.sineHz*Math.pow(2,(pit[o]-P0)/100), tilt = hz>1000 ? Math.pow(10, s.bright*Math.log2(hz/1000)/20) : 1;
+      amp[k] = vol[o]/(tilt*s.outGain); let j=0; while(j<NG-1 && hz>=GE[j+1]) j++; band[k]=j; model[j] += amp[k]*amp[k]/2; }
+    for(let k=0;k<S;k++){ const o=f*V+k; if(!vol[o]) continue; const j=band[k], lim = 2;   // dB of headroom
+      const allow = gateP[f*NG+j]*Math.pow(10, lim/10); if(model[j] > allow) vol[o] *= Math.sqrt(allow/model[j]); }
+  }
+  setProg(0.8); await tick();
+
+  // quantize volume to 0–99 (0.6 dB steps, 0 = silent) relative to the loudest voice
+  let G = 0; for(const v of vol) if(v>G) G=v;
+  let warn = '';
+  if(G>10){ warn = `The loudest voice needed volume ${G.toFixed(1)}, but Roblox caps volume at 10, so it was limited. Lower the output gain.`; G = 10; }
+  G = Math.max(1, Math.round(G*10000))/10000;   // stored as a whole number ×10000
+  const A = new Uint8Array(F*V);
+  for(let o=0;o<vol.length;o++){ let a = vol[o]>0 ? Math.round(99 + 20*Math.log10(vol[o]/G)/0.6) : 0; A[o] = a<1 ? 0 : a>99 ? 99 : a; }
+
+  // clean up each sine voice: bridge short dropouts, then remove flicker (blips shorter than ~60 ms that aren't loud)
+  const MINRUN = Math.max(2, Math.round(fps*0.06)), jumpU = s.jump*100/12;
+  for(let k=0;k<S;k++){
+    const at = f => A[f*V+k], pt = f => pit[f*V+k];
+    for(let f=1; f<F-1; f++){
+      if(at(f)!==0 || at(f-1)===0) continue;
+      let g = f; while(g<F && at(g)===0 && g-f<GRACE) g++;
+      if(g<F && at(g)>0 && Math.abs(pt(g)-pt(f-1))<=jumpU){
+        for(let m=f; m<g; m++){ const t=(m-f+1)/(g-f+1); A[m*V+k] = Math.round(at(f-1)+(at(g)-at(f-1))*t); pit[m*V+k] = Math.round(pt(f-1)+(pt(g)-pt(f-1))*t); }
+      }
+      f = g;
+    }
+    for(let f=0; f<F; f++){
+      if(at(f)===0) continue;
+      let g = f, peak = 0; while(g<F && at(g)>0){ peak = Math.max(peak, at(g)); g++; }
+      if(g-f < MINRUN && peak < 85) for(let m=f; m<g; m++) A[m*V+k] = 0;
+      f = g;
+    }
+    // remove chirps: sine fragments that are very short, or short and jumping around in pitch, are noise, not tones.
+    // Their energy is left to the noise voices (it's not subtracted from the noise bands below).
+    if(s.strict) for(let f=0; f<F; f++){
+      if(at(f)===0) continue;
+      let g = f, wig = 0, ps = 0; while(g<F && at(g)>0){ if(g>f) wig += Math.abs(pt(g)-pt(g-1)); ps += pt(g); g++; }
+      const ms = (g-f)/fps*1000, rate = g-f>1 ? wig/(g-f-1)*fps : 0;   // pitch movement in 1/100 octave per second
+      const hiTone = s.sineHz*Math.pow(2,(ps/(g-f)-P0)/100) > 2500;
+      if(ms < s.chirpMs || (ms < 250 && rate > 150) || (hiTone && ms < s.hiMs)) for(let m=f; m<g; m++) A[m*V+k] = 0;
+      f = g;
+    }
+  }
+
+  // noise voices: band power minus the sines we kept, split over voices that share an equalizer band
+  if(Z>0){
+    const groups = {};
+    NZ.forEach(([band,lo,hi],j) => (groups[band+lo] = groups[band+lo] || []).push({j, lo, hi}));
+    const bandPow = (P, x0, x1) => { let s2=0; for(let j=0;j<nEdges.length-1;j++) if(nEdges[j]>=x0 && nEdges[j+1]<=x1) s2+=P[j]; return s2; };
+    for(let f=0; f<F; f++){
+      const P = Float64Array.from(frameBand[f]);
+      // during vowels the highs are weak next to the lows: there the hiss would sit on top of the voice as a separate
+      // layer, so turn it down (highs vs lows ≤ −20 dB → full cut, ≥ −8 dB like s/sh/t → none)
+      const gp = gateP.subarray(f*NG, f*NG+NG), hl = 10*Math.log10((gp[4]+gp[5]+1e-20)/(gp[0]+gp[1]+1e-20));
+      const vg = 1 - Math.min(1, Math.max(0, (-8-hl)/12))*(1-s.vowelHiss);
+      for(let k=0;k<S;k++){
+        const a = A[f*V+k]; if(!a) continue;
+        const hz = s.sineHz*Math.pow(2,(pit[f*V+k]-P0)/100), tilt = hz>1000 ? Math.pow(10, s.bright*Math.log2(hz/1000)/20) : 1;
+        const amp = G*Math.pow(10,(a-99)*0.03)/(tilt*s.outGain);
+        for(let j=0;j<P.length;j++) if(hz>=nEdges[j] && hz<nEdges[j+1]){ P[j] = Math.max(0, P[j]-amp*amp/2); break; }
+      }
+      for(const key in groups){
+        const g = groups[key].slice().sort((u,v)=>u.hi-v.hi); let above = 0;
+        for(let i=g.length-1;i>=0;i--){
+          const x0 = i ? g[i-1].hi : g[i].lo, x1 = g[i].hi, d = Math.max(0, bandPow(P,x0,x1)/(x1-x0) - above);
+          above += d;
+          const v = Math.sqrt(d*x1/eqLoss(key, g[i].lo, x1))/s.noiseRms*s.noiseGain*s.outGain*vg, o = f*V+S+g[i].j;
+          let a = v>0 ? Math.round(99 + 20*Math.log10(v/G)/0.6) : 0;
+          A[o] = a<1 ? 0 : a>99 ? 99 : a;
+          pit[o] = Math.max(0, Math.min(999, Math.round(100*Math.log2(x1/NOISE_BW))+P0));
+        }
+      }
+    }
+  }
+
+  // per-voice tracks (+ silent padding so the last keyframe can land past the end)
+  const FP = F + STEPS[STEPS.length-1], tracks = [];
+  for(let k=0;k<V;k++){
+    const a = new Float64Array(FP), p = new Float64Array(FP);
+    for(let f=0;f<F;f++){ a[f]=A[f*V+k]; p[f]=pit[f*V+k]; }
+    if(k<S){   // smooth analysis jitter inside each note: pitch median-of-3, volume 1-2-1 average
+      const a0 = a.slice(), p0 = p.slice();
+      for(let f=1;f<F-1;f++) if(a0[f-1]>0 && a0[f]>0 && a0[f+1]>0){
+        a[f] = Math.round((a0[f-1]+2*a0[f]+a0[f+1])/4);
+        p[f] = [p0[f-1],p0[f],p0[f+1]].sort((x,y)=>x-y)[1];
+      }
+    }
+    // silent frames take the pitch of the next sound, so fades in start on the right pitch
+    let nextP = -1; for(let f=FP-1;f>=0;f--){ if(a[f]>0) nextP=p[f]; else p[f] = nextP>=0 ? nextP : P0; }
+    tracks.push({a,p});
+  }
+  setProg(0.85); await tick();
+
+  // fit the size budget: loosen the keyframe tolerance, and if that's not enough drop the least important notes
+  const target = s.budget > 0 ? Math.max(2000, Math.round(s.budget*1024*(F/fps)/60)) : Infinity;   // 0 = no limit
+  const encodeAll = sc => tracks.map(t=>encodeVoice(t.a, t.p, F, sc));
+  const sizeOf = secs => secs.reduce((n,x)=>n+pairLen(x)+4, 40);
+  const LO = 0.6, HI = 14;
+  let scale = LO, secs = encodeAll(LO), pruned = 0;
+  if(sizeOf(secs) > target){
+    let hiSecs = encodeAll(HI);
+    if(sizeOf(hiSecs) > target){
+      // drop the notes with the least loudness per byte first (importance = loudness × length × ear weight, cost ≈ how much they wiggle)
+      const runs = [];
+      tracks.forEach((t,k)=>{ if(k>=S) return; for(let f=0;f<F;f++){ if(!t.a[f]) continue;
+        let g=f, imp=0, wig=0;
+        while(g<F && t.a[g]){ imp += Math.pow(10,(t.a[g]-99)*0.03)*Math.pow(aWeight(s.sineHz*Math.pow(2,(t.p[g]-P0)/100)), s.ear); if(g>f) wig += Math.abs(t.p[g]-t.p[g-1])/3 + Math.abs(t.a[g]-t.a[g-1])/12; g++; }
+        runs.push({k,f0:f,f1:g,imp:imp/(2+wig)}); f=g; } });
+      runs.sort((x,y)=>x.imp-y.imp);
+      let r = 0;
+      while(sizeOf(hiSecs) > target && r < runs.length){
+        const n = Math.max(1, Math.ceil((runs.length-r)*0.12));
+        for(const run of runs.slice(r, r+n)){ const t = tracks[run.k]; for(let f=run.f0;f<run.f1;f++) t.a[f]=0; }
+        r += n; pruned = r;
+        hiSecs = encodeAll(HI);
+        setProg(0.85+0.1*r/runs.length); await tick();
+      }
+      for(const t of tracks){ let nextP=-1; for(let f=FP-1;f>=0;f--){ if(t.a[f]>0) nextP=t.p[f]; else t.p[f] = nextP>=0 ? nextP : P0; } }
+      hiSecs = encodeAll(HI);
+    }
+    // smallest tolerance that still fits
+    let lo = LO, hi = HI; secs = hiSecs; scale = HI;
+    for(let it=0; it<8; it++){
+      const mid = Math.sqrt(lo*hi), m = encodeAll(mid);
+      if(sizeOf(m) <= target){ hi = mid; secs = m; scale = mid; } else lo = mid;
+      await tick();
+    }
+  }
+  // CatWeb tags (####) inputs that look like personal info, so the song is only short numbers and spaces:
+  // version fps voices noiseVoices frames gain×10000 eq, then each voice's keyframe count, then every keyframe as "DAA PPP"
+  const data = [DATA_VER, fps, V, Z, F, Math.round(G*10000), s.eq?1:0, ...secs.map(x=>x.length/6), ...secs.map(toPairs)].join(' ');
+  if(data.length > target*1.05) warn += (warn?' ':'') + `Couldn't get under the size budget (${sizeStr(data.length)}). Use fewer voices or a shorter clip.`;
+  return {data, warn, scale, pruned};
+}
+
+// keyframes for one voice: 6-digit tokens "D AA PPP" (D = index into STEPS, AA volume 0–99, PPP pitch 0–999)
+// only keeps the points needed so straight lines between them stay within tolerance (× sc)
+function encodeVoice(a, p, F, sc){
+  const tolA = Math.min(12, 2.5*sc), tolP = Math.min(3, 1.2*sc);   // volume may bend up to ~7 dB, pitch never more than ~1/3 semitone
+  const tok = (d,f) => String(d*100000 + a[f]*1000 + p[f]).padStart(6,'0');
+  let silent = true; for(let f=0;f<F;f++) if(a[f]){ silent=false; break; }
+  if(silent) return tok(0,0);
+  const ok = (i,j) => {
+    // a silent keyframe holds silence and fades in only during the last frame, so a note start costs one keyframe
+    if(a[i]===0){ for(let m=i+1;m<j;m++) if(a[m]) return false; return true; }
+    for(let m=i+1;m<j;m++){
+      const t = (m-i)/(j-i), ia = a[i]+(a[j]-a[i])*t;
+      if(Math.abs((ia<1?0:ia)-a[m]) > tolA) return false;
+      if(a[m]>0 && Math.abs(p[i]+(p[j]-p[i])*t-p[m]) > tolP*(1+(99-a[m])/30)) return false;
+    }
+    return true;
+  };
+  let out = tok(0,0), i = 0;
+  while(i < F-1){
+    let best = 0;
+    for(let si=1; si<STEPS.length; si++){
+      const j = i+STEPS[si]; if(j >= a.length) break;
+      if(ok(i,j)) best = si; else if(si>=2) break;
+    }
+    i += STEPS[best]; out += tok(best, i);
+  }
+  return out;
+}
+
+// 6-digit tokens "D AA PPP" → "DAA PPP" (two numbers of at most 3 digits each)
+function toPairs(sec){
+  const out = [];
+  for(let i=0;i+6<=sec.length;i+=6) out.push(Number(sec.slice(i,i+3)), Number(sec.slice(i+3,i+6)));
+  return out.join(' ');
+}
+function pairLen(sec){
+  let n = 0;
+  for(let i=0;i+6<=sec.length;i+=6){ const a = Number(sec.slice(i,i+3)), b = Number(sec.slice(i+3,i+6)); n += (a>99?3:a>9?2:1) + (b>99?3:b>9?2:1) + 2; }
+  return n;
+}
+
+// data → keyframe lists per voice
+function parseData(data){
+  const n = data.split(' ').map(Number);
+  const [ver,fps,V,Z,F,Gi,E] = n, G = Gi/10000, voices = [];
+  let at = 7+V;
+  for(let k=0;k<V;k++){
+    const kf = []; let fb = -1;   // the player starts one frame before 0
+    for(let i=0;i<n[7+k];i++){ const daa = n[at++], p = n[at++]; fb += STEPS[Math.floor(daa/100)]; kf.push({f:fb, a:daa%100, p}); }
+    voices.push(kf);
+  }
+  return {ver,fps,V,Z,F,G,E,voices};
+}
+
+// ---------- the voice loop, exactly as the CatWeb Voice function runs it ----------
+// returns a stepper: call with the current (fractional) frame, get {speed, vol} or null (silent)
+function voiceStepper(kf, G){
+  let i = 0, fk = END_F, fa = END_F, va = 0, pa = P0, fb = 0, vb = 0, pb = P0, len = 1, dv = 0, dp = 0;
+  return c => {
+    if(c < fk){ i = 0; fb = -1; vb = 0; pb = P0; }
+    while(c >= fb){
+      fa = fb; fk = fb; va = vb; pa = pb; i++;
+      if(i <= kf.length){ const k = kf[i-1]; fb = k.f; vb = k.a; pb = k.p; } else fb = END_F;   // k.f is the running sum of frame steps
+      if(va === 0){ fa = fb - 1; pa = pb; }   // silence holds until one frame before the next keyframe
+      len = fb - fa; dv = vb - va; dp = pb - pa;
+    }
+    if(va + vb === 0 || c < fa) return null;
+    const t = (c - fa)/len, q = dv*t + va, p = dp*t + pa;
+    return {speed: Math.pow(2,(p-P0)/100), vol: Math.pow(10,(q-99)*0.03)*G};   // (q≈0 at a fade start is ~−59 dB)
+  };
+}
+
+// 2nd-order Butterworth section (RBJ cookbook); two in a row ≈ 24 dB/octave, close to a strong equalizer cut
+function biquad(type, f0, sr){
+  const w = 2*Math.PI*f0/sr, al = Math.sin(w)/Math.SQRT2, cw = Math.cos(w), a0 = 1+al;
+  const b = type==='lp' ? [(1-cw)/2,1-cw,(1-cw)/2] : [(1+cw)/2,-(1+cw),(1+cw)/2];
+  const c = [b[0]/a0, b[1]/a0, b[2]/a0, -2*cw/a0, (1-al)/a0];
+  let x1=0,x2=0,y1=0,y2=0;
+  return x => { const y = c[0]*x+c[1]*x1+c[2]*x2-c[3]*y1-c[4]*y2; x2=x1; x1=x; y2=y1; y1=y; return y; };
+}
+
+// how much of a noise voice's power the equalizer's sloped band edges keep inside [lo, hi] (same filters as the preview)
+function eqLoss(band, lo, hi){
+  const hp = (f,f0) => { const r=Math.pow(f/f0,4); return Math.pow(r/(1+r),2); }, lp = (f,f0) => Math.pow(1/(1+Math.pow(f/f0,4)),2);
+  let sum = 0; const n = 64;
+  for(let i=0;i<n;i++){ const f = lo+(hi-lo)*(i+0.5)/n;
+    sum += band.startsWith('mid') ? hp(f,400)*lp(f,4000) : band.startsWith('high') ? hp(f,4000) : 1; }
+  return sum/n;
+}
+
+function renderPreview(P, s){
+  const sr = 44100, {fps,V,Z,F,G,E,voices} = P;
+  const nTicks = Math.ceil(F/fps*TICK_HZ)+2, total = Math.ceil(nTicks/TICK_HZ*sr)+1024;
+  const out = new Float32Array(total), tmp = Z ? new Float32Array(total) : null;
+  const TL = 4096, sinT = new Float32Array(TL+1); for(let i=0;i<=TL;i++) sinT[i]=Math.sin(2*Math.PI*i/TL);
+  // the hiss asset, modelled as white noise at its loudness; playing it at speed s squeezes it below s × 22 kHz
+  // (×√1.5: reading white noise slowly with linear interpolation loses 1/3 of its power; the real asset doesn't)
+  const NL = 1<<17, noise = new Float32Array(NL), na = (s.noiseRms||0.25)*Math.sqrt(3)*Math.sqrt(1.5);
+  for(let i=0;i<NL;i++) noise[i] = (Math.random()*2-1)*na;
+  const NZ = E ? NOISE_EQ : NOISE_LP, RAMP = 64;
+  for(let k=0;k<V;k++){
+    const step = voiceStepper(voices[k], G), isNoise = k >= V-Z, dst = isNoise ? tmp : out;
+    if(isNoise) tmp.fill(0);
+    let phase = 0, npos = Math.random()*NL, prevOut = 0, spd = 1;
+    for(let j=0;j<nTicks;j++){
+      const c = j/TICK_HZ*fps;
+      let vol = 0;
+      if(c < F){ const r = step(c); if(r){ vol = r.vol; spd = r.speed; } }
+      const s0 = Math.round(j/TICK_HZ*sr), s1 = Math.round((j+1)/TICK_HZ*sr);
+      if(vol===0 && prevOut===0) continue;
+      const ramp = Math.min(RAMP, s1-s0);
+      if(!isNoise){
+        const inc = SINE_HZ*spd/sr*TL;
+        for(let i=s0;i<s1;i++){
+          const g = i-s0<ramp ? prevOut+(vol-prevOut)*(i-s0)/ramp : vol;
+          phase += inc; if(phase>=TL) phase -= TL*Math.floor(phase/TL);
+          const ip = phase|0; dst[i] += g*(sinT[ip]+(sinT[ip+1]-sinT[ip])*(phase-ip));
+        }
+      } else {
+        const inc = spd*2*NOISE_BW/sr;
+        for(let i=s0;i<s1;i++){
+          const g = i-s0<ramp ? prevOut+(vol-prevOut)*(i-s0)/ramp : vol;
+          npos += inc; if(npos>=NL) npos -= NL*Math.floor(npos/NL);
+          const ip = npos|0; dst[i] += g*(noise[ip]+(noise[(ip+1)&(NL-1)]-noise[ip])*(npos-ip));
+        }
+      }
+      prevOut = vol;
+    }
+    if(isNoise){   // the equalizer: keep only this voice's band
+      const band = NZ[k-(V-Z)][0], fl = [];
+      if(band==='mid'){ fl.push(biquad('hp',400,sr), biquad('hp',400,sr), biquad('lp',4000,sr), biquad('lp',4000,sr)); }
+      if(band==='high'){ fl.push(biquad('hp',4000,sr), biquad('hp',4000,sr)); }
+      for(let i=0;i<total;i++){ let v = tmp[i]; for(const q of fl) v = q(v); out[i] += v; }
+    }
+  }
+  let pk = 0; for(const v of out) pk = Math.max(pk, Math.abs(v));
+  const scale = pk>0.98 ? 0.98/pk : 1;
+  if(scale!==1) for(let i=0;i<out.length;i++) out[i]*=scale;
+  return {sr, out};
+}
+
+// ---------- playback ----------
+let playStart=0, playDur=0, raf=0;
+function stopAudio(){ if(src){ try{src.stop();}catch(e){} src=null; } cancelAnimationFrame(raf); drawViz(); }
+function playBuffer(buf, offset, dur){
+  stopAudio();
+  const c = ctx(); c.resume();
+  src = c.createBufferSource(); src.buffer = buf; src.connect(c.destination);
+  src.start(0, offset, dur); playStart = c.currentTime; playDur = dur;
+  src.onended = () => { cancelAnimationFrame(raf); drawViz(); };
+  if(result){ const loop = () => { drawViz((c.currentTime-playStart)/playDur); raf = requestAnimationFrame(loop); }; loop(); }
+}
+$('stopAudio').onclick = stopAudio;
+$('playOrig').onclick = () => {
+  if(!audio) return; const s = settings(), off = Math.min(audio.buf.duration, s.start);
+  playBuffer(audio.buf, off, s.length>0 ? Math.min(s.length, audio.buf.duration-off) : audio.buf.duration-off);
+};
+$('playPrev').onclick = () => {
+  if(!result) return; const {sr,out} = result.preview;
+  const b = ctx().createBuffer(1, out.length, sr); b.copyToChannel(out,0);
+  playBuffer(b, 0, out.length/sr);
+};
+$('dlWav').onclick = () => {
+  if(!result) return; const {sr,out} = result.preview, n = out.length, buf = new ArrayBuffer(44+n*2), v = new DataView(buf);
+  const w = (o,str)=>{ for(let i=0;i<str.length;i++) v.setUint8(o+i,str.charCodeAt(i)); };
+  w(0,'RIFF'); v.setUint32(4,36+n*2,true); w(8,'WAVE'); w(12,'fmt '); v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
+  v.setUint32(24,sr,true); v.setUint32(28,sr*2,true); v.setUint16(32,2,true); v.setUint16(34,16,true); w(36,'data'); v.setUint32(40,n*2,true);
+  for(let i=0;i<n;i++) v.setInt16(44+i*2, Math.max(-1,Math.min(1,out[i]))*32767, true);
+  download(new Blob([buf],{type:'audio/wav'}), settings().song+'-catweb-preview.wav');
+};
+
+// ---------- sound view (purple) ----------
+let vizCache = null;
+function drawViz(head){
+  const cv = $('viz'), g = cv.getContext('2d'), W = cv.width, Hh = cv.height;
+  if(!result){
+    g.fillStyle='#0a0812'; g.fillRect(0,0,W,Hh);
+    g.fillStyle='#3b2f5c'; g.font='24px system-ui'; g.textAlign='center'; g.fillText('The sound view shows up here after converting', W/2, Hh/2); g.textAlign='left';
+    return;
+  }
+  if(!vizCache){
+    vizCache = document.createElement('canvas'); vizCache.width=W; vizCache.height=Hh;
+    const c = vizCache.getContext('2d'), {fps,V,Z,F,E,voices} = result.parsed, NZ = E ? NOISE_EQ : NOISE_LP;
+    c.fillStyle='#0a0812'; c.fillRect(0,0,W,Hh);
+    const top = 10, bot = Hh-24, lo = Math.log2(50), hi = Math.log2(16000);
+    const yOf = hz => bot - (Math.log2(hz)-lo)/(hi-lo)*(bot-top);
+    c.font='18px system-ui'; c.lineWidth=1;
+    for(const hz of [100,200,500,1000,2000,5000,10000]){ const y=yOf(hz); c.strokeStyle='#1a1428'; c.beginPath(); c.moveTo(0,y); c.lineTo(W,y); c.stroke(); c.fillStyle='#4a3d70'; c.fillText(hz>=1000?hz/1000+'k':hz, 6, y-4); }
+    const xOf = f => f/F*W;
+    voices.forEach((kf,k)=>{
+      const nz = k>=V-Z ? NZ[k-(V-Z)] : null;
+      for(let i=0;i+1<kf.length;i++){
+        const A0=kf[i], A1=kf[i+1]; if(A0.a+A1.a===0) continue;
+        const a = Math.max(A0.a,A1.a)/99;
+        if(nz){   // noise voice: a faint band over its frequency range
+          const yt = yOf(Math.min(16000,nz[2])), yb = yOf(Math.max(50,nz[1]));
+          c.fillStyle = `rgba(167,139,250,${0.03+0.15*a})`; c.fillRect(xOf(A0.f), yt, xOf(A1.f)-xOf(A0.f)+0.6, yb-yt);
+        } else {
+          c.strokeStyle = `hsla(${262+((k*37)%24)-12},${70+a*20}%,${42+a*30}%,${0.2+a*0.8})`; c.lineWidth = 3;
+          c.beginPath(); c.moveTo(xOf(A0.f), yOf(SINE_HZ*Math.pow(2,(A0.p-P0)/100))); c.lineTo(xOf(A1.f), yOf(SINE_HZ*Math.pow(2,(A1.p-P0)/100))); c.stroke();
+        }
+      }
+    });
+    c.fillStyle='#6d5bb0'; c.fillText(`${(F/fps).toFixed(1)} s`, W-70, Hh-4);
+  }
+  g.drawImage(vizCache,0,0);
+  if(head!=null && head>=0 && head<=1){ g.fillStyle='#e9e3ff'; g.fillRect(head*W-1,0,2,Hh); }
+}
+
+function showStats(){
+  const {fps,V,Z,F,voices} = result.parsed, d = result.data;
+  const sc = result.scale, detail = sc<=1 ? 'full' : sc<=2.5 ? 'high' : sc<=5 ? 'medium' : 'low';
+  const st = [
+    [(F/fps).toFixed(1)+' s','duration'], [`${V-Z} + ${Z}`,'sines + noise'],
+    [sizeStr(d.length),'song data'], [sizeStr(Math.round(d.length/(F/fps)*60))+'/min','per minute'],
+    [detail, `detail (tolerance ×${sc.toFixed(1)})`], [result.pruned ? result.pruned+' notes' : 'none','dropped to fit'],
+  ];
+  $('stats').innerHTML = st.map(([b,l])=>`<div class="stat"><b>${b}</b><span>${l}</span></div>`).join('');
+}
+const sizeStr = n => n<1024 ? n+' chars' : n<1048576 ? (n/1024).toFixed(1)+' KB' : (n/1048576).toFixed(2)+' MB';
+
+// ---------- CatWeb JSON generation ----------
+function makeGid(){
+  const C='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let n = 3844 + Math.floor(Math.random()*150000);
+  return () => { let x=n++, out=''; for(let i=0;i<3;i++){ out=C[x%62]+out; x=Math.floor(x/62); } return out; };
+}
+
+function blocks(gid){
+  const short = v => { v=String(v); return v.length>24 ? '…' : v; };
+  // () annotation convention: every param's value is mirrored in the preceding literal segment
+  function annotate(parts){
+    const out = parts.map(p => typeof p==='string' ? p : Object.assign({},p)), pending=[];
+    for(let i=0;i<out.length;i++){
+      const p = out[i]; if(typeof p==='string') continue;
+      const a = p._ann!==undefined ? p._ann : (Array.isArray(p.value) ? p.value.map(x=>x.value).join(', ') : short(p.value));
+      delete p._ann;
+      if(a==='') continue;
+      let j=i-1; while(j>=0 && typeof out[j]!=='string') j--;
+      if(j>=0) out[j] += ` (${a})`; else pending.push(a);
+    }
+    if(pending.length){ const j=out.findIndex(x=>typeof x==='string'); if(j>=0) out[j] = pending.map(a=>`(${a})`).join(' ')+' '+out[j]; }
+    return out;
+  }
+  const B = (id, parts) => ({id:String(id), text:annotate(parts), globalid:gid()});
+  const ann = (p,a) => (a===undefined ? p : Object.assign(p,{_ann:a}));
+  const V=v=>({value:String(v),t:'string',l:'variable'}), ANY=v=>({value:String(v),t:'string',l:'any'}),
+        BARE=v=>({value:String(v),t:'any'}), NUM=v=>({value:String(v),t:'number'}), STR=v=>({value:String(v),t:'string'}),
+        ENTRY=v=>({value:String(v),t:'string',l:'entry'}), TABLE=v=>({value:String(v),t:'string',l:'table'}),
+        ARRAY=v=>({value:String(v),t:'string',l:'array'}), SEP=v=>({value:String(v),t:'string',l:'separator'}),
+        PROP=v=>({value:String(v),t:'string',l:'property'}), AUDIO=v=>({value:String(v),t:'string',assetbrowser:'audio',l:'id'}),
+        VARQ=v=>({value:String(v),t:'string',l:'variable?'}), BTN=v=>({value:String(v),t:'object',l:'button'}),
+        FN=v=>({value:String(v),t:'string',l:'function'});
+  const tuple = args => ({value:args.map(a=>({value:String(a),t:'string',l:'any'})),t:'tuple'});
+  const H = {
+    gid, BTN,
+    set:(v,val,a)=>B(11,['Set',V(v),'to',ann(ANY(val),a)]),
+    inc:(v,n)=>B(12,['Increase',V(v),'by',NUM(n)]),
+    dec:(v,n)=>B(13,['Decrease',V(v),'by',NUM(n)]),
+    mul:(v,n)=>B(14,['Multiply',V(v),'by',NUM(n)]),
+    div:(v,n)=>B(15,['Divide',V(v),'by',NUM(n)]),
+    floor:v=>B(17,['Floor',V(v)]),
+    mod:(v,n)=>B(41,[V(v),'modulo',NUM(n)]),
+    pow:(v,n)=>B(40,['Raise',V(v),'to the power of',NUM(n)]),
+    random:(v,a,b)=>B(27,['Set',{value:String(v),t:'string',l:'var'},'to random',{value:String(a),t:'number',l:'n'},'-',{value:String(b),t:'number',l:'n'}]),
+    upper:(s,o)=>B(70,['Upper',STR(s),'→',V(o)]),
+    getEntry:(e,t,o)=>B(56,['Get entry',ENTRY(e),'of',TABLE(t),'→',V(o)]),
+    setEntry:(e,t,val)=>B(55,['Set entry',ENTRY(e),'of',TABLE(t),'to',ANY(val)]),
+    length:(t,o)=>B(59,['Get length of',ARRAY(t),'→',V(o)]),
+    strLen:(s,o)=>B(48,['Get length of',STR(s),'→',V(o)]),
+    sub:(v,a,b)=>B(42,['Sub',V(v),{value:String(a),t:'number',l:'start'},'-',{value:String(b),t:'number',l:'end'}]),
+    createTable:t=>B(54,['Create table',TABLE(t)]),
+    del:v=>B(96,['Delete',V(v)]),
+    ifEq:(a,b)=>B(18,['If',ANY(a),'is equal to',ANY(b)]),
+    ifNe:(a,b)=>B(19,['If',ANY(a),'is not equal to',ANY(b)]),
+    ifLt:(a,b)=>B(21,['If',ANY(a),'is lower than',ANY(b)]),
+    ifGe:(a,b)=>B(125,['If',ANY(a),'is greater or equal to',ANY(b)]),
+    ifExists:v=>B(92,['If',V(v),'exists']),
+    ifMissing:v=>B(93,['If',V(v),"doesn't exist"]),
+    ELSE:()=>B(112,['else']), END:()=>B(25,['end']), FOREVER:()=>B(23,['Repeat forever']), BREAK:()=>B(24,['Break']),
+    repeat:n=>B(22,['Repeat',NUM(n),'times']),
+    wait:t=>B(3,['Wait',NUM(t),'seconds']),
+    warn:m=>B(1,['Warn',BARE(m)]),
+    ret:v=>B(115,['Return',ANY(v)]),
+    getTick:v=>B(83,['Get tick →',V(v)]),
+    split:(str,sep,t)=>B(57,['Split',STR(str),SEP(sep),'→',TABLE(t)]),
+    concat:(a,b,o,an)=>B(109,['Concatenate',STR(a),'with',ann(STR(b),an),'→',V(o)]),
+    playLoop:(id,v)=>B(26,['Play looped audio',AUDIO(id),'→',VARQ(v)]),
+    stopAudio:v=>B(74,['Stop audio',V(v)]),
+    setSpeed:(h,val)=>B(94,['Set',PROP('Speed'),'of',V(h),'to',BARE(val)]),
+    setVol:(h,val)=>B(94,['Set',PROP('Volume'),'of',V(h),'to',BARE(val)]),
+    setProp:(h,prop,val)=>B(94,['Set',PROP(prop),'of',V(h),'to',BARE(val)]),
+    runFn:(n,args=[])=>B(87,['Run function',FN(n),tuple(args),'→',VARQ('')]),
+    runBg:(n,args=[])=>B(63,['Run function in background',FN(n),tuple(args)]),
+  };
+  // CatWeb compiles scripts to Lua, where a local first set inside an If or loop disappears at that block's end.
+  // Every local that is used outside the block where it is first set (or before it) is set to 0 on the opening lines.
+  // (Only those: CatWeb allows at most 120 actions per event or function.)
+  const OPENS = ['18','19','20','21','125','126','92','93','22','23','113'];
+  const OUT_AT = {11:0,12:0,13:0,14:0,15:0,16:0,17:0,40:0,41:0,42:0,96:0,56:2,48:1,70:1,83:0,109:2,27:0,59:1,26:1,87:1};
+  const hoist = actions => {
+    const ranges = [], st = [];
+    actions.forEach((a,i)=>{
+      if(a.id==='25' || a.id==='112'){ const r = st.pop(); if(r){ r.e = i; ranges.push(r); } if(a.id==='112') st.push({s:i+1}); }
+      else if(OPENS.includes(a.id)) st.push({s:i+1});
+    });
+    const inner = i => ranges.reduce((b,r) => i>=r.s && i<r.e && r.e-r.s < b.e-b.s ? r : b, {s:0, e:actions.length});
+    const first = {}, need = new Set();
+    actions.forEach((a,i)=>{
+      const P = a.text.filter(x=>typeof x!=='string'), k = OUT_AT[a.id], w = k!==undefined && P[k] ? P[k].value : null;
+      if(w && /^l!\d+$/.test(w) && !(w in first)) first[w] = {...inner(i), at:i};
+    });
+    actions.forEach((a,i)=>{
+      const t = JSON.stringify(a.text);
+      for(const n in first){ const r = first[n];
+        if((i<r.s || i>=r.e || i<r.at) && (t.includes('{'+n+'}') || t.includes('"'+n+'"'))) need.add(n); }
+    });
+    return [...[...need].sort((a,b)=>a.slice(2)-b.slice(2)).map(n => H.set(n,'0')), ...actions];
+  };
+  let evN = 0;
+  H.resetLayout = () => { evN = 0; };
+  const pos = () => { const i = evN++; return {x:String(4300+(i%6)*440), y:String(4300+Math.floor(i/6)*900), width:'420'}; };
+  H.event = (id, text, actions) => Object.assign({id:String(id), text:annotate(text), globalid:gid()}, pos(), {actions:hoist(actions)});
+  H.defFn = (name, actions, params) => {
+    const e = Object.assign({id:'6', text:annotate(['Define function', FN(name)]), globalid:gid()}, pos());
+    if(params) e.variable_overrides = params.map(p=>({value:p}));
+    e.actions = hoist(actions); return e;
+  };
+  return H;
+}
+
+// Song file: registers its numbers in table {900} under the song name
+function buildSong(H, name, parts, debug){
+  const PER = 110, fns = [], runs = [];
+  H.resetLayout();
+  const loadGid = H.gid();
+  for(let f=0; f*PER<parts.length; f++){
+    const fname = `${name}_${"abcdefghijklmnopqrstuvwxyz"[f]}`, acts = [];
+    parts.slice(f*PER,(f+1)*PER).forEach((part,j)=>{
+      const n = f*PER+j+1;
+      acts.push(n===1 ? H.set('898', part, 'data 1') : H.concat('{898}', part, '898', 'data '+n));
+    });
+    fns.push(H.defFn(fname, acts));
+    runs.push(H.runFn(fname));
+  }
+  const load = H.event(0, ['When website loaded...'], [
+    H.FOREVER(), H.ifEq('{899}','1'), H.BREAK(), H.END(), H.wait('0'), H.END(),   // song inputs: no dots, no digits in names
+    ...runs,
+    H.setEntry(name, '900', '{898}'),
+    ...(debug ? [H.strLen('{898}','897'), H.warn(`Debug: song file ${name} loaded, ({897}) characters`)] : []),
+    H.del('898'),
+  ]);
+  load.globalid = loadGid;
+  return {class:'script', globalid:H.gid(), alias:name, enabled:'true', content:[load, ...fns]};
+}
+
+// Player: one script with the clock, Sound(act, song) and Voice(v) started 50× in the background
+function buildPlayer(H, uiButtons, debug){
+  const {set,inc,dec,mul,div,floor,mod,pow,random,upper,getEntry,length,strLen,sub,createTable,ifEq,ifNe,ifLt,ifGe,ifExists,ifMissing,
+         ELSE,END,FOREVER,BREAK,repeat,wait,warn,ret,getTick,split,playLoop,stopAudio,setProp,runBg} = H;
+  H.resetLayout();
+  const D = (...b) => debug ? b : [];   // debug-only blocks
+
+  // globals: 2 song sections · 3 fps · 4 voices · 5 noise voices · 6 frames · 7 gain · 8 last sine voice · 9 start tick
+  //          11 state (0 stop, 1 play, 2 pause) · 12 paused at · 15 song · 16 equalizer on · 18 song number · 21 frame now
+  //          17 song number the sounds were started for · 101–150 the sounds · tables 902 volume, 903 speed, 904 changed
+  const hv = v => String(100+v), switchBy = [], applyBy = [];
+  // sound slots 1–4 are the hiss voices when the song has them (slots 1–2 mid band, 3–4 high band), the rest are sines
+  for(let v=1; v<=VOICES; v++){
+    const switchSongs = [], apply = []; switchBy.push(switchSongs); applyBy.push(apply);
+    const play = v<=4 ? [
+        ifGe('{5}',String(v)),
+          playLoop(NOISE_ID,hv(v)),
+          ifEq('{16}','1'),
+            setProp(hv(v),'Equalizer Low Gain','-80'),
+            setProp(hv(v),'Equalizer Mid Gain', v<=2 ? '0' : '-80'), setProp(hv(v),'Equalizer High Gain', v<=2 ? '-80' : '0'),
+          END(),
+        ELSE(), playLoop(SINE_ID,hv(v)), END(),
+      ] : [playLoop(SINE_ID,hv(v))];
+    switchSongs.push(
+      ifExists(hv(v)), stopAudio(hv(v)), H.del(hv(v)), END(),
+      ifGe('{4}',String(v)), ...play, H.setVol(hv(v),'0'), END());
+    apply.push(
+      getEntry(String(v),'904','l!2'),
+      ifEq('{l!2}','1'),
+        H.setEntry(String(v),'904','0'),
+        getEntry(String(v),'902','l!2'), H.setVol(hv(v),'{l!2}'),
+        getEntry(String(v),'903','l!2'), H.setSpeed(hv(v),'{l!2}'),
+      END());
+  }
+  // CatWeb allows at most 120 actions per event/function: pack the per-slot code into functions Start1…, Apply1…
+  const MAXA = 112, packFns = (prefix, perSlot) => {
+    const fns = []; let cur = [];
+    for(const b of perSlot){ if(cur.length + b.length > MAXA){ fns.push(cur); cur = []; } cur.push(...b); }
+    if(cur.length) fns.push(cur);
+    return fns.map((acts,i) => H.defFn(prefix+"abcdefghij"[i], acts));   // letters: names with digits got tagged
+  };
+  const startFns = packFns('Start', switchBy), applyFns = packFns('Apply', applyBy);
+  // debug self-tests: do function inputs arrive, do background copies keep their own inputs, does Get tick count seconds
+  const selfTest = D(
+    warn('Debug: player started'),
+    set('950','none'), H.runFn('Probein',['seven']),
+    ifEq('{950}','seven'), warn('Debug test A ok: function inputs work'), ELSE(), warn('Debug test A FAILED: a function input arrived as ({950})'), END(),
+  );
+  const load = H.event(0, ['When website loaded...'], [
+    createTable('900'), createTable('902'), createTable('903'), createTable('904'),
+    // keyframe step sizes, one short number per block (a long number list can get tagged)
+    createTable('19'), ...STEPS.map((n,i)=>H.setEntry(String(i+1),'19',String(n))),
+    set('11','0'), set('12','0'), set('15','0'), set('17','0'), set('18','0'), set('21','0'), ...D(set('953','0'), set('956','0')),
+    set('l!1','0'),
+    repeat(String(VOICES)), inc('l!1','1'), H.setEntry('{l!1}','902','0'), H.setEntry('{l!1}','903','1'), H.setEntry('{l!1}','904','0'), END(),
+    ...selfTest,
+    set('899','1'),
+    set('l!1','0'),
+    repeat(String(VOICES)), inc('l!1','1'), H.runBg('Voice',['{l!1}']), END(),
+    FOREVER(),
+      // a new song: restart the sounds (sine or hiss per voice)
+      ifNe('{18}','{17}'), set('17','{18}'), ...startFns.map(f=>H.runFn(f.text[1].value)),
+        ...D(ifExists('101'), warn('Debug: sounds started (slot one exists)'), ELSE(), warn('Debug FAILED: Play looped audio did not fill variable 101'), END(), set('953','0')),
+      END(),
+      ifEq('{11}','1'),
+        getTick('l!1'), dec('l!1','{9}'), mul('l!1','{3}'), set('21','{l!1}'),
+        ifGe('{l!1}','{6}'), set('11','0'), END(),
+        // debug (words only, numbers get tagged): is the clock still running two seconds in
+        ...D(ifEq('{953}','0'), ifGe('{l!1}','120'), set('953','1'), warn('Debug clock is still running after two seconds'), END(), END()),
+      END(),
+      ...applyFns.map(f=>H.runFn(f.text[1].value)),
+      wait('0.01'),
+    END(),
+  ]);
+
+  const sound = H.defFn('Sound', [
+    ...D(warn('Debug: Sound called with ({l!act}) and ({l!song})')),
+    upper('{l!act}','l!act'),
+    ifEq('{l!act}','STOP'), set('11','0'), set('12','0'), set('21','0'), END(),
+    ifEq('{l!act}','PAUSE'),
+      ifEq('{11}','1'), getTick('12'), dec('12','{9}'), set('11','2'), END(),
+    END(),
+    ifEq('{l!act}','PLAY'),
+      // the player's page-load event creates the song table; if it never ran there is nothing to play
+      ifEq('{899}','1'), ELSE(), warn('Sound function: the player did not start, so its page load event failed. Re-import A.'), ret('0'), END(),
+      ifNe('{l!song}','{15}'),
+        set('11','0'),
+        repeat('100'),
+          getEntry('{l!song}','900','l!1'),
+          ifExists('l!1'), BREAK(), END(),
+          wait('0.05'),
+        END(),
+        ifMissing('l!1'), warn('Sound function: song not found'), ret('0'), END(),
+        split('{l!1}',' ','2'),
+        getEntry('1','2','l!4'),
+        ifNe('{l!4}',String(DATA_VER)), warn('Sound function: this song file and the player are different versions. Convert the song again and import A again.'), ret('0'), END(),
+        getEntry('2','2','3'), getEntry('3','2','4'), getEntry('4','2','5'), getEntry('5','2','6'), getEntry('6','2','7'), getEntry('7','2','16'),
+        div('7','10000'),
+        set('8','{4}'), dec('8','{5}'),
+        // where each voice's keyframes start in {2}: after the 7 header numbers and the keyframe counts, 2 numbers per keyframe
+        createTable('22'), set('l!5','{4}'), inc('l!5','8'), set('l!6','0'),
+        repeat(String(VOICES)),
+          inc('l!6','1'),
+          ifGe('{4}','{l!6}'),
+            H.setEntry('{l!6}','22','{l!5}'),
+            set('l!7','{l!6}'), inc('l!7','7'), getEntry('{l!7}','2','l!8'), mul('l!8','2'), inc('l!5','{l!8}'),
+          END(),
+        END(),
+        ...D(warn('Debug: song found: ({4}) voices, ({5}) hiss, ({6}) frames at ({3}) per second, gain ({7})')),
+        set('15','{l!song}'), inc('18','1'), set('12','0'),
+        wait('0.15'),
+      END(),
+      ifEq('{11}','2'), getTick('9'), dec('9','{12}'), ELSE(), getTick('9'), END(),
+      set('11','1'),
+    END(),
+  ], ['act','song']);
+
+  // Voice locals: 11 song seen · 12 voice in use · 13 audible · 30 keyframes start · 31 count · 32 index
+  //   33/34/35 keyframe A (frame, vol, pitch) · 36/37/38 keyframe B · 39/40/41 B-A · 43 frame now · 44–46 temp
+  // A voice never touches a sound itself: it writes its volume and speed into tables {902}/{903} and flags {904};
+  // the clock loop applies them to the sounds in globals {101}–{150}. (CatWeb: max 120 actions per function.)
+  const setVol = x => [H.setEntry('{l!v}','902',x), H.setEntry('{l!v}','904','1')];
+  // Out(v, a, da, p, dp, t): volume number a+da·t and pitch number p+dp·t → the sound's Volume and Speed
+  const out = H.defFn('Out', [
+    set('l!1','{l!da}'), mul('l!1','{l!t}'), inc('l!1','{l!a}'),
+    dec('l!1','99'), mul('l!1','0.03'), set('l!2','10'), pow('l!2','{l!1}'), mul('l!2','{7}'),
+    H.setEntry('{l!v}','902','{l!2}'),
+    set('l!1','{l!dp}'), mul('l!1','{l!t}'), inc('l!1','{l!p}'),
+    dec('l!1',String(P0)), div('l!1','100'), set('l!2','2'), pow('l!2','{l!1}'),
+    H.setEntry('{l!v}','903','{l!2}'), H.setEntry('{l!v}','904','1'),
+  ], ['v','a','da','p','dp','t']);
+  const voice = H.defFn('Voice', [
+    set('l!11','0'), set('l!12','0'), set('l!13','0'), set('l!33',String(END_F)), set('l!52',String(END_F)),
+    FOREVER(),
+      // a different song was loaded: fetch this voice's keyframes
+      ifNe('{18}','{l!11}'),
+        set('l!11','{18}'), set('l!12','0'),
+        ifGe('{4}','{l!v}'),
+          set('l!12','1'), ...setVol('0'), set('l!13','0'),
+          // which voice of the song this sound slot plays: slots 1…{5} are the hiss voices (stored last in the song)
+          set('l!44','{l!v}'),
+          ifGe('{5}','{l!v}'), inc('l!44','{8}'), ELSE(), dec('l!44','{5}'), END(),
+          getEntry('{l!44}','22','l!30'), inc('l!44','7'), getEntry('{l!44}','2','l!31'),
+          set('l!33',String(END_F)), set('l!52',String(END_F)),
+        END(),
+      END(),
+      ifEq('{l!12}','1'),
+        ifEq('{11}','1'),
+          // counted one frame ahead so keyframe positions are never negative
+          set('l!43','{21}'), inc('l!43','1'),
+          // time went backwards (new play / stop): restart from the first keyframe
+          ifLt('{l!43}','{l!52}'), set('l!32','0'), set('l!36','0'), set('l!37','0'), set('l!38',String(P0)), END(),
+          // move to the keyframe pair around the current frame (up to 4 keyframes per tick)
+          repeat('4'),
+            ifGe('{l!43}','{l!36}'),
+              set('l!33','{l!36}'), set('l!52','{l!36}'), set('l!34','{l!37}'), set('l!35','{l!38}'),
+              inc('l!32','1'),
+              ifGe('{l!31}','{l!32}'),
+                // keyframe i = numbers start+2(i-1) ("DAA": step index ×100 + volume) and the next one (pitch)
+                set('l!45','{l!32}'), dec('l!45','1'), mul('l!45','2'), inc('l!45','{l!30}'),
+                getEntry('{l!45}','2','l!46'), inc('l!45','1'), getEntry('{l!45}','2','l!38'),
+                set('l!45','{l!46}'), div('l!45','100'), floor('l!45'), inc('l!45','1'), getEntry('{l!45}','19','l!45'), inc('l!36','{l!45}'),
+                set('l!37','{l!46}'), mod('l!37','100'),
+              ELSE(),
+                set('l!36',String(END_F)),
+              END(),
+              // a silent keyframe holds silence, then fades in during the last frame before the next one
+              ifEq('{l!34}','0'), set('l!33','{l!36}'), dec('l!33','1'), set('l!35','{l!38}'), END(),
+              set('l!39','{l!36}'), dec('l!39','{l!33}'), set('l!40','{l!37}'), dec('l!40','{l!34}'), set('l!41','{l!38}'), dec('l!41','{l!35}'),
+            END(),
+          END(),
+          set('l!46','{l!34}'), inc('l!46','{l!37}'),
+          ifLt('{l!43}','{l!33}'), set('l!46','0'), END(),
+          ifEq('{l!46}','0'),
+            ifEq('{l!13}','1'), ...setVol('0'), set('l!13','0'), END(),
+          ELSE(),
+            set('l!46','{l!43}'), dec('l!46','{l!33}'), div('l!46','{l!39}'),
+            H.runFn('Out',['{l!v}','{l!34}','{l!40}','{l!35}','{l!41}','{l!46}']),
+            set('l!13','1'),
+          END(),
+        ELSE(),
+          ifEq('{l!13}','1'), ...setVol('0'), set('l!13','0'), END(),
+        END(),
+      END(),
+      wait('0.01'),
+    END(),
+  ], ['v']);
+
+  const content = [load, sound, voice, out, ...startFns, ...applyFns];
+  if(debug) content.push(
+    H.defFn('Probein', [set('950','{l!x}')], ['x']),
+  );
+  if(uiButtons) for(const [id,act,name] of uiButtons) content.push(H.event(1, ['When', H.BTN(id), 'pressed...'], [H.runFn('Sound',[act,name])]));
+  return {class:'script', globalid:H.gid(), alias:'soundplayer', enabled:'true', content};
+}
+
+function buildUI(H, name){
+  const ids = {card:H.gid(), cc:H.gid(), cs:H.gid(), title:H.gid(), sub:H.gid(), play:H.gid(), pause:H.gid(), stop:H.gid()};
+  const btn = (id, alias, text, x, light) => ({class:'TextButton', globalid:id, alias, text,
+    font:'BuilderSansBold', font_size:'15', font_color: light ? '#0c0c0d' : '#ececee', align_x:'Center', align_y:'Center', auto_color:'true',
+    background_color: light ? '#ececee' : '#232327', background_transparency:'0', position:x, size:'{0.333,-19},{0,44}'});
+  const card = {class:'Frame', globalid:ids.card, alias:'soundcard', position:'{0.5,0},{0.5,0}', anchor:'0.5,0.5', size:'{0,360},{0,150}',
+    background_color:'#141416', background_transparency:'0', children:[
+      {class:'UICorner', globalid:ids.cc, radius:'0,12'},
+      {class:'UIStroke', globalid:ids.cs, stroke_color:'#2a2a2e', stroke_thickness:'1'},
+      {class:'TextLabel', globalid:ids.title, alias:'soundtitle', text:'Sound player', font:'BuilderSansBold', font_size:'20', font_color:'#ececee',
+       font_weight:'Bold', align_x:'Left', align_y:'Center', background_transparency:'1', position:'{0,20},{0,16}', size:'{1,-40},{0,28}'},
+      {class:'TextLabel', globalid:ids.sub, alias:'soundname', text:name, font:'BuilderSans', font_size:'13', font_color:'#8e8e95',
+       align_x:'Left', align_y:'Center', background_transparency:'1', position:'{0,20},{0,44}', size:'{1,-40},{0,20}'},
+      btn(ids.play, 'playbtn', 'Play', '{0,20},{1,-64}', true),
+      btn(ids.pause, 'pausebtn', 'Pause', '{0.333,13},{1,-64}', false),
+      btn(ids.stop, 'stopbtn', 'Stop', '{0.667,6},{1,-64}', false),
+    ]};
+  return {card, buttons:[[ids.play,'PLAY',name],[ids.pause,'PAUSE',name],[ids.stop,'STOP',name]]};
+}
+
+// blocks of at most CHUNK chars; prefer cutting inside a number
+function chunkData(data, max){
+  const parts = []; let pos = 0;
+  while(data.length-pos > max){
+    let cut = pos+max;
+    while(cut>pos+1 && /[ /]/.test(data[cut-1]+data[cut])) cut--;
+    if(cut<=pos+1) cut = pos+max;
+    parts.push(data.slice(pos,cut)); pos = cut;
+  }
+  parts.push(data.slice(pos));
+  return parts;
+}
+
+// CatWeb limits (a saved/published page silently loses whatever goes past them): 120 actions per event or function,
+// 30 events per script, 3,600 actions per script
+function limitProblems(elements){
+  const out = [];
+  (function walk(e){
+    if(e.class==='script'){
+      let total = 0;
+      for(const ev of e.content){ const n = (ev.actions||[]).length; total += n;
+        if(n > 120) out.push(`${e.alias}: "${ev.text[1]&&ev.text[1].value||ev.text[0]}" has ${n} actions (max 120)`); }
+      if(e.content.length > 30) out.push(`${e.alias}: ${e.content.length} events (max 30)`);
+      if(total > 3600) out.push(`${e.alias}: ${total} actions (max 3600)`);
+    }
+    (e.children||[]).forEach(walk);
+  })({children:elements});
+  return out;
+}
+
+let jsonA = '', jsonB = '';
+function refreshOutputs(){
+  const warnEl = $('exportWarn'), setWarn = t => { warnEl.classList.toggle('show', !!t); warnEl.lastElementChild.textContent = t||''; };
+  if(!result) return;
+  const s = settings(), name = s.song, parts = chunkData(result.data, CHUNK), problems = [];
+  if(Math.ceil(parts.length/110) > 26) problems.push('This song is too long for one song file. Shorten it, or use the Long or Small preset with Coarse detail.');
+  if(result.parsed.F + 200 > END_F) problems.push(`This clip has too many frames for the player (max ${END_F-200}). Use fewer frames per second or a shorter clip.`);
+  if(['sound','voice'].includes(name)) problems.push(`Pick a different song name; "${name}" clashes with a player function.`);
+  const ok = !problems.length;
+  // big song files can stall CatWeb's importer
+  const est = Math.round(result.data.length*1.22);
+  if(ok && est > 700*1024) problems.push(`This song file will be about ${sizeStr(est)}. Files this big may take very long or never finish importing (a 2.3 MB one never did). Pick a Size limit or a shorter clip.`);
+  setWarn(problems.join(' '));
+  $('copyA').disabled = $('dlA').disabled = $('copyB').disabled = $('dlB').disabled = !ok;
+  if(!ok){ jsonA = jsonB = ''; $('infoA').textContent = $('infoB').textContent = ''; return; }
+
+  const H = blocks(makeGid());
+  const song = buildSong(H, name, parts, $('debug').checked);
+  jsonB = JSON.stringify([song]);
+  let elements;
+  if(s.kind==='page'){
+    const ui = buildUI(H, name), player = buildPlayer(H, ui.buttons, $('debug').checked);
+    const root = {class:'Frame', globalid:H.gid(), alias:'soundroot', position:'{0,0},{0,0}', size:'{1,0},{1,0}',
+      background_color:'#0c0c0d', background_transparency:'0', children:[ui.card, player, song]};
+    jsonA = JSON.stringify({favicon:'103516276905873', title:'Sound player', background:'#0c0c0d', webcontent:[root]});
+    elements = 11;
+  } else {
+    jsonA = JSON.stringify([buildPlayer(H, null, $('debug').checked), song]);
+    elements = 2;
+  }
+  const over = limitProblems(JSON.parse(jsonA).webcontent || JSON.parse(jsonA));
+  if(over.length){
+    setWarn('Over CatWeb limits, a saved page would lose code: ' + over.join('; '));
+    $('copyA').disabled = $('dlA').disabled = $('copyB').disabled = $('dlB').disabled = true; jsonA = jsonB = ''; return;
+  }
+  $('infoA').innerHTML = `${sizeStr(jsonA.length)} · ${elements} elements · ${s.kind==='page'?'full page':'element list'} · song <code>${name}</code>`;
+  $('infoB').innerHTML = `${sizeStr(jsonB.length)} · 1 element · ${parts.length} data block${parts.length>1?'s':''} · play with <code>Sound ("PLAY", "${name}")</code>`;
+}
+async function copyText(text, btn){
+  const old = btn.innerHTML;
+  try{ await navigator.clipboard.writeText(text); }
+  catch(e){ const t=document.createElement('textarea'); t.value=text; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); }
+  btn.innerHTML = icon('check')+'Copied'; setTimeout(()=>btn.innerHTML=old, 1400);
+}
+function download(blob, name){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),5000); }
+$('copyA').onclick = e => copyText(jsonA, e.currentTarget);
+$('copyB').onclick = e => copyText(jsonB, e.currentTarget);
+$('dlA').onclick = () => download(new Blob([jsonA],{type:'application/json'}), `${settings().song}-player-${settings().kind}.json`);
+$('dlB').onclick = () => download(new Blob([jsonB],{type:'application/json'}), `${settings().song}-song.json`);
+
+drawViz();
+</script>
+</body>
+</html>
